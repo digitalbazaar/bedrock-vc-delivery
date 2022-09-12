@@ -1,31 +1,71 @@
 {
-  "name": "bedrock-module-template-http-test",
-  "version": "0.0.1-0",
+  "name": "bedrock-vc-delivery-test",
+  "version": "0.0.1",
+  "type": "module",
   "private": true,
   "scripts": {
     "test": "node --preserve-symlinks test.js test",
-    "coverage": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text-summary npm test",
-    "coverage-ci": "cross-env NODE_ENV=test nyc --reporter=lcovonly npm test",
-    "coverage-report": "nyc report"
+    "debug": "node --preserve-symlinks test.js test --log-level debug",
+    "coverage": "cross-env NODE_ENV=test c8 npm test",
+    "coverage-ci": "cross-env NODE_ENV=test c8 --reporter=lcovonly --reporter=text-summary --repoter=text npm test",
+    "coverage-report": "c8 report"
   },
   "dependencies": {
-    "bedrock": "^4.1.1",
-    "bedrock-express": "^3.2.0",
-    "bedrock-https-agent": "^2.0.0",
-    "bedrock-module-template-http": "file:..",
-    "bedrock-mongodb": "^8.2.0",
-    "bedrock-server": "^2.7.0",
-    "bedrock-test": "^5.3.2",
+    "@bedrock/app-identity": "^4.0.0",
+    "@bedrock/core": "^6.0.1",
+    "@bedrock/credentials-context": "^3.0.0",
+    "@bedrock/did-context": "^4.0.0",
+    "@bedrock/did-io": "^9.0.1",
+    "@bedrock/edv-storage": "^16.0.0",
+    "@bedrock/express": "^8.0.0",
+    "@bedrock/https-agent": "^4.0.0",
+    "@bedrock/jsonld-document-loader": "^3.0.0",
+    "@bedrock/kms": "^11.0.0",
+    "@bedrock/kms-http": "^15.0.0",
+    "@bedrock/ledger-context": "^23.0.0",
+    "@bedrock/meter": "^4.0.0",
+    "@bedrock/meter-http": "^9.0.1",
+    "@bedrock/meter-usage-reporter": "^8.0.0",
+    "@bedrock/mongodb": "^10.0.0",
+    "@bedrock/package-manager": "^3.0.0",
+    "@bedrock/security-context": "^7.0.0",
+    "@bedrock/server": "^5.0.0",
+    "@bedrock/service-agent": "^6.0.0",
+    "@bedrock/service-context-store": "^8.1.0",
+    "@bedrock/service-core": "^6.1.2",
+    "@bedrock/ssm-mongodb": "^10.0.0",
+    "@bedrock/test": "^8.0.5",
+    "@bedrock/validation": "^7.0.0",
+    "@bedrock/vc-issuer": "^19.2.0",
+    "@bedrock/vc-delivery": "file:..",
+    "@bedrock/vc-revocation-list-context": "^3.1.0",
+    "@bedrock/vc-status-list-context": "^4.1.0",
+    "@bedrock/veres-one-context": "^14.0.1",
+    "@bedrock/zcap-storage": "^8.0.0",
+    "@digitalbazaar/ed25519-signature-2020": "^4.0.1",
+    "@digitalbazaar/edv-client": "^15.0.0",
+    "@digitalbazaar/ezcap": "^3.0.1",
+    "@digitalbazaar/http-client": "^3.2.0",
+    "@digitalbazaar/vc-status-list": "^5.0.0",
+    "@digitalbazaar/webkms-client": "^12.0.0",
+    "c8": "^7.11.3",
     "cross-env": "^7.0.3",
-    "nyc": "^15.1.0"
+    "jose": "^4.8.3",
+    "klona": "^2.0.5",
+    "sinon": "^14.0.0"
   },
-  "nyc": {
+  "c8": {
     "excludeNodeModules": false,
     "include": [
-      "node_modules/bedrock-module-template-http/**"
+      "node_modules/@bedrock/vc-delivery/**"
     ],
     "exclude": [
-      "node_modules/bedrock-module-template-http/node_modules/**"
+      "node_modules/@bedrock/vc-delivery/node_modules/**"
+    ],
+    "reporter": [
+      "lcov",
+      "text-summary",
+      "text"
     ]
   }
 }
