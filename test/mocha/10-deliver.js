@@ -18,7 +18,7 @@ const serviceType = 'vc-issuer';
 // https://www.w3.org/2018/credentials/examples/v1
 const mockCredential = require('./mock-credential.json');
 
-describe('issue APIs', () => {
+describe('delivery', () => {
   let capabilityAgent;
   let oauth2IssuerConfig;
   let issuerId;
@@ -85,6 +85,250 @@ describe('issue APIs', () => {
     issuerId = oauth2IssuerConfig.id;
     issuerRootZcap = `urn:zcap:root:${encodeURIComponent(issuerId)}`;
   });
+  describe('pre-authorized code delivery', () => {
+    // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+
+    // FIXME: handle URL w/pre-authorized_code
+    /* Pre-authorized flow, issuer-initiated
+    openid-initiate-issuance://?
+        issuer=https%3A%2F%2Fserver%2Eexample%2Ecom
+        &credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard
+        &pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA
+        &user_pin_required=true
+    */
+
+    // FIXME: wallet gets access token
+    /*
+    POST /token HTTP/1.1
+      Host: server.example.com
+      Content-Type: application/x-www-form-urlencoded
+      Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+      grant_type=urn:ietf:params:oauth:grant-type:pre-authorized_code
+      &pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA
+      &user_pin=493536
+    */
+
+    // FIXME: token response (success); note `c_nonce*` probably doesn't make
+    // sense to send here because it presumes authz server and issuance server
+    // (delivery server) are the same; instead send those (if DID authn is
+    // required) from the delivery server
+    /*
+    HTTP/1.1 200 OK
+      Content-Type: application/json
+      Cache-Control: no-store
+
+      {
+        "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",
+        "token_type": "bearer",
+        "expires_in": 86400,
+        "c_nonce": "tZignsnFbp",
+        "c_nonce_expires_in": 86400
+      }
+    */
+
+    // FIXME: token response (failure)
+    /*
+    HTTP/1.1 400 Bad Request
+    Content-Type: application/json
+    Cache-Control: no-store
+    {
+      "error": "invalid_request"
+    }
+    */
+
+    // FIXME: request delivery (use helpers.requestDelivery() which implements
+    // what follows for reuse in other tests...)
+
+    // FIXME: wallet sends credential request WITHOUT DID proof JWT:
+
+    /*
+    POST /credential HTTP/1.1
+    Host: server.example.com
+    Content-Type: application/json
+    Authorization: BEARER czZCaGRSa3F0MzpnWDFmQmF0M2JW
+
+    {
+      "type": "https://did.example.org/healthCard"
+      "format": "ldp_vc"
+    }
+    */
+
+    // FIXME: if DID authn is required, delivery server sends:
+    /*
+    HTTP/1.1 400 Bad Request
+      Content-Type: application/json
+      Cache-Control: no-store
+
+    {
+      "error": "invalid_or_missing_proof"
+      "error_description":
+          "Credential issuer requires proof element in Credential Request"
+      "c_nonce": "8YE9hCnyV2",
+      "c_nonce_expires_in": 86400
+    }
+    */
+
+    // FIXME: wallet builds DID proof JWT:
+    /*
+    {
+      "alg": "ES256",
+      "kid":"did:example:ebfeb1f712ebc6f1c276e12ec21/keys/1"
+    }.
+    {
+      "iss": "s6BhdRkqt3",
+      "aud": "https://server.example.com",
+      "iat": 1659145924,
+      "nonce": "tZignsnFbp"
+    }
+    */
+
+    // FIXME: wallet resends credential request w/ DID proof JWT:
+
+    /*
+    POST /credential HTTP/1.1
+    Host: server.example.com
+    Content-Type: application/json
+    Authorization: BEARER czZCaGRSa3F0MzpnWDFmQmF0M2JW
+
+    {
+      "type": "https://did.example.org/healthCard"
+      "format": "ldp_vc",
+      "did": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "proof": {
+        "proof_type": "jwt",
+        "jwt": "eyJraWQiOiJkaWQ6ZXhhbXBsZTplYmZlYjFmNzEyZWJjNmYxYzI3NmUxMmVjMjEva2V5cy8
+        xIiwiYWxnIjoiRVMyNTYiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJzNkJoZFJrcXQzIiwiYXVkIjoiaHR
+        0cHM6Ly9zZXJ2ZXIuZXhhbXBsZS5jb20iLCJpYXQiOiIyMDE4LTA5LTE0VDIxOjE5OjEwWiIsIm5vbm
+        NlIjoidFppZ25zbkZicCJ9.ewdkIkPV50iOeBUqMXCC_aZKPxgihac0aW9EkL1nOzM"
+      }
+    }
+    */
+
+    // FIXME: wallet receives credential:
+    // FIXME: Note! The credential is not wrapped here in a VP in the current
+    // ...spec:
+
+    /*
+    HTTP/1.1 200 OK
+      Content-Type: application/json
+      Cache-Control: no-store
+
+    {
+      "format": "ldp_vc"
+      "credential" : {...}
+    }
+    */
+  });
+
+  describe('wallet initiated delivery', () => {
+    // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+
+    // FIXME: wallet sends request for a credential
+    /*
+    {
+     "type":"openid_credential",
+     "credential_type":"https://did.example.org/healthCard",
+     "format":"ldp_vc",
+     //"locations": ["aud1", "aud2", ...]
+    }
+    // ... OR ... request 2+ credentials
+    [
+      {
+          "type":"openid_credential",
+          "credential_type":"https://did.example.org/healthCard",
+          "format":"ldp_vc"
+      },
+      {
+          "type":"openid_credential",
+          "credential_type":"https://did.example.org/mDL"
+      }
+    ]
+    */
+
+    // FIXME: wallet receives response
+    /*
+    HTTP/1.1 302 Found
+    Location: https://server.example.com/authorize?
+      response_type=code
+      &client_id=s6BhdRkqt3
+      &code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+      &code_challenge_method=S256
+      &authorization_details=%5B%7B%22type%22:%22openid_credential%22,%22credential_type
+      %22:%22https://did.example.org/healthCard%22,%22format%22:%22ldp_vc%22%7D,%7B%22ty
+      pe%22:%22openid_credential%22,%22credential_type%22:%22https://did.example.org/mDL
+      %22%7D%5D
+      &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
+      });
+
+    ... OR ... scope option (map credential type to an oauth2 scope):
+
+    HTTP/1.1 302 Found
+    Location: https://server.example.com/authorize?
+      response_type=code
+      &scope=com.example.healthCardCredential
+      &client_id=s6BhdRkqt3
+      &code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+      &code_challenge_method=S256
+      &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
+    */
+
+    // FIXME: authorization responses:
+    /*
+    success:
+    HTTP/1.1 302 Found
+      Location: https://Wallet.example.org/cb?
+        code=SplxlOBeZQQYbYS6WxSbIA
+
+    failure:
+    HTTP/1.1 302 Found
+    Location: https://client.example.net/cb?
+        error=invalid_request
+        &error_description=Unsupported%20response_type%20value
+    */
+
+    // FIXME: wallet gets access token
+    /*
+    POST /token HTTP/1.1
+      Host: server.example.com
+      Content-Type: application/x-www-form-urlencoded
+      Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+      grant_type=authorization_code
+      &code=SplxlOBeZQQYbYS6WxSbIA
+      &code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+      &redirect_uri=https%3A%2F%2FWallet.example.org%2Fcb
+    */
+
+    // FIXME: token response (success); note `c_nonce*` probably doesn't make
+    // sense to send here because it presumes authz server and issuance server
+    // (delivery server) are the same; instead send those (if DID authn is
+    // required) from the delivery server
+    /*
+    HTTP/1.1 200 OK
+      Content-Type: application/json
+      Cache-Control: no-store
+
+      {
+        "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",
+        "token_type": "bearer",
+        "expires_in": 86400,
+        "c_nonce": "tZignsnFbp",
+        "c_nonce_expires_in": 86400
+      }
+    */
+
+    // FIXME: token response (failure)
+    /*
+    HTTP/1.1 400 Bad Request
+    Content-Type: application/json
+    Cache-Control: no-store
+    {
+      "error": "invalid_request"
+    }
+    */
+
+    // FIXME: request delivery (use helpers.requestDelivery())
+  });
+
   describe('/credentials/issue', () => {
     it('issues a valid credential w/no "credentialStatus"', async () => {
       const credential = klona(mockCredential);
