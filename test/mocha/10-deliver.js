@@ -114,7 +114,7 @@ describe('delivery', () => {
     console.log('parsedIssuanceUrl', parsedIssuanceUrl);
 
     // FIXME: wallet gets access token
-    /*
+    /* Implemented on AS:
     POST /token HTTP/1.1
       Host: server.example.com
       Content-Type: application/x-www-form-urlencoded
@@ -124,10 +124,8 @@ describe('delivery', () => {
       &user_pin=493536
     */
 
-    // FIXME: token response (success); note `c_nonce*` probably doesn't make
-    // sense to send here because it presumes authz server and issuance server
-    // (delivery server) are the same; instead send those (if DID authn is
-    // required) from the delivery server
+    // FIXME: token response (success); note do not send `c_nonce*` here
+    // because it conflates AS with DS (delivery server)
     /*
     HTTP/1.1 200 OK
       Content-Type: application/json
@@ -136,9 +134,7 @@ describe('delivery', () => {
       {
         "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6Ikp..sHQ",
         "token_type": "bearer",
-        "expires_in": 86400,
-        "c_nonce": "tZignsnFbp",
-        "c_nonce_expires_in": 86400
+        "expires_in": 86400
       }
     */
 
@@ -157,7 +153,7 @@ describe('delivery', () => {
 
     // FIXME: wallet sends credential request WITHOUT DID proof JWT:
 
-    /*
+    /* Implemented on DS:
     POST /credential HTTP/1.1
     Host: server.example.com
     Content-Type: application/json
@@ -200,7 +196,7 @@ describe('delivery', () => {
 
     // FIXME: wallet resends credential request w/ DID proof JWT:
 
-    /*
+    /* Implemented on DS:
     POST /credential HTTP/1.1
     Host: server.example.com
     Content-Type: application/json
