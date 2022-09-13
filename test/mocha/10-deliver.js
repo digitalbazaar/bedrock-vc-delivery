@@ -85,17 +85,33 @@ describe('delivery', () => {
     issuerId = oauth2IssuerConfig.id;
     issuerRootZcap = `urn:zcap:root:${encodeURIComponent(issuerId)}`;
   });
-  describe('pre-authorized code delivery', () => {
+  it.only('pre-authorized code', () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
-    // FIXME: handle URL w/pre-authorized_code
-    /* Pre-authorized flow, issuer-initiated
-    openid-initiate-issuance://?
-        issuer=https%3A%2F%2Fserver%2Eexample%2Ecom
-        &credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard
-        &pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA
-        &user_pin_required=true
-    */
+    /* This flow demonstrates passing an OIDC4VCI issuance initiation URL
+    through a CHAPI OIDC4VCI request. The request is passed to a "Claimed URL"
+    which was registered on a user's device by a native app. The native app's
+    domain also published a "manifest.json" file that expressed the same
+    "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
+    `credential_handler.launchType='redirect'` (TBD). */
+
+    // Pre-authorized flow, issuer-initiated
+    const issuanceUrl = 'openid-initiate-issuance://?' +
+        'issuer=https%3A%2F%2Fserver%2Eexample%2Ecom' +
+        '&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard' +
+        '&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA' +
+        '&user_pin_required=true';
+    const chapiRequest = {OIDC4VCI: issuanceUrl};
+    // CHAPI could potentially be used to deliver the URL to a native app
+    // that registered a "claimed URL" of `https://myapp.examples/ch`
+    // like so:
+    const claimedUrlFromChapi = 'https://myapp.example/ch?request=' +
+      encodeURIComponent(JSON.stringify(chapiRequest));
+    const parsedClaimedUrl = new URL(claimedUrlFromChapi);
+    const parsedChapiRequest = JSON.parse(
+      parsedClaimedUrl.searchParams.get('request'));
+    const parsedIssuanceUrl = new URL(parsedChapiRequest.OIDC4VCI);
+    console.log('parsedIssuanceUrl', parsedIssuanceUrl);
 
     // FIXME: wallet gets access token
     /*
@@ -220,7 +236,7 @@ describe('delivery', () => {
     */
   });
 
-  describe('wallet initiated delivery', () => {
+  it('wallet-initiated', () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     // FIXME: wallet sends request for a credential
