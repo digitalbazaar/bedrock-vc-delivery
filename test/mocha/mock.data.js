@@ -30,7 +30,8 @@ mockData.baseUrl = config.server.baseUri;
 mockData.oauth2IssuerConfigRoute = '/.well-known/oauth-authorization-server';
 mockData.oauth2Config = {
   issuer: mockData.baseUrl,
-  jwks_uri: `${mockData.baseUrl}/oauth2/jwks`
+  jwks_uri: `${mockData.baseUrl}/oauth2/jwks`,
+  token_endpoint: `${mockData.baseUrl}/oauth2/token`
 };
 
 // Ed25519 and EC keys
