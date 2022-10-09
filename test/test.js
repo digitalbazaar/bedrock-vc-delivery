@@ -2,6 +2,7 @@
  * Copyright (c) 2016-2022 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
+import {createAuthorizationService} from '@bedrock/vc-delivery';
 import {getServiceIdentities} from '@bedrock/app-identity';
 import {handlers} from '@bedrock/meter-http';
 import '@bedrock/ssm-mongodb';
@@ -12,7 +13,6 @@ import '@bedrock/meter-usage-reporter';
 import '@bedrock/server';
 import '@bedrock/kms-http';
 import '@bedrock/edv-storage';
-import '@bedrock/vc-delivery';
 import '@bedrock/vc-issuer';
 
 import {mockData} from './mocha/mock.data.js';
@@ -39,13 +39,16 @@ bedrock.events.on('bedrock.init', async () => {
 });
 
 // mock oauth2 authz server routes
-bedrock.events.on('bedrock-express.configure.routes', app => {
+bedrock.events.on('bedrock-express.configure.routes', async app => {
   app.get(mockData.oauth2IssuerConfigRoute, (req, res) => {
     res.json(mockData.oauth2Config);
   });
   app.get('/oauth2/jwks', (req, res) => {
     res.json(mockData.jwks);
   });
+
+  // install authorization service
+  await createAuthorizationService({app});
 });
 
 import '@bedrock/test';
