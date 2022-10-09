@@ -96,9 +96,9 @@ describe('delivery', () => {
     "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
     `credential_handler.launchType='redirect'` (TBD). */
 
-    // Pre-authorized flow, issuer-initiated
+    // pre-authorized flow, issuer-initiated
     const issuanceUrl = 'openid-initiate-issuance://?' +
-        'issuer=https%3A%2F%2Fserver%2Eexample%2Ecom' +
+        `issuer=${encodeURIComponent(baseUrl)}` +
         '&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard' +
         '&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA' +
         '&user_pin_required=true';
@@ -111,12 +111,18 @@ describe('delivery', () => {
     const parsedClaimedUrl = new URL(claimedUrlFromChapi);
     const parsedChapiRequest = JSON.parse(
       parsedClaimedUrl.searchParams.get('request'));
-    const parsedIssuanceUrl = new URL(parsedChapiRequest.OIDC4VCI);
-    console.log('parsedIssuanceUrl', parsedIssuanceUrl);
+    console.log('raw parsed URL', new URL(parsedChapiRequest.OIDC4VCI));
+    const initiateIssuanceInfo = OIDC4VCIClient.parseInitiateIssuanceUrl(
+      {url: parsedChapiRequest.OIDC4VCI});
+    console.log('parsed initiate issuance info', initiateIssuanceInfo);
+
+    // FIXME: get user pin if required
+    const userPin = '493536';
 
     // FIXME: wallet gets access token
+    const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
     const client = await OIDC4VCIClient.fromPreAuthorizedCode({
-      url: parsedIssuanceUrl
+      issuer, preAuthorizedCode, userPin, agent
     });
 
     // FIXME: wallet receives credential
@@ -192,7 +198,7 @@ describe('delivery', () => {
     const url = '';
 
     // FIXME: implement OIDC4VCIClient.fromAuthorizationCode()
-    const client = await OIDC4VCIClient.fromAuthorizationCode({url});
+    const client = await OIDC4VCIClient.fromAuthorizationCode({url, agent});
 
     // FIXME: request delivery
     const result = await client.requestDelivery();
