@@ -1,104 +1,118 @@
 /*!
  * Copyright (c) 2022 Digital Bazaar, Inc. All rights reserved.
  */
+import * as base64url from 'base64url-universal';
 import {httpClient} from '@digitalbazaar/http-client';
+
+// FIXME: remove me; temporary for testing
+import {jwtVerify} from 'jose';
+
+const TEXT_ENCODER = new TextEncoder();
+const ENCODED_PERIOD = TEXT_ENCODER.encode('.');
 
 const GRANT_TYPES = new Map([
   ['preAuthorizedCode', 'urn:ietf:params:oauth:grant-type:pre-authorized_code']
 ])
+const HEADERS = {accept: 'application/json'};
 const WELL_KNOWN_REGEX = /\/\.well-known\/([^\/]+)/;
 
+// FIXME: move to separate lib
 export class OIDC4VCIClient {
-  constructor({accessToken = null} = {}) {
+  constructor({accessToken = null, agent} = {}) {
     this.accessToken = accessToken;
+    this.agent = agent;
   }
 
   // FIXME: optional param includes DID proof
-  async requestDelivery({didProof} = {}) {
-    /* First send credential request to DS without DID proof JWT:
+  async requestDelivery({url, didProof} = {}) {
+    try {
+      /* First send credential request to DS without DID proof JWT, e.g.:
 
-    POST /credential HTTP/1.1
-    Host: server.example.com
-    Content-Type: application/json
-    Authorization: BEARER czZCaGRSa3F0MzpnWDFmQmF0M2JW
-
-    {
-      "type": "https://did.example.org/healthCard"
-      "format": "ldp_vc"
-    }
-    */
-
-    // FIXME: if DID authn is required, delivery server sends:
-    /*
-    HTTP/1.1 400 Bad Request
+      POST /credential HTTP/1.1
+      Host: server.example.com
       Content-Type: application/json
-      Cache-Control: no-store
+      Authorization: BEARER czZCaGRSa3F0MzpnWDFmQmF0M2JW
 
-    {
-      "error": "invalid_or_missing_proof"
-      "error_description":
-          "Credential issuer requires proof element in Credential Request"
-      "c_nonce": "8YE9hCnyV2",
-      "c_nonce_expires_in": 86400
-    }
-    */
-
-    // FIXME: wallet builds DID proof JWT:
-    /*
-    {
-      "alg": "ES256",
-      "kid":"did:example:ebfeb1f712ebc6f1c276e12ec21/keys/1"
-    }.
-    {
-      "iss": "s6BhdRkqt3",
-      "aud": "https://server.example.com",
-      "iat": 1659145924,
-      "nonce": "tZignsnFbp"
-    }
-    */
-
-    // FIXME: wallet resends credential request w/ DID proof JWT:
-
-    /* Implemented on DS:
-    POST /credential HTTP/1.1
-    Host: server.example.com
-    Content-Type: application/json
-    Authorization: BEARER czZCaGRSa3F0MzpnWDFmQmF0M2JW
-
-    {
-      "type": "https://did.example.org/healthCard"
-      "format": "ldp_vc",
-      "did": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-      "proof": {
-        "proof_type": "jwt",
-        "jwt": "eyJraWQiOiJkaWQ6ZXhhbXBsZTplYmZlYjFmNzEyZWJjNmYxYzI3NmUxMmVjMjEva2V5cy8
-        xIiwiYWxnIjoiRVMyNTYiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJzNkJoZFJrcXQzIiwiYXVkIjoiaHR
-        0cHM6Ly9zZXJ2ZXIuZXhhbXBsZS5jb20iLCJpYXQiOiIyMDE4LTA5LTE0VDIxOjE5OjEwWiIsIm5vbm
-        NlIjoidFppZ25zbkZicCJ9.ewdkIkPV50iOeBUqMXCC_aZKPxgihac0aW9EkL1nOzM"
+      {
+        "type": "https://did.example.org/healthCard"
+        "format": "ldp_vc"
       }
-    }
-    */
+      */
 
-    // FIXME: wallet receives credential:
-    // FIXME: Note! The credential is not wrapped here in a VP in the current
-    // ...spec:
+      try {
+        const response = await httpClient.post(url, {agent, headers: HEADERS});
+        if(!response.data) {
+          const error = new Error('Credential response format is not JSON.');
+          error.name = 'DataError';
+          throw error;
+        }
+      } catch(cause) {
+        if(!_isMissingProofError(cause)) {
+          // non-specific error case
+          throw cause;
+        }
 
-    /*
-    HTTP/1.1 200 OK
+        const {data: details} = cause.response;
+        const error = new Error('');
+        error.name = 'NotAllowedError';
+        error.cause = cause;
+        error.details = details;
+        throw error;
+      }
+
+      // FIXME: wallet builds DID proof JWT:
+      /*const jwt = await OIDC4VCIClient.generateDIDProofJWT(
+        {signer, nonce, iss, aud, nonce, exp, nbf});*/
+
+      // FIXME: wallet resends credential request w/ DID proof JWT:
+
+      /* Implemented on DS:
+      POST /credential HTTP/1.1
+      Host: server.example.com
       Content-Type: application/json
-      Cache-Control: no-store
+      Authorization: BEARER czZCaGRSa3F0MzpnWDFmQmF0M2JW
 
-    {
-      "format": "ldp_vc"
-      "credential" : {...}
+      {
+        "type": "https://did.example.org/healthCard"
+        "format": "ldp_vc",
+        "did": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+        "proof": {
+          "proof_type": "jwt",
+          "jwt": "eyJraWQiOiJkaWQ6ZXhhbXBsZTplYmZlYjFmNzEyZWJjNmYxYzI3NmUxMmVjMjEva2V5cy8
+          xIiwiYWxnIjoiRVMyNTYiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJzNkJoZFJrcXQzIiwiYXVkIjoiaHR
+          0cHM6Ly9zZXJ2ZXIuZXhhbXBsZS5jb20iLCJpYXQiOiIyMDE4LTA5LTE0VDIxOjE5OjEwWiIsIm5vbm
+          NlIjoidFppZ25zbkZicCJ9.ewdkIkPV50iOeBUqMXCC_aZKPxgihac0aW9EkL1nOzM"
+        }
+      }
+      */
+
+      // FIXME: wallet receives credential:
+      // FIXME: Note! The credential is not wrapped here in a VP in the current
+      // ...spec:
+
+      /*
+      HTTP/1.1 200 OK
+        Content-Type: application/json
+        Cache-Control: no-store
+
+      {
+        "format": "ldp_vc"
+        "credential" : {...}
+      }
+      */
+      return {
+        format: 'ldp_vc',
+        credential: {}
+      };
+    } catch(cause) {
+      const error = new Error('Could not receive credentials.');
+      error.name = 'OperationError';
+      error.cause = cause;
+      throw error;
     }
-    */
-    return {
-      format: 'ldp_vc',
-      credential: {}
-    };
   }
 
+  // FIXME: move to helper function in separate lib
   static async discoverIssuer({issuerConfigUrl, agent} = {}) {
     try {
       if(!(issuerConfigUrl && typeof issuerConfigUrl === 'string')) {
@@ -213,7 +227,7 @@ export class OIDC4VCIClient {
       }
       const {token_endpoint} = issuerConfig;
       const response = await httpClient.post(token_endpoint, {
-        agent, body, headers: {accept: 'application/json'}
+        agent, body, headers: HEADERS
       });
       const {data: result} = response;
       if(!result) {
@@ -251,7 +265,7 @@ export class OIDC4VCIClient {
       }
 
       // create client w/access token
-      return new OIDC4VCIClient({accessToken});
+      return new OIDC4VCIClient({accessToken, agent});
     } catch(cause) {
       const error = new Error('Could not create OIDC4VCI client.');
       console.log('cause', cause);
@@ -332,4 +346,82 @@ export class OIDC4VCIClient {
     const userPinRequired = searchParams.get('user_pin_required') === 'true';
     return {issuer, credentialType, preAuthorizedCode, userPinRequired};
   }
+
+  // FIXME: move to helper function in separate lib
+  static async generateDIDProofJWT({signer, nonce, iss, aud, exp, nbf} = {}) {
+    /* Example:
+    {
+      "alg": "ES256",
+      "kid":"did:example:ebfeb1f712ebc6f1c276e12ec21/keys/1"
+    }.
+    {
+      "iss": "s6BhdRkqt3",
+      "aud": "https://server.example.com",
+      "iat": 1659145924,
+      "nonce": "tZignsnFbp"
+    }
+    */
+
+    if(exp === undefined) {
+      // default to 5 minute expiration time
+      exp = Math.floor(Date.now() / 1000) + 60 * 5;
+    }
+    if(nbf === undefined) {
+      // default to now
+      nbf = Math.floor(Date.now() / 1000);
+    }
+
+    const {algorithm: alg, id: kid} = signer;
+    const payload = {nonce, iss, aud, exp, nbf};
+    const protectedHeader = {alg, kid};
+
+    return _signJWT({payload, protectedHeader, signer});
+  }
+}
+
+function _isMissingProofError(error) {
+  /* If DID authn is required, delivery server sends, e.g.:
+
+  HTTP/1.1 400 Bad Request
+    Content-Type: application/json
+    Cache-Control: no-store
+
+  {
+    "error": "invalid_or_missing_proof"
+    "error_description":
+        "Credential issuer requires proof element in Credential Request"
+    "c_nonce": "8YE9hCnyV2",
+    "c_nonce_expires_in": 86400
+  }
+  */
+  return error.status === 400 &&
+    error?.response?.data?.error === 'invalid_or_missing_proof';
+}
+
+async function _signJWT({payload, protectedHeader, signer} = {}) {
+  // encode payload and protected header
+  const b64Payload = base64url.encode(JSON.stringify(payload));
+  const b64ProtectedHeader = base64url.encode(JSON.stringify(protectedHeader));
+  payload = TEXT_ENCODER.encode(b64Payload);
+  protectedHeader = TEXT_ENCODER.encode(b64ProtectedHeader);
+
+  // concatenate
+  const data = new Uint8Array(
+    protectedHeader.length + ENCODED_PERIOD.length + payload.length);
+  data.set(protectedHeader);
+  data.set(ENCODED_PERIOD, protectedHeader.length);
+  data.set(payload, protectedHeader.length + ENCODED_PERIOD.length);
+
+  // sign
+  const signature = await signer.sign(data);
+
+  // create JWS
+  const jws = {
+    signature: base64url.encode(signature),
+    payload: b64Payload,
+    protected: b64ProtectedHeader
+  };
+
+  // create compact JWT
+  return `${jws.protected}.${jws.payload}.${jws.signature}`;
 }

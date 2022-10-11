@@ -125,8 +125,22 @@ describe('delivery', () => {
       issuer, preAuthorizedCode, userPin, agent
     });
 
+    /*console.log('generating JWT');
+    const signer = {
+      algorithm: 'EdDSA', id: 'did:key:1234#5678',
+      async sign(data) {
+        return new Uint8Array(64);
+      }
+    };
+    const nonce = '1234';
+    const iss = 'did:key:1234';
+    const aud = 'https://issuer.example';
+    const jwt = await OIDC4VCIClient.generateDIDProofJWT(
+      {signer, nonce, iss, aud});
+    console.log('jwt', jwt);*/
+
     // FIXME: wallet receives credential
-    const result = await client.requestDelivery();
+    //const result = await client.requestDelivery();
     // FIXME: assert on result
   });
 
