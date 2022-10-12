@@ -2,7 +2,9 @@
  * Copyright (c) 2016-2022 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
-import {createAuthorizationService} from '@bedrock/vc-delivery';
+import {
+  createAuthorizationService, createDeliveryService
+} from '@bedrock/vc-delivery';
 import {getServiceIdentities} from '@bedrock/app-identity';
 import {handlers} from '@bedrock/meter-http';
 import '@bedrock/ssm-mongodb';
@@ -49,6 +51,9 @@ bedrock.events.on('bedrock-express.configure.routes', async app => {
 
   // install authorization service
   await createAuthorizationService({app});
+
+  // install delivery service
+  await createDeliveryService({app});
 });
 
 import '@bedrock/test';
