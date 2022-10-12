@@ -18,13 +18,14 @@ const WELL_KNOWN_REGEX = /\/\.well-known\/([^\/]+)/;
 
 // FIXME: move to separate lib
 export class OIDC4VCIClient {
-  constructor({accessToken = null, agent} = {}) {
+  constructor({accessToken = null, agent, issuerConfig} = {}) {
     this.accessToken = accessToken;
     this.agent = agent;
+    this.issuerConfig = issuerConfig;
   }
 
   // FIXME: optional param includes DID proof
-  async requestDelivery({url, didProof} = {}) {
+  async requestDelivery({didProof, agent} = {}) {
     try {
       /* First send credential request to DS without DID proof JWT, e.g.:
 
@@ -38,10 +39,13 @@ export class OIDC4VCIClient {
         "format": "ldp_vc"
       }
       */
+      const {credential_endpoint: url} = this.issuerConfig;
 
+      let result;
       try {
         const response = await httpClient.post(url, {agent, headers: HEADERS});
-        if(!response.data) {
+        result = response.data;
+        if(!result) {
           const error = new Error('Credential response format is not JSON.');
           error.name = 'DataError';
           throw error;
@@ -100,11 +104,9 @@ export class OIDC4VCIClient {
         "credential" : {...}
       }
       */
-      return {
-        format: 'ldp_vc',
-        credential: {}
-      };
+      return result;
     } catch(cause) {
+      console.log('cause', cause);
       const error = new Error('Could not receive credentials.');
       error.name = 'OperationError';
       error.cause = cause;
@@ -265,7 +267,7 @@ export class OIDC4VCIClient {
       }
 
       // create client w/access token
-      return new OIDC4VCIClient({accessToken, agent});
+      return new OIDC4VCIClient({accessToken, agent, issuerConfig});
     } catch(cause) {
       const error = new Error('Could not create OIDC4VCI client.');
       console.log('cause', cause);

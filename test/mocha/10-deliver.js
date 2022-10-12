@@ -140,7 +140,7 @@ describe('delivery', () => {
     console.log('jwt', jwt);*/
 
     // FIXME: wallet receives credential
-    //const result = await client.requestDelivery();
+    const result = await client.requestDelivery({agent});
     // FIXME: assert on result
   });
 
