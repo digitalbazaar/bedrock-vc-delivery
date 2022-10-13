@@ -25,7 +25,7 @@ export class OIDC4VCIClient {
   }
 
   // FIXME: optional param includes DID proof
-  async requestDelivery({didProof, agent} = {}) {
+  async requestDelivery({did, didProofSigner, agent} = {}) {
     try {
       /* First send credential request to DS without DID proof JWT, e.g.:
 
@@ -36,59 +36,74 @@ export class OIDC4VCIClient {
 
       {
         "type": "https://did.example.org/healthCard"
-        "format": "ldp_vc"
+        "format": "ldp_vc",
+        // only present on retry after server requests it
+        "proof": {
+          "proof_type": "jwt",
+          "jwt": "eyJraW..."
+        }
       }
       */
       const {credential_endpoint: url} = this.issuerConfig;
-
       let result;
-      try {
-        const response = await httpClient.post(url, {agent, headers: HEADERS});
-        result = response.data;
-        if(!result) {
-          const error = new Error('Credential response format is not JSON.');
-          error.name = 'DataError';
-          throw error;
-        }
-      } catch(cause) {
-        if(!_isMissingProofError(cause)) {
-          // non-specific error case
-          throw cause;
-        }
+      // FIXME: pass as function params:
+      const json = {
+        type: 'https://did.example.org/healthCard',
+        format: 'ldp_vc'
+      };
 
-        const {data: details} = cause.response;
-        const error = new Error('');
-        error.name = 'NotAllowedError';
-        error.cause = cause;
-        error.details = details;
-        throw error;
+      for(let retries = 0; retries <= 1; ++retries) {
+        try {
+          const response = await httpClient.post(
+            url, {agent, headers: HEADERS, json});
+          result = response.data;
+          if(!result) {
+            const error = new Error('Credential response format is not JSON.');
+            error.name = 'DataError';
+            throw error;
+          }
+        } catch(cause) {
+          if(!_isMissingProofError(cause)) {
+            // non-specific error case
+            throw cause;
+          }
+
+          console.log('received request for DID authn', cause.data);
+
+          // if `didProofSigner` is not provided, throw error
+          if(!(did && didProofSigner)) {
+            const {data: details} = cause;
+            const error = new Error('DID authentication is required.');
+            error.name = 'NotAllowedError';
+            error.cause = cause;
+            error.details = details;
+            throw error;
+          }
+
+          // validate that `result` has
+          const {data: {c_nonce: nonce}} = cause;
+          if(!(nonce && typeof nonce === 'string')) {
+            const error = new Error('No DID proof challenge specified.');
+            error.name = 'DataError';
+            throw error;
+          }
+
+          // generate a DID proof JWT
+          const {issuer: aud} = this.issuerConfig;
+          const jwt = await OIDC4VCIClient.generateDIDProofJWT({
+            signer: didProofSigner,
+            nonce,
+            // the entity identified by the DID is issuing this JWT
+            iss: did,
+            // FIXME: should `aud` be more specific,
+            // i.e., be the `credential_endpoint`?
+            aud
+          });
+
+          // add proof to body to be posted and loop to retry
+          json.proof = {proof_type: 'jwt', jwt};
+        }
       }
-
-      // FIXME: wallet builds DID proof JWT:
-      /*const jwt = await OIDC4VCIClient.generateDIDProofJWT(
-        {signer, nonce, iss, aud, nonce, exp, nbf});*/
-
-      // FIXME: wallet resends credential request w/ DID proof JWT:
-
-      /* Implemented on DS:
-      POST /credential HTTP/1.1
-      Host: server.example.com
-      Content-Type: application/json
-      Authorization: BEARER czZCaGRSa3F0MzpnWDFmQmF0M2JW
-
-      {
-        "type": "https://did.example.org/healthCard"
-        "format": "ldp_vc",
-        "did": "did:example:ebfeb1f712ebc6f1c276e12ec21",
-        "proof": {
-          "proof_type": "jwt",
-          "jwt": "eyJraWQiOiJkaWQ6ZXhhbXBsZTplYmZlYjFmNzEyZWJjNmYxYzI3NmUxMmVjMjEva2V5cy8
-          xIiwiYWxnIjoiRVMyNTYiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJzNkJoZFJrcXQzIiwiYXVkIjoiaHR
-          0cHM6Ly9zZXJ2ZXIuZXhhbXBsZS5jb20iLCJpYXQiOiIyMDE4LTA5LTE0VDIxOjE5OjEwWiIsIm5vbm
-          NlIjoidFppZ25zbkZicCJ9.ewdkIkPV50iOeBUqMXCC_aZKPxgihac0aW9EkL1nOzM"
-        }
-      }
-      */
 
       // FIXME: wallet receives credential:
       // FIXME: Note! The credential is not wrapped here in a VP in the current
@@ -397,7 +412,7 @@ function _isMissingProofError(error) {
   }
   */
   return error.status === 400 &&
-    error?.response?.data?.error === 'invalid_or_missing_proof';
+    error?.data?.error === 'invalid_or_missing_proof';
 }
 
 async function _signJWT({payload, protectedHeader, signer} = {}) {
