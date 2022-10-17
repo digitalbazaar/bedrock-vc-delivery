@@ -96,6 +96,19 @@ describe('delivery', () => {
     "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
     `credential_handler.launchType='redirect'` (TBD). */
 
+    // FIXME: first, create an exchange with a VC template and indicate that
+    // a DID Authn proof is required and OIDC4VCI delivery is permitted;
+    // ... might need to pass a query param for the protocol to the exchange
+    // ... otherwise it won't be clear what kind of response should be sent
+    // FIXME: ... so the exchange URL will need to be different for VC-API from
+    // OIDC4VCI via a query param like `?p=oidc4vci` (and default to VC-API)
+    // or perhaps add a path: `/oidc4vci`
+    // FIXME: the exchange ID must have an exchanger ID in the path (for now)
+    // ... the reason for this is to allow the exchange to have access to
+    // whatever authz tokens / zcaps it needs to use verifier/issuer instances
+    // that need only be configured once per exchanger (and used many times
+    // per exchange)
+
     // pre-authorized flow, issuer-initiated
     const issuanceUrl = 'openid-initiate-issuance://?' +
         `issuer=${encodeURIComponent(baseUrl)}` +
