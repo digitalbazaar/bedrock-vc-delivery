@@ -12,7 +12,7 @@ import {OIDC4VCIClient} from './OIDC4VCIClient.js';
 
 const {baseUrl} = mockData;
 
-describe('provision', () => {
+describe.only('provision', () => {
   let capabilityAgent;
   let exchangerIssueZcap;
   let exchangerVerifyPresentationZcap;
@@ -23,7 +23,24 @@ describe('provision', () => {
   });
 
   describe('create config', () => {
-    it.only('creates a config with no zcaps', async () => {
+    it('throws error on bad zcaps', async () => {
+      let err;
+      let result;
+      try {
+        result = await helpers.createExchangerConfig({
+          capabilityAgent, zcaps: {invalid: ''}
+        });
+      } catch(e) {
+        err = e;
+      }
+      should.exist(err);
+      should.not.exist(result);
+      err.data.details.errors.should.have.length(1);
+      const [error] = err.data.details.errors;
+      error.name.should.equal('ValidationError');
+      error.message.should.contain('should NOT have additional properties');
+    });
+    it('creates a config with no zcaps', async () => {
       let err;
       let result;
       try {
@@ -233,7 +250,7 @@ describe('provision', () => {
       const ipAllowList = ['8.8.8.8/32'];
 
       const config = await helpers.createExchangerConfig(
-        {capabilityAgent, ipAllowList, zcaps});
+        {capabilityAgent, ipAllowList});
       let err;
       let result;
       try {
@@ -388,8 +405,7 @@ describe('provision', () => {
       should.exist(result.data);
       result.status.should.equal(200);
       result.data.should.have.keys([
-        'id', 'controller', 'sequence', 'meterId', 'authorization', 'zcaps',
-        'issueOptions'
+        'id', 'controller', 'sequence', 'meterId', 'authorization'
       ]);
       let expectedConfig = {
         ...existingConfig,
@@ -428,7 +444,7 @@ describe('provision', () => {
       should.exist(result.data);
       result.status.should.equal(200);
       result.data.should.have.keys([
-        'id', 'controller', 'sequence', 'meterId', 'zcaps', 'issueOptions'
+        'id', 'controller', 'sequence', 'meterId'
       ]);
       expectedConfig = {
         ...existingConfig,
@@ -584,8 +600,7 @@ describe('provision', () => {
         should.exist(result.data);
         result.status.should.equal(200);
         result.data.should.have.keys([
-          'id', 'controller', 'sequence', 'meterId', 'ipAllowList', 'zcaps',
-          'issueOptions'
+          'id', 'controller', 'sequence', 'meterId', 'ipAllowList'
         ]);
         const expectedConfig = {
           ...existingConfig,
@@ -710,7 +725,7 @@ describe('provision', () => {
         {capabilityAgent: capabilityAgent2});
       const {data} = await zcapClient.read({capability: zcap});
       data.should.have.keys([
-        'controller', 'id', 'sequence', 'meterId', 'zcaps', 'issueOptions'
+        'controller', 'id', 'sequence', 'meterId'
       ]);
       data.id.should.equal(config.id);
 
