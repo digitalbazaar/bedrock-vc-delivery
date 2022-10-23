@@ -4,6 +4,8 @@
 import * as bedrock from '@bedrock/core';
 import {importJWK, SignJWT} from 'jose';
 import {KeystoreAgent, KmsClient} from '@digitalbazaar/webkms-client';
+import {agent} from '@bedrock/https-agent';
+import {CapabilityAgent} from '@digitalbazaar/webkms-client';
 import {decodeList} from '@digitalbazaar/vc-status-list';
 import {didIo} from '@bedrock/did-io';
 import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
@@ -86,8 +88,10 @@ export async function createExchangerConfig({
   capabilityAgent, ipAllowList, meterId, zcaps, oauth2 = false
 } = {}) {
   const url = `${mockData.baseUrl}/exchangers`;
-  return createConfig(
-    {url, capabilityAgent, ipAllowList, meterId, zcaps, oauth2});
+  return createConfig({
+    serviceType: 'vc-exchanger',
+    url, capabilityAgent, ipAllowList, meterId, zcaps, oauth2
+  });
 }
 
 export async function createIssuerConfig({
@@ -102,8 +106,20 @@ export async function createIssuerConfig({
     },
     statusListOptions
   };
-  return createConfig(
-    {url, capabilityAgent, ipAllowList, meterId, zcaps, configOptions, oauth2});
+  return createConfig({
+    serviceType: 'vc-issuer',
+    url, capabilityAgent, ipAllowList, meterId, zcaps, configOptions, oauth2
+  });
+}
+
+export async function createVerifierConfig({
+  capabilityAgent, ipAllowList, meterId, zcaps, oauth2 = false
+} = {}) {
+  const url = `${mockData.baseUrl}/verifiers`;
+  return createConfig({
+    serviceType: 'vc-verifier',
+    url, capabilityAgent, ipAllowList, meterId, zcaps, oauth2
+  });
 }
 
 export async function getConfig({id, capabilityAgent, accessToken}) {
@@ -305,7 +321,7 @@ export async function provisionDependencies() {
     {verifierConfig, exchangerVerifyPresentationZcap}
   ] = await Promise.all([
     provisionIssuer({capabilityAgent, keystoreAgent}),
-    provisionVerifier({capabilityAgent})
+    provisionVerifier({capabilityAgent, keystoreAgent})
   ]);
 
   return {
@@ -337,6 +353,7 @@ export async function provisionIssuer({capabilityAgent, keystoreAgent}) {
 
   // delegate edv, hmac, and key agreement key zcaps to service agent
   const {id: edvId} = edvConfig;
+  const zcaps = {};
   zcaps.edv = await delegate({
     controller: issuerServiceAgent.id,
     delegator: capabilityAgent,
@@ -394,7 +411,7 @@ export async function provisionIssuer({capabilityAgent, keystoreAgent}) {
   return {issuerConfig, exchangerIssueZcap};
 }
 
-export async function provisionVerifier({capabilityAgent}) {
+export async function provisionVerifier({capabilityAgent, keystoreAgent}) {
   // create EDV for storage (creating hmac and kak in the process)
   const {
     edvConfig,
@@ -410,6 +427,7 @@ export async function provisionVerifier({capabilityAgent}) {
 
   // delegate edv, hmac, and key agreement key zcaps to service agent
   const {id: edvId} = edvConfig;
+  const zcaps = {};
   zcaps.edv = await delegate({
     controller: veriferServiceAgent.id,
     delegator: capabilityAgent,
@@ -430,7 +448,7 @@ export async function provisionVerifier({capabilityAgent}) {
   });
 
   // create verifer instance w/ oauth2-based authz
-  const verifierConfig = await createIssuerConfig(
+  const verifierConfig = await createVerifierConfig(
     {capabilityAgent, zcaps, oauth2: true});
   const {id: verifierId} = verifierConfig;
   const verifierRootZcap = `urn:zcap:root:${encodeURIComponent(verifierId)}`;
