@@ -41,7 +41,7 @@ describe.only('exchange w/oidc4vci delivery', () => {
     };
     const credentialTemplates = [{
       type: 'jsonata',
-      template: klona(mockCredential)
+      template: JSON.stringify(mockCredential)
     }];
     exchangerConfig = await helpers.createExchangerConfig(
       {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
