@@ -317,7 +317,7 @@ export async function provisionDependencies() {
   const keystoreAgent = await createKeystoreAgent({capabilityAgent});
 
   const [
-    {issuerConfig, exchangerIssueZcap},
+    {issuerConfig, exchangerIssueZcap, exchangerCredentialStatusZcap},
     {verifierConfig, exchangerVerifyPresentationZcap}
   ] = await Promise.all([
     provisionIssuer({capabilityAgent, keystoreAgent}),
@@ -325,7 +325,7 @@ export async function provisionDependencies() {
   ]);
 
   return {
-    issuerConfig, exchangerIssueZcap,
+    issuerConfig, exchangerIssueZcap, exchangerCredentialStatusZcap,
     verifierConfig, exchangerVerifyPresentationZcap,
     capabilityAgent
   };
@@ -401,6 +401,7 @@ export async function provisionIssuer({capabilityAgent, keystoreAgent}) {
   const {data: exchangerServiceAgent} = await httpClient.get(
     exchangerServiceAgentUrl, {agent});
 
+  // zcap to issue a credential
   const exchangerIssueZcap = await delegate({
     capability: issuerRootZcap,
     controller: exchangerServiceAgent.id,
@@ -408,7 +409,15 @@ export async function provisionIssuer({capabilityAgent, keystoreAgent}) {
     delegator: capabilityAgent
   });
 
-  return {issuerConfig, exchangerIssueZcap};
+  // zcap to set the status of a credential
+  const exchangerCredentialStatusZcap = await delegate({
+    capability: issuerRootZcap,
+    controller: exchangerServiceAgent.id,
+    invocationTarget: `${issuerId}/credentials/status`,
+    delegator: capabilityAgent
+  });
+
+  return {issuerConfig, exchangerIssueZcap, exchangerCredentialStatusZcap};
 }
 
 export async function provisionVerifier({capabilityAgent, keystoreAgent}) {

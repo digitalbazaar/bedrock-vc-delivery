@@ -24,15 +24,19 @@ describe.only('exchange', () => {
   let exchangerId;
   let exchangerRootZcap;
   let exchangerIssueZcap;
+  let exchangerCredentialStatusZcap;
   let exchangerVerifyPresentationZcap;
   beforeEach(async () => {
     ({
-      exchangerIssueZcap, exchangerVerifyPresentationZcap, capabilityAgent
+      exchangerIssueZcap, exchangerCredentialStatusZcap,
+      exchangerVerifyPresentationZcap,
+      capabilityAgent
     } = await helpers.provisionDependencies());
 
     // create exchanger instance w/ oauth2-based authz
     const zcaps = {
       issue: exchangerIssueZcap,
+      credentialStatus: exchangerCredentialStatusZcap,
       verifyPresentation: exchangerVerifyPresentationZcap
     };
     exchangerConfig = await helpers.createExchangerConfig(

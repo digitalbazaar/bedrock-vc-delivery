@@ -11,6 +11,7 @@ import {mockData} from './mock.data.js';
 describe('provision', () => {
   let capabilityAgent;
   let exchangerIssueZcap;
+  let exchangerCredentialStatusZcap;
   let exchangerVerifyPresentationZcap;
   beforeEach(async () => {
     ({
@@ -73,12 +74,13 @@ describe('provision', () => {
       const {id: capabilityAgentId} = capabilityAgent;
       result.controller.should.equal(capabilityAgentId);
     });
-    it('creates a config with issue and verify zcaps', async () => {
+    it('creates a config with issue, status, and verify zcaps', async () => {
       let err;
       let result;
       try {
         const zcaps = {
           issue: exchangerIssueZcap,
+          credentialStatus: exchangerCredentialStatusZcap,
           verifyPresentation: exchangerVerifyPresentationZcap
         };
         result = await helpers.createExchangerConfig({capabilityAgent, zcaps});
