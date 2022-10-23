@@ -18,7 +18,7 @@ const {baseUrl} = mockData;
 // https://www.w3.org/2018/credentials/examples/v1
 const mockCredential = require('./mock-credential.json');
 
-describe.only('exchange', () => {
+describe.only('exchange w/oid4vci delivery', () => {
   let capabilityAgent;
   let exchangerConfig;
   let exchangerId;
@@ -45,7 +45,65 @@ describe.only('exchange', () => {
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
 
-  it.only('pre-authorized code', async () => {
+  it('pre-authorized code w/o DID authn', async () => {
+    // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+
+    /* This flow demonstrates passing an OIDC4VCI issuance initiation URL
+    through a CHAPI OIDC4VCI request. The request is passed to a "Claimed URL"
+    which was registered on a user's device by a native app. The native app's
+    domain also published a "manifest.json" file that expressed the same
+    "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
+    `credential_handler.launchType='redirect'` (TBD). */
+
+    // FIXME: first, create an exchange with a VC template and indicate that
+    // a DID Authn proof is required and OIDC4VCI delivery is permitted;
+    // use `exchangerRootZcap` to create exchange
+    // ... might need to pass a query param for the protocol to the exchange
+    // ... otherwise it won't be clear what kind of response should be sent
+    // FIXME: ... so the exchange URL will need to be different for VC-API from
+    // OIDC4VCI via a query param like `?p=oidc4vci` (and default to VC-API)
+    // or perhaps add a path: `/oidc4vci`
+    // FIXME: the exchange ID must have an exchanger ID in the path (for now)
+    // ... the reason for this is to allow the exchange to have access to
+    // whatever authz tokens / zcaps it needs to use verifier/issuer instances
+    // that need only be configured once per exchanger (and used many times
+    // per exchange)
+
+    // pre-authorized flow, issuer-initiated
+    const issuanceUrl = 'openid-initiate-issuance://?' +
+        `issuer=${encodeURIComponent(baseUrl)}` +
+        '&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard' +
+        '&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA' +
+        '&user_pin_required=true';
+    const chapiRequest = {OIDC4VCI: issuanceUrl};
+    // CHAPI could potentially be used to deliver the URL to a native app
+    // that registered a "claimed URL" of `https://myapp.examples/ch`
+    // like so:
+    const claimedUrlFromChapi = 'https://myapp.example/ch?request=' +
+      encodeURIComponent(JSON.stringify(chapiRequest));
+    const parsedClaimedUrl = new URL(claimedUrlFromChapi);
+    const parsedChapiRequest = JSON.parse(
+      parsedClaimedUrl.searchParams.get('request'));
+    console.log('raw parsed URL', new URL(parsedChapiRequest.OIDC4VCI));
+    const initiateIssuanceInfo = OIDC4VCIClient.parseInitiateIssuanceUrl(
+      {url: parsedChapiRequest.OIDC4VCI});
+    console.log('parsed initiate issuance info', initiateIssuanceInfo);
+
+    // FIXME: get user pin if required
+    const userPin = '493536';
+
+    // FIXME: wallet gets access token
+    const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
+    const client = await OIDC4VCIClient.fromPreAuthorizedCode({
+      issuer, preAuthorizedCode, userPin, agent
+    });
+
+    // FIXME: wallet receives credential
+    const result = await client.requestDelivery({agent});
+    // FIXME: assert on result
+  });
+
+  it.only('pre-authorized code w/ DID authn', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     /* This flow demonstrates passing an OIDC4VCI issuance initiation URL
