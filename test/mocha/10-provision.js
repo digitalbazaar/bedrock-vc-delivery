@@ -6,13 +6,9 @@ import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {CapabilityAgent} from '@digitalbazaar/webkms-client';
 import {httpClient} from '@digitalbazaar/http-client';
-import {klona} from 'klona';
 import {mockData} from './mock.data.js';
-import {OIDC4VCIClient} from './OIDC4VCIClient.js';
 
-const {baseUrl} = mockData;
-
-describe.only('provision', () => {
+describe('provision', () => {
   let capabilityAgent;
   let exchangerIssueZcap;
   let exchangerVerifyPresentationZcap;
