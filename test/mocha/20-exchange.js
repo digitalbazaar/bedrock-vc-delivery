@@ -13,80 +13,35 @@ import {OIDC4VCIClient} from './OIDC4VCIClient.js';
 const require = createRequire(import.meta.url);
 
 const {baseUrl} = mockData;
-const serviceType = 'vc-issuer';
 
 // NOTE: using embedded context in mockCredential:
 // https://www.w3.org/2018/credentials/examples/v1
 const mockCredential = require('./mock-credential.json');
 
-describe('delivery', () => {
+describe('exchange', () => {
   let capabilityAgent;
-  let oauth2IssuerConfig;
-  let issuerId;
-  let issuerRootZcap;
-  const zcaps = {};
+  let exchangerConfig;
+  let exchangerId;
+  let exchangerRootZcap;
+  let exchangerIssueZcap;
+  let exchangerVerifyPresentationZcap;
   beforeEach(async () => {
-    const secret = '53ad64ce-8e1d-11ec-bb12-10bf48838a41';
-    const handle = 'test';
-    capabilityAgent = await CapabilityAgent.fromSecret({secret, handle});
+    ({
+      exchangerIssueZcap, exchangerVerifyPresentationZcap, capabilityAgent
+    } = await helpers.provisionDependencies());
 
-    // create keystore for capability agent
-    const keystoreAgent = await helpers.createKeystoreAgent(
-      {capabilityAgent});
-
-    // generate key for signing VCs (make it a did:key DID for simplicity)
-    const assertionMethodKey = await keystoreAgent.generateKey({
-      type: 'asymmetric',
-      publicAliasTemplate: 'did:key:{publicKeyMultibase}#{publicKeyMultibase}'
-    });
-
-    // create EDV for storage (creating hmac and kak in the process)
-    const {
-      edvConfig,
-      hmac,
-      keyAgreementKey
-    } = await helpers.createEdv({capabilityAgent, keystoreAgent});
-
-    // get service agent to delegate to
-    const serviceAgentUrl =
-      `${baseUrl}/service-agents/${encodeURIComponent(serviceType)}`;
-    const {data: serviceAgent} = await httpClient.get(
-      serviceAgentUrl, {agent});
-
-    // delegate edv, hmac, and key agreement key zcaps to service agent
-    const {id: edvId} = edvConfig;
-    zcaps.edv = await helpers.delegate({
-      controller: serviceAgent.id,
-      delegator: capabilityAgent,
-      invocationTarget: edvId
-    });
-    const {keystoreId} = keystoreAgent;
-    zcaps.hmac = await helpers.delegate({
-      capability: `urn:zcap:root:${encodeURIComponent(keystoreId)}`,
-      controller: serviceAgent.id,
-      invocationTarget: hmac.id,
-      delegator: capabilityAgent
-    });
-    zcaps.keyAgreementKey = await helpers.delegate({
-      capability: `urn:zcap:root:${encodeURIComponent(keystoreId)}`,
-      controller: serviceAgent.id,
-      invocationTarget: keyAgreementKey.kmsId,
-      delegator: capabilityAgent
-    });
-    zcaps['assertionMethod:ed25519'] = await helpers.delegate({
-      capability: `urn:zcap:root:${encodeURIComponent(keystoreId)}`,
-      controller: serviceAgent.id,
-      invocationTarget: assertionMethodKey.kmsId,
-      delegator: capabilityAgent
-    });
-
-    // create issuer instance w/ oauth2-based authz
-    oauth2IssuerConfig = await helpers.createConfig(
+    // create exchanger instance w/ oauth2-based authz
+    const zcaps = {
+      issue: exchangerIssueZcap,
+      verifyPresentation: exchangerVerifyPresentationZcap
+    };
+    exchangerConfig = await helpers.createExchangerConfig(
       {capabilityAgent, zcaps, oauth2: true});
-    issuerId = oauth2IssuerConfig.id;
-    issuerRootZcap = `urn:zcap:root:${encodeURIComponent(issuerId)}`;
+    exchangerId = exchangerConfig.id;
+    exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
-  it.only('pre-authorized code', async () => {
+
+  it.skip('pre-authorized code', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     /* This flow demonstrates passing an OIDC4VCI issuance initiation URL
@@ -98,6 +53,7 @@ describe('delivery', () => {
 
     // FIXME: first, create an exchange with a VC template and indicate that
     // a DID Authn proof is required and OIDC4VCI delivery is permitted;
+    // use `exchangerRootZcap` to create exchange
     // ... might need to pass a query param for the protocol to the exchange
     // ... otherwise it won't be clear what kind of response should be sent
     // FIXME: ... so the exchange URL will need to be different for VC-API from
