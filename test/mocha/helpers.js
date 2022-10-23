@@ -160,6 +160,15 @@ export async function getOAuth2AccessToken({
   return builder.sign(key);
 }
 
+export async function createExchange({
+  url, capabilityAgent, capability, exchange
+}) {
+  const zcapClient = createZcapClient({capabilityAgent});
+  const response = await zcapClient.write({url, json: exchange, capability});
+  const exchangeId = response.headers.location;
+  return {id: exchangeId};
+}
+
 export async function createEdv({
   capabilityAgent, keystoreAgent, keyAgreementKey, hmac, meterId
 }) {
