@@ -18,7 +18,7 @@ const {baseUrl} = mockData;
 // https://www.w3.org/2018/credentials/examples/v1
 const mockCredential = require('./mock-credential.json');
 
-describe.only('exchange w/oid4vci delivery', () => {
+describe.only('exchange w/oidc4vci delivery', () => {
   let capabilityAgent;
   let exchangerConfig;
   let exchangerId;
@@ -39,8 +39,12 @@ describe.only('exchange w/oid4vci delivery', () => {
       credentialStatus: exchangerCredentialStatusZcap,
       verifyPresentation: exchangerVerifyPresentationZcap
     };
+    const credentialTemplates = [{
+      type: 'jsonata',
+      template: klona(mockCredential)
+    }];
     exchangerConfig = await helpers.createExchangerConfig(
-      {capabilityAgent, zcaps, oauth2: true});
+      {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
     exchangerId = exchangerConfig.id;
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
