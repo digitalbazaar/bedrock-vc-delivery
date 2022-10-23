@@ -113,9 +113,29 @@ describe.only('exchange w/oid4vci delivery', () => {
     "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
     `credential_handler.launchType='redirect'` (TBD). */
 
-    // FIXME: first, create an exchange with a VC template and indicate that
-    // a DID Authn proof is required and OIDC4VCI delivery is permitted;
-    // use `exchangerRootZcap` to create exchange
+    // first, create an exchange with a VC template and indicate that a DID
+    // Authn proof is required and OIDC4VCI delivery is permitted; use
+    // `exchangerRootZcap` as the capability
+    let exchangeId;
+    let err;
+    try {
+      const exchange = {
+        // FIXME: include fields
+      };
+      const result = await helpers.createExchange({
+        url: `${exchangerId}/exchanges`,
+        capabilityAgent, capability: exchangerRootZcap, exchange
+      });
+      should.exist(result);
+      // FIXME: include other keys?
+      result.should.have.keys(['id']);
+      exchangeId = result.id;
+    } catch(e) {
+      err = e;
+    }
+    assertNoError(err);
+
+    // FIXME:
     // ... might need to pass a query param for the protocol to the exchange
     // ... otherwise it won't be clear what kind of response should be sent
     // FIXME: ... so the exchange URL will need to be different for VC-API from
