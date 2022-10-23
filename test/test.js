@@ -14,6 +14,7 @@ import '@bedrock/server';
 import '@bedrock/kms-http';
 import '@bedrock/edv-storage';
 import '@bedrock/vc-issuer';
+import '@bedrock/vc-verifier';
 
 import {mockData} from './mocha/mock.data.js';
 
