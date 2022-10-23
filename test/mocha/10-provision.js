@@ -96,6 +96,56 @@ describe('provision', () => {
       const {id: capabilityAgentId} = capabilityAgent;
       result.controller.should.equal(capabilityAgentId);
     });
+    it('creates a config with credential templates', async () => {
+      let err;
+      let result;
+      try {
+        const zcaps = {
+          issue: exchangerIssueZcap,
+          credentialStatus: exchangerCredentialStatusZcap,
+          verifyPresentation: exchangerVerifyPresentationZcap
+        };
+        const credentialTemplates = [{
+          type: 'jsonata',
+          template: {}
+        }];
+        result = await helpers.createExchangerConfig(
+          {capabilityAgent, zcaps, credentialTemplates});
+      } catch(e) {
+        err = e;
+      }
+      assertNoError(err);
+      should.exist(result);
+      result.should.have.keys([
+        'controller', 'id', 'sequence', 'meterId', 'zcaps',
+        'credentialTemplates'
+      ]);
+      result.sequence.should.equal(0);
+      const {id: capabilityAgentId} = capabilityAgent;
+      result.controller.should.equal(capabilityAgentId);
+    });
+    it('throws with credential templates and no issue zcap', async () => {
+      let err;
+      let result;
+      try {
+        const credentialTemplates = [{
+          type: 'jsonata',
+          template: {}
+        }];
+        result = await helpers.createExchangerConfig({
+          capabilityAgent, credentialTemplates
+        });
+      } catch(e) {
+        err = e;
+      }
+      should.exist(err);
+      should.not.exist(result);
+      should.exist(err.data);
+      err.data.name.should.equal('DataError');
+      err.data.message.should.contain(
+        'A capability to issue credentials must be provided when credential ' +
+        'templates are provided.');
+    });
     it('creates a config including proper ipAllowList', async () => {
       const ipAllowList = ['127.0.0.1/32', '::1/128'];
 

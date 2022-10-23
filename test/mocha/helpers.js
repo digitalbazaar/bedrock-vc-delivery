@@ -85,12 +85,14 @@ export async function createConfig({
 }
 
 export async function createExchangerConfig({
-  capabilityAgent, ipAllowList, meterId, zcaps, oauth2 = false
+  capabilityAgent, ipAllowList, meterId, zcaps, credentialTemplates,
+  oauth2 = false
 } = {}) {
   const url = `${mockData.baseUrl}/exchangers`;
+  const configOptions = {credentialTemplates};
   return createConfig({
     serviceType: 'vc-exchanger',
-    url, capabilityAgent, ipAllowList, meterId, zcaps, oauth2
+    url, capabilityAgent, ipAllowList, meterId, zcaps, configOptions, oauth2
   });
 }
 
