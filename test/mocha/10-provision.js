@@ -107,7 +107,7 @@ describe('provision', () => {
         };
         const credentialTemplates = [{
           type: 'jsonata',
-          template: {}
+          template: '{}'
         }];
         result = await helpers.createExchangerConfig(
           {capabilityAgent, zcaps, credentialTemplates});
@@ -130,7 +130,7 @@ describe('provision', () => {
       try {
         const credentialTemplates = [{
           type: 'jsonata',
-          template: {}
+          template: '{}'
         }];
         result = await helpers.createExchangerConfig({
           capabilityAgent, credentialTemplates

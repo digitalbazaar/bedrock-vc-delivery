@@ -26,11 +26,8 @@ const credentialTemplate = {
       type: 'string',
       enum: ['jsonata']
     },
-    /* Note: If template types other than `jsonata` are supported in the
-    future, then `template` may need to support `string`. */
     template: {
-      type: 'object',
-      additionalProperties: true
+      type: 'string'
     }
   }
 };
