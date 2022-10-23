@@ -6,6 +6,9 @@ export const createExchangeBody = {
   type: 'object',
   additionalProperties: false,
   properties: {
+    ttl: {
+      type: 'number'
+    },
     variables: {
       type: 'object',
       additionalProperties: true

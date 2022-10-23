@@ -120,7 +120,9 @@ describe.only('exchange w/oid4vci delivery', () => {
     let err;
     try {
       const exchange = {
-        // FIXME: include fields
+        // 15 minute expiry in seconds
+        ttl: 60 * 15
+        // FIXME: include other fields
       };
       const result = await helpers.createExchange({
         url: `${exchangerId}/exchanges`,
