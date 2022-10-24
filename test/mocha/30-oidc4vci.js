@@ -153,12 +153,17 @@ describe.only('exchange w/oidc4vci delivery', () => {
     // that need only be configured once per exchanger (and used many times
     // per exchange)
 
+    // FIXME: a credential offer endpoint should return the issuance URL ...
+    // and be responsible for creating the exchange, including any user-bound
+    // data (variables) associated with the template(s) in the exchanger
+
     // pre-authorized flow, issuer-initiated
     const issuanceUrl = 'openid-initiate-issuance://?' +
-        `issuer=${encodeURIComponent(baseUrl)}` +
-        '&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard' +
-        '&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA' +
-        '&user_pin_required=true';
+      // FIXME: make `issuer` be the exchanges endpoint?
+      `issuer=${encodeURIComponent(baseUrl)}` +
+      '&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard' +
+      '&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA' +
+      '&user_pin_required=true';
     const chapiRequest = {OIDC4VCI: issuanceUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
