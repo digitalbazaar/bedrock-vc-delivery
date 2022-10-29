@@ -146,7 +146,7 @@ export class OIDC4VCIClient {
       };
 
       // FIXME: needs a rolling, memoized cache
-      console.log('issuerConfigUrl', issuerConfigUrl);
+      console.log('discoverIssuer issuerConfigUrl', issuerConfigUrl);
       const response = await httpClient.get(issuerConfigUrl, fetchOptions);
       if(!response.data) {
         const error = new Error('Issuer configuration format is not JSON.');
@@ -210,8 +210,10 @@ export class OIDC4VCIClient {
   } = {}) {
     try {
       // discover issuer info
+      const parsedIssuer = new URL(issuer);
       const issuerConfigUrl =
-        `${issuer}/.well-known/oauth-authorization-server`;
+        `${parsedIssuer.origin}/.well-known/oauth-authorization-server` +
+        parsedIssuer.pathname;
       const issuerConfig = await OIDC4VCIClient.discoverIssuer(
         {issuerConfigUrl, agent});
       console.log('issuerConfig', issuerConfig);

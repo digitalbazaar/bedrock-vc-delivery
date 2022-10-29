@@ -4,7 +4,6 @@
 import * as bedrock from '@bedrock/core';
 import {getServiceIdentities} from '@bedrock/app-identity';
 import {handlers} from '@bedrock/meter-http';
-import {oidc4vci} from '@bedrock/vc-delivery';
 import '@bedrock/ssm-mongodb';
 import '@bedrock/kms';
 import '@bedrock/https-agent';
@@ -39,7 +38,8 @@ bedrock.events.on('bedrock.init', async () => {
   handlers.setUseHandler({handler: ({meter} = {}) => ({meter})});
 });
 
-// mock oauth2 authz server routes
+// mock oauth2 authz server routes; these are for creating exchangers, not
+// for performing OIDC4VCI delivery
 bedrock.events.on('bedrock-express.configure.routes', async app => {
   app.get(mockData.oauth2IssuerConfigRoute, (req, res) => {
     res.json(mockData.oauth2Config);
@@ -47,9 +47,6 @@ bedrock.events.on('bedrock-express.configure.routes', async app => {
   app.get('/oauth2/jwks', (req, res) => {
     res.json(mockData.jwks);
   });
-
-  // install authorization service
-  await oidc4vci.authorization.createService({app});
 });
 
 import '@bedrock/test';
