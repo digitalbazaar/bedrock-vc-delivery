@@ -51,7 +51,6 @@ export async function createCredentialOffer({
     url: `${exchangerId}/exchanges`,
     capabilityAgent, capability: exchangerRootZcap, exchange
   });
-  console.log('result', result);
   const {id: exchangeId} = result;
 
   // FIXME: if OIDC4VCI is permitted, return this URL
