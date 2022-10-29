@@ -22,30 +22,53 @@ const kmsBaseUrl = `${mockData.baseUrl}/kms`;
 
 const FIVE_MINUTES = 1000 * 60 * 5;
 
-export async function createMeter({capabilityAgent, serviceType} = {}) {
-  // create signer using the application's capability invocation key
-  const {keys: {capabilityInvocationKey}} = getAppIdentity();
+export async function createCredentialOffer({
+  userId, credentialType, preAuthorized, userPinRequired = false,
+  capabilityAgent, exchangerId, exchangerRootZcap
+} = {}) {
+  // FIXME: ... so the exchange URL will need to be different for VC-API from
+  // OIDC4VCI via a query param like `?p=oidc4vci` (and default to VC-API)
+  // or perhaps add a path: `/oidc4vci`
+  // FIXME: the exchange ID must have an exchanger ID in the path (for now)
+  // ... the reason for this is to allow the exchange to have access to
+  // whatever authz tokens / zcaps it needs to use verifier/issuer instances
+  // that need only be configured once per exchanger (and used many times
+  // per exchange)
 
-  const zcapClient = new ZcapClient({
-    agent: httpsAgent,
-    invocationSigner: capabilityInvocationKey.signer(),
-    SuiteClass: Ed25519Signature2020
-  });
-
-  // create a meter
-  const meterService = `${bedrock.config.server.baseUri}/meters`;
-  let meter = {
-    controller: capabilityAgent.id,
-    product: {
-      // mock ID for service type
-      id: mockData.productIdMap.get(serviceType)
-    }
+  // first, create an exchange with variables based on the local user ID;
+  // indicate that OIDC4VCI delivery is permitted
+  const exchange = {
+    // 15 minute expiry in seconds
+    ttl: 60 * 15
+    // FIXME: include other fields
+    // FIXME: include variables with data specific to the local user
+    // variables: {}
+    // FIXME: include whether the exchange requires authorization (e.g.,
+    // include `authorization` section with `oauth2.issuerConfigUrl`)
+    // FIXME: include whether OIDC4VCI is permitted
   };
-  ({data: {meter}} = await zcapClient.write({url: meterService, json: meter}));
+  const result = await createExchange({
+    url: `${exchangerId}/exchanges`,
+    capabilityAgent, capability: exchangerRootZcap, exchange
+  });
+  console.log('result', result);
+  const {id: exchangeId} = result;
 
-  // return full meter ID
-  const {id} = meter;
-  return {id: `${meterService}/${id}`};
+  // FIXME: if OIDC4VCI is permitted, return this URL
+  const searchParams = new URLSearchParams();
+  // FIXME: include `exchangeId` in issuer URL path
+  searchParams.set('issuer', mockData.baseUrl);
+  searchParams.set('credential_type', credentialType);
+  if(preAuthorized) {
+    // FIXME: generate
+    searchParams.set('pre-authorized_code', 'SplxlOBeZQQYbYS6WxSbIA');
+  }
+  if(userPinRequired) {
+    searchParams.set('user_pin_required', true);
+  }
+  const oidc4vciUrl = `openid-initiate-issuance://?${searchParams}`;
+
+  return {oidc4vciUrl, exchangeId};
 }
 
 export async function createConfig({
@@ -114,6 +137,32 @@ export async function createIssuerConfig({
   });
 }
 
+export async function createMeter({capabilityAgent, serviceType} = {}) {
+  // create signer using the application's capability invocation key
+  const {keys: {capabilityInvocationKey}} = getAppIdentity();
+
+  const zcapClient = new ZcapClient({
+    agent: httpsAgent,
+    invocationSigner: capabilityInvocationKey.signer(),
+    SuiteClass: Ed25519Signature2020
+  });
+
+  // create a meter
+  const meterService = `${bedrock.config.server.baseUri}/meters`;
+  let meter = {
+    controller: capabilityAgent.id,
+    product: {
+      // mock ID for service type
+      id: mockData.productIdMap.get(serviceType)
+    }
+  };
+  ({data: {meter}} = await zcapClient.write({url: meterService, json: meter}));
+
+  // return full meter ID
+  const {id} = meter;
+  return {id: `${meterService}/${id}`};
+}
+
 export async function createVerifierConfig({
   capabilityAgent, ipAllowList, meterId, zcaps, oauth2 = false
 } = {}) {
@@ -167,7 +216,7 @@ export async function createExchange({
 }) {
   const zcapClient = createZcapClient({capabilityAgent});
   const response = await zcapClient.write({url, json: exchange, capability});
-  const exchangeId = response.headers.location;
+  const exchangeId = response.headers.get('location');
   return {id: exchangeId};
 }
 
