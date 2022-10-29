@@ -33,6 +33,9 @@ describe.only('exchange w/oidc4vci delivery', () => {
       capabilityAgent
     } = await helpers.provisionDependencies());
 
+    // FIXME: create two different exchangers; one requires DID authn the
+    // other does not
+
     // create exchanger instance w/ oauth2-based authz
     const zcaps = {
       issue: exchangerIssueZcap,
@@ -59,26 +62,21 @@ describe.only('exchange w/oidc4vci delivery', () => {
     "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
     `credential_handler.launchType='redirect'` (TBD). */
 
-    // FIXME: first, create an exchange with a VC template and indicate that
-    // a DID Authn proof is required and OIDC4VCI delivery is permitted;
-    // use `exchangerRootZcap` to create exchange
-    // ... might need to pass a query param for the protocol to the exchange
-    // ... otherwise it won't be clear what kind of response should be sent
-    // FIXME: ... so the exchange URL will need to be different for VC-API from
-    // OIDC4VCI via a query param like `?p=oidc4vci` (and default to VC-API)
-    // or perhaps add a path: `/oidc4vci`
-    // FIXME: the exchange ID must have an exchanger ID in the path (for now)
-    // ... the reason for this is to allow the exchange to have access to
-    // whatever authz tokens / zcaps it needs to use verifier/issuer instances
-    // that need only be configured once per exchanger (and used many times
-    // per exchange)
-
     // pre-authorized flow, issuer-initiated
-    const issuanceUrl = 'openid-initiate-issuance://?' +
-        `issuer=${encodeURIComponent(baseUrl)}` +
-        '&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard' +
-        '&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA' +
-        '&user_pin_required=true';
+    const {
+      oidc4vciUrl: issuanceUrl,
+      exchangeId
+    } = await helpers.createCredentialOffer({
+      // FIXME: identify target user in local system
+      userId: 'urn:123',
+      credentialType: 'https://did.example.org/healthCard',
+      preAuthorized: true,
+      userPinRequired: true,
+      capabilityAgent,
+      exchangerId,
+      exchangerRootZcap
+    });
+    console.log('exchangeId', exchangeId);
     const chapiRequest = {OIDC4VCI: issuanceUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
@@ -117,53 +115,21 @@ describe.only('exchange w/oidc4vci delivery', () => {
     "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
     `credential_handler.launchType='redirect'` (TBD). */
 
-    // first, create an exchange with a VC template and indicate that a DID
-    // Authn proof is required and OIDC4VCI delivery is permitted; use
-    // `exchangerRootZcap` as the capability
-    let exchangeId;
-    let err;
-    try {
-      const exchange = {
-        // 15 minute expiry in seconds
-        ttl: 60 * 15
-        // FIXME: include other fields
-      };
-      const result = await helpers.createExchange({
-        url: `${exchangerId}/exchanges`,
-        capabilityAgent, capability: exchangerRootZcap, exchange
-      });
-      should.exist(result);
-      // FIXME: include other keys?
-      result.should.have.keys(['id']);
-      exchangeId = result.id;
-    } catch(e) {
-      err = e;
-    }
-    assertNoError(err);
-
-    // FIXME:
-    // ... might need to pass a query param for the protocol to the exchange
-    // ... otherwise it won't be clear what kind of response should be sent
-    // FIXME: ... so the exchange URL will need to be different for VC-API from
-    // OIDC4VCI via a query param like `?p=oidc4vci` (and default to VC-API)
-    // or perhaps add a path: `/oidc4vci`
-    // FIXME: the exchange ID must have an exchanger ID in the path (for now)
-    // ... the reason for this is to allow the exchange to have access to
-    // whatever authz tokens / zcaps it needs to use verifier/issuer instances
-    // that need only be configured once per exchanger (and used many times
-    // per exchange)
-
-    // FIXME: a credential offer endpoint should return the issuance URL ...
-    // and be responsible for creating the exchange, including any user-bound
-    // data (variables) associated with the template(s) in the exchanger
-
     // pre-authorized flow, issuer-initiated
-    const issuanceUrl = 'openid-initiate-issuance://?' +
-      // FIXME: make `issuer` be the exchanges endpoint?
-      `issuer=${encodeURIComponent(baseUrl)}` +
-      '&credential_type=https%3A%2F%2Fdid%2Eexample%2Eorg%2FhealthCard' +
-      '&pre-authorized_code=SplxlOBeZQQYbYS6WxSbIA' +
-      '&user_pin_required=true';
+    const {
+      oidc4vciUrl: issuanceUrl,
+      exchangeId
+    } = await helpers.createCredentialOffer({
+      // FIXME: identify target user in local system
+      userId: 'urn:123',
+      credentialType: 'https://did.example.org/healthCard',
+      preAuthorized: true,
+      userPinRequired: true,
+      capabilityAgent,
+      exchangerId,
+      exchangerRootZcap
+    });
+    console.log('exchangeId', exchangeId);
     const chapiRequest = {OIDC4VCI: issuanceUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
