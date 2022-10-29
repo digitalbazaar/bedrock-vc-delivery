@@ -26,15 +26,6 @@ export async function createCredentialOffer({
   userId, credentialType, preAuthorized, userPinRequired = false,
   capabilityAgent, exchangerId, exchangerRootZcap
 } = {}) {
-  // FIXME: ... so the exchange URL will need to be different for VC-API from
-  // OIDC4VCI via a query param like `?p=oidc4vci` (and default to VC-API)
-  // or perhaps add a path: `/oidc4vci`
-  // FIXME: the exchange ID must have an exchanger ID in the path (for now)
-  // ... the reason for this is to allow the exchange to have access to
-  // whatever authz tokens / zcaps it needs to use verifier/issuer instances
-  // that need only be configured once per exchanger (and used many times
-  // per exchange)
-
   // first, create an exchange with variables based on the local user ID;
   // indicate that OIDC4VCI delivery is permitted
   const exchange = {
@@ -53,10 +44,9 @@ export async function createCredentialOffer({
   });
   const {id: exchangeId} = result;
 
-  // FIXME: if OIDC4VCI is permitted, return this URL
+  // FIXME: only build this if OIDC4VCI is permitted for the exchange
   const searchParams = new URLSearchParams();
-  // FIXME: include `exchangeId` in issuer URL path
-  searchParams.set('issuer', mockData.baseUrl);
+  searchParams.set('issuer', exchangeId);
   searchParams.set('credential_type', credentialType);
   if(preAuthorized) {
     // FIXME: generate
