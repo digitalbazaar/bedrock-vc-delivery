@@ -10,6 +10,7 @@ import {decodeList} from '@digitalbazaar/vc-status-list';
 import {didIo} from '@bedrock/did-io';
 import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {EdvClient} from '@digitalbazaar/edv-client';
+import {generateId} from 'bnid';
 import {getAppIdentity} from '@bedrock/app-identity';
 import {httpClient} from '@digitalbazaar/http-client';
 import {httpsAgent} from '@bedrock/https-agent';
@@ -38,6 +39,11 @@ export async function createCredentialOffer({
     // include `authorization` section with `oauth2.issuerConfigUrl`)
     // FIXME: include whether OIDC4VCI is permitted
   };
+  if(preAuthorized) {
+    exchange.oidc4vci = {
+      preAuthorizedCode: await _generateRandom()
+    };
+  }
   const result = await createExchange({
     url: `${exchangerId}/exchanges`,
     capabilityAgent, capability: exchangerRootZcap, exchange
@@ -49,8 +55,8 @@ export async function createCredentialOffer({
   searchParams.set('issuer', exchangeId);
   searchParams.set('credential_type', credentialType);
   if(preAuthorized) {
-    // FIXME: generate
-    searchParams.set('pre-authorized_code', 'SplxlOBeZQQYbYS6WxSbIA');
+    searchParams.set(
+      'pre-authorized_code', exchange.oidc4vci.preAuthorizedCode);
   }
   if(userPinRequired) {
     searchParams.set('user_pin_required', true);
@@ -543,4 +549,14 @@ async function keyResolver({id}) {
   // support HTTP-based keys; currently a requirement for WebKMS
   const {data} = await httpClient.get(id, {agent: httpsAgent});
   return data;
+}
+
+function _generateRandom() {
+  // 128-bit random number, base58 multibase + multihash encoded
+  return generateId({
+    bitLength: 128,
+    encoding: 'base58',
+    multibase: true,
+    multihash: true
+  });
 }

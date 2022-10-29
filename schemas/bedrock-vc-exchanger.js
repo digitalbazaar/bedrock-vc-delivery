@@ -12,6 +12,16 @@ export const createExchangeBody = {
     variables: {
       type: 'object',
       additionalProperties: true
+    },
+    oidc4vci: {
+      title: 'OIDC4VCI Exchange options',
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        preAuthorizedCode: {
+          type: 'string'
+        }
+      }
     }
   }
 };

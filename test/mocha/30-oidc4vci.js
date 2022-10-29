@@ -153,6 +153,9 @@ describe.only('exchange w/oidc4vci delivery', () => {
       issuer, preAuthorizedCode, userPin, agent
     });
 
+    // FIXME: add negative tests with invalid `preAuthorizedCode` and / or
+    // `userPin`
+
     // FIXME: update with real signer
     const didProofSigner = {
       algorithm: 'EdDSA', id: 'did:key:1234#5678',
