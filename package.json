@@ -28,6 +28,7 @@
   "homepage": "https://github.com/digitalbazaar/bedrock-vc-delivery",
   "dependencies": {
     "@digitalbazaar/ezcap": "^3.0.1",
+    "bnid": "^3.0.0",
     "jsonata": "^1.8.6"
   },
   "peerDependencies": {
