@@ -30,6 +30,7 @@
     "@digitalbazaar/ezcap": "^3.0.1",
     "bnid": "^3.0.0",
     "body-parser": "^1.20.1",
+    "jose": "^4.10.4",
     "jsonata": "^1.8.6"
   },
   "peerDependencies": {
@@ -38,6 +39,7 @@
     "@bedrock/express": "^8.0.0",
     "@bedrock/https-agent": "^4.0.0",
     "@bedrock/mongodb": "^10.0.0",
+    "@bedrock/oauth2-verifier": "^1.0.0",
     "@bedrock/service-agent": "^6.0.0",
     "@bedrock/service-core": "^7.0.1",
     "@bedrock/validation": "^7.0.0"
