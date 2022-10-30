@@ -20,18 +20,16 @@ const mockCredential = require('./mock-credential.json');
 
 describe.only('exchange w/oidc4vci delivery', () => {
   let capabilityAgent;
-  let exchangerConfig;
   let exchangerId;
   let exchangerRootZcap;
-  let exchangerIssueZcap;
-  let exchangerCredentialStatusZcap;
-  let exchangerVerifyPresentationZcap;
   beforeEach(async () => {
-    ({
-      exchangerIssueZcap, exchangerCredentialStatusZcap,
-      exchangerVerifyPresentationZcap,
-      capabilityAgent
-    } = await helpers.provisionDependencies());
+    const deps = await helpers.provisionDependencies();
+    const {
+      exchangerIssueZcap,
+      exchangerCredentialStatusZcap,
+      exchangerVerifyPresentationZcap
+    } = deps;
+    ({capabilityAgent} = deps);
 
     // FIXME: create two different exchangers; one requires DID authn the
     // other does not
@@ -46,7 +44,7 @@ describe.only('exchange w/oidc4vci delivery', () => {
       type: 'jsonata',
       template: JSON.stringify(mockCredential)
     }];
-    exchangerConfig = await helpers.createExchangerConfig(
+    const exchangerConfig = await helpers.createExchangerConfig(
       {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
     exchangerId = exchangerConfig.id;
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
