@@ -3,13 +3,16 @@
  */
 import * as helpers from './helpers.js';
 import {createRequire} from 'node:module';
+import {mockData} from './mock.data.js';
 const require = createRequire(import.meta.url);
+
+const {baseUrl} = mockData;
 
 // NOTE: using embedded context in mockCredential:
 // https://www.w3.org/2018/credentials/examples/v1
 const mockCredential = require('./mock-credential.json');
 
-describe('exchange w/ VC-API delivery', () => {
+describe('exchange w/ VC-API delivery + DID authn', () => {
   let capabilityAgent;
   let exchangerId;
   let exchangerRootZcap;
@@ -62,6 +65,11 @@ describe('exchange w/ VC-API delivery', () => {
 
     const chapiRequest = {
       VerifiablePresentation: {
+        query: {
+          type: 'DIDAuthentication'
+        },
+        challenge: '3182bdea-63d9-11ea-b6de-3b7c1404d57f',
+        domain: baseUrl,
         interact: {
           service: [{
             type: 'VerifiableCredentialApiExchangeService',
@@ -80,7 +88,17 @@ describe('exchange w/ VC-API delivery', () => {
     const parsedChapiRequest = JSON.parse(
       parsedClaimedUrl.searchParams.get('request'));
 
-    // FIXME: call helper to post empty body and get VP w/VCs in response
+    // FIXME: digitally-sign VP w/DID authn proof
+
+    // FIXME: update with real signer
+    const didProofSigner = {
+      algorithm: 'EdDSA', id: 'did:key:1234#5678',
+      async sign(data) {
+        return new Uint8Array(64);
+      }
+    };
+
+    // FIXME: call helper to post VP and get VP w/VCs in response
 
     // FIXME: assert on result
   });
