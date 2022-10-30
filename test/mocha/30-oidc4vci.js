@@ -83,6 +83,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     const userPin = '493536';
 
     // FIXME: wallet gets access token
+    // FIXME: add negative tests that use invalid and missing access tokens
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
     const client = await OIDC4VCIClient.fromPreAuthorizedCode({
       issuer, preAuthorizedCode, userPin, agent

@@ -51,11 +51,13 @@ export class OIDC4VCIClient {
         type: 'https://did.example.org/healthCard',
         format: 'ldp_vc'
       };
-
+      const headers = {
+        ...HEADERS,
+        'authorization': `Bearer ${this.accessToken}`
+      };
       for(let retries = 0; retries <= 1; ++retries) {
         try {
-          const response = await httpClient.post(
-            url, {agent, headers: HEADERS, json});
+          const response = await httpClient.post(url, {agent, headers, json});
           result = response.data;
           if(!result) {
             const error = new Error('Credential response format is not JSON.');

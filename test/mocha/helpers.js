@@ -2,7 +2,7 @@
  * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
-import {importJWK, SignJWT} from 'jose';
+import {exportJWK, generateKeyPair, importJWK, SignJWT} from 'jose';
 import {KeystoreAgent, KmsClient} from '@digitalbazaar/webkms-client';
 import {agent} from '@bedrock/https-agent';
 import {CapabilityAgent} from '@digitalbazaar/webkms-client';
@@ -25,7 +25,7 @@ const FIVE_MINUTES = 1000 * 60 * 5;
 
 export async function createCredentialOffer({
   userId, credentialType, preAuthorized, userPinRequired = false,
-  capabilityAgent, exchangerId, exchangerRootZcap
+  capabilityAgent, exchangerId, exchangerRootZcap, oidc4vci = true
 } = {}) {
   // first, create an exchange with variables based on the local user ID;
   // indicate that OIDC4VCI delivery is permitted
@@ -35,14 +35,22 @@ export async function createCredentialOffer({
     // FIXME: include other fields
     // FIXME: include variables with data specific to the local user
     // variables: {}
-    // FIXME: include whether the exchange requires authorization (e.g.,
-    // include `authorization` section with `oauth2.issuerConfigUrl`)
-    // FIXME: include whether OIDC4VCI is permitted
   };
-  if(preAuthorized) {
+  if(oidc4vci) {
+    // generate keypair for AS
+    const keyPair = await generateKeyPair('EdDSA', {extractable: true});
+    const [privateKeyJwk, publicKeyJwk] = await Promise.all([
+      exportJWK(keyPair.privateKey),
+      exportJWK(keyPair.publicKey),
+    ]);
     exchange.oidc4vci = {
-      preAuthorizedCode: await _generateRandom()
+      oauth2: {
+        keyPair: {privateKeyJwk, publicKeyJwk}
+      }
     };
+    if(preAuthorized) {
+      exchange.oidc4vci.preAuthorizedCode = await _generateRandom();
+    }
   }
   const result = await createExchange({
     url: `${exchangerId}/exchanges`,
