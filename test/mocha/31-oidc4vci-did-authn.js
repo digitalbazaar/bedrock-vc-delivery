@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 // https://www.w3.org/2018/credentials/examples/v1
 const mockCredential = require('./mock-credential.json');
 
-describe('exchange w/OIDC4VCI delivery', () => {
+describe('exchange w/OIDC4VCI delivery + DID authn', () => {
   let capabilityAgent;
   let exchangerId;
   let exchangerRootZcap;
@@ -34,13 +34,14 @@ describe('exchange w/OIDC4VCI delivery', () => {
       type: 'jsonata',
       template: JSON.stringify(mockCredential)
     }];
+    // FIXME: require exchanger steps w/ DID authn
     const exchangerConfig = await helpers.createExchangerConfig(
       {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
     exchangerId = exchangerConfig.id;
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
 
-  it('should pass w/ pre-authorized code flow', async () => {
+  it.only('should pass w/ pre-authorized code flow', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     /* This flow demonstrates passing an OIDC4VCI issuance initiation URL
@@ -88,8 +89,23 @@ describe('exchange w/OIDC4VCI delivery', () => {
       issuer, preAuthorizedCode, userPin, agent
     });
 
+    // FIXME: add negative tests with invalid `preAuthorizedCode` and / or
+    // `userPin`
+
+    // FIXME: update with real signer
+    const didProofSigner = {
+      algorithm: 'EdDSA', id: 'did:key:1234#5678',
+      async sign(data) {
+        return new Uint8Array(64);
+      }
+    };
+
     // FIXME: wallet receives credential
-    const result = await client.requestDelivery({agent});
+    const result = await client.requestDelivery({
+      did: 'did:key:1234',
+      didProofSigner,
+      agent
+    });
     // FIXME: assert on result
   });
 
