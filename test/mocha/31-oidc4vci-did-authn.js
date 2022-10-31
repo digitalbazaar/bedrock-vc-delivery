@@ -4,7 +4,9 @@
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {createRequire} from 'node:module';
-import {OIDC4VCIClient} from './OIDC4VCIClient.js';
+import {
+  OIDC4VCIClient, parseInitiateIssuanceUrl
+} from '@digitalbazaar/oidc4vci-client';
 const require = createRequire(import.meta.url);
 
 // NOTE: using embedded context in mockCredential:
@@ -76,7 +78,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
     const parsedChapiRequest = JSON.parse(
       parsedClaimedUrl.searchParams.get('request'));
     console.log('raw parsed URL', new URL(parsedChapiRequest.OIDC4VCI));
-    const initiateIssuanceInfo = OIDC4VCIClient.parseInitiateIssuanceUrl(
+    const initiateIssuanceInfo = parseInitiateIssuanceUrl(
       {url: parsedChapiRequest.OIDC4VCI});
     console.log('parsed initiate issuance info', initiateIssuanceInfo);
 
