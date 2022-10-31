@@ -41,12 +41,20 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
       // DID Authn step
       didAuthn: {
         generateChallenge: true,
+        // will be used by VC-API
         verifiablePresenationRequest: {
           query: {
             type: 'DIDAuthentication',
             acceptedMethods: [{method: 'key'}]
           },
           domain: 'https://example.com'
+        },
+        // will be used by OIDC4VCI
+        jwtDidProofRequest: {
+          acceptedMethods: [{method: 'key'}],
+          expectedClaims: {
+            aud: 'https://example.com'
+          }
         }
       }
     };

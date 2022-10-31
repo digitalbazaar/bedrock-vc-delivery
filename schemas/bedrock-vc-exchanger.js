@@ -85,6 +85,40 @@ const step = {
     },
     verifiablePresenationRequest: {
       type: 'object'
+    },
+    jwtDidProofRequest: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        acceptedMethods: {
+          title: 'Accepted DID Methods',
+          type: 'array',
+          minItems: 1,
+          items: {
+            title: 'Accepted DID Method',
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              method: {
+                type: 'string'
+              }
+            }
+          }
+        },
+        allowedAlgorithms: {
+          title: 'Allowed JWT Algorithms',
+          type: 'array',
+          minItems: 1,
+          items: {
+            type: 'string'
+          }
+        },
+        expectedClaims: {
+          title: 'Expected JWT claims',
+          type: 'object',
+          additionalProperties: true
+        }
+      }
     }
   }
 };
