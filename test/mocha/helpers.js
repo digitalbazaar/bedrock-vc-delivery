@@ -34,10 +34,9 @@ export async function createCredentialOffer({
   // indicate that OIDC4VCI delivery is permitted
   const exchange = {
     // 15 minute expiry in seconds
-    ttl: 60 * 15
-    // FIXME: include other fields
-    // FIXME: include variables with data specific to the local user
-    // variables: {}
+    ttl: 60 * 15,
+    // template variables
+    variables: {}
   };
   if(oidc4vci) {
     // generate keypair for AS
@@ -115,10 +114,10 @@ export async function createConfig({
 
 export async function createExchangerConfig({
   capabilityAgent, ipAllowList, meterId, zcaps, credentialTemplates,
-  oauth2 = false
+  steps, initialStep, oauth2 = false
 } = {}) {
   const url = `${mockData.baseUrl}/exchangers`;
-  const configOptions = {credentialTemplates};
+  const configOptions = {credentialTemplates, steps, initialStep};
   return createConfig({
     serviceType: 'vc-exchanger',
     url, capabilityAgent, ipAllowList, meterId, zcaps, configOptions, oauth2

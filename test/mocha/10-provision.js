@@ -143,7 +143,7 @@ describe('provision', () => {
       should.exist(err.data);
       err.data.name.should.equal('DataError');
       err.data.message.should.contain(
-        'A capability to issue credentials must be provided when credential ' +
+        'A capability to issue credentials is required when credential ' +
         'templates are provided.');
     });
     it('creates a config including proper ipAllowList', async () => {

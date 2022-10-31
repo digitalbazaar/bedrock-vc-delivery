@@ -74,3 +74,31 @@ export const credentialTemplates = {
   minItems: 1,
   items: credentialTemplate
 };
+
+const step = {
+  title: 'Exchange Step',
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    generateChallenge: {
+      type: 'boolean'
+    },
+    verifiablePresenationRequest: {
+      type: 'object'
+    }
+  }
+};
+
+export const steps = {
+  title: 'Exchange Steps',
+  type: 'object',
+  additionalProperties: false,
+  patternProperties: {
+    '^.*$': step
+  }
+};
+
+export const initialStep = {
+  title: 'Initial Exchange Step',
+  type: 'string'
+};

@@ -35,8 +35,26 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
       type: 'jsonata',
       template: JSON.stringify(mockCredential)
     }];
-    const exchangerConfig = await helpers.createExchangerConfig(
-      {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
+    // require semantically-named exchanger steps
+    const steps = {
+      // DID Authn step
+      didAuthn: {
+        generateChallenge: true,
+        verifiablePresenationRequest: {
+          query: {
+            type: 'DIDAuthentication',
+            acceptedMethods: [{method: 'key'}]
+          },
+          domain: 'https://example.com'
+        }
+      }
+    };
+    // set initial step
+    const initialStep = 'didAuthn';
+    const exchangerConfig = await helpers.createExchangerConfig({
+      capabilityAgent, zcaps, credentialTemplates, steps, initialStep,
+      oauth2: true
+    });
     exchangerId = exchangerConfig.id;
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
