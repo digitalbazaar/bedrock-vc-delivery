@@ -2,6 +2,8 @@
  * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
+import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
+import {driver} from '@digitalbazaar/did-method-key';
 import {exportJWK, generateKeyPair, importJWK, SignJWT} from 'jose';
 import {KeystoreAgent, KmsClient} from '@digitalbazaar/webkms-client';
 import {agent} from '@bedrock/https-agent';
@@ -18,6 +20,7 @@ import {ZcapClient} from '@digitalbazaar/ezcap';
 
 import {mockData} from './mock.data.js';
 
+const didKeyDriver = driver();
 const edvBaseUrl = `${mockData.baseUrl}/edvs`;
 const kmsBaseUrl = `${mockData.baseUrl}/kms`;
 
@@ -212,6 +215,13 @@ export async function getOAuth2AccessToken({
   }
   const key = await importJWK({...mockData.ed25519KeyPair, alg: 'EdDSA'});
   return builder.sign(key);
+}
+
+export async function createDidProofSigner() {
+  const {didDocument, methodFor} = await didKeyDriver.generate();
+  const authenticationKeyPair = methodFor({purpose: 'authentication'});
+  const keyPair = await Ed25519Multikey.from(authenticationKeyPair);
+  return {did: didDocument.id, signer: keyPair.signer()};
 }
 
 export async function createExchange({

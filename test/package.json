@@ -46,6 +46,8 @@
     "@bedrock/vc-verifier": "^13.0.0",
     "@bedrock/veres-one-context": "^14.0.1",
     "@bedrock/zcap-storage": "^8.0.0",
+    "@digitalbazaar/did-method-key": "^3.0.0",
+    "@digitalbazaar/ed25519-multikey": "^1.0.0",
     "@digitalbazaar/ed25519-signature-2020": "^4.0.1",
     "@digitalbazaar/edv-client": "^15.0.0",
     "@digitalbazaar/ezcap": "^3.0.1",

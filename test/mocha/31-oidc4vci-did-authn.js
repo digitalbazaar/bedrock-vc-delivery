@@ -94,17 +94,11 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
     // FIXME: add negative tests with invalid `preAuthorizedCode` and / or
     // `userPin`
 
-    // FIXME: update with real signer
-    const didProofSigner = {
-      algorithm: 'EdDSA', id: 'did:key:1234#5678',
-      async sign(data) {
-        return new Uint8Array(64);
-      }
-    };
+    const {did, signer: didProofSigner} = await helpers.createDidProofSigner();
 
     // FIXME: wallet receives credential
     const result = await client.requestDelivery({
-      did: 'did:key:1234',
+      did,
       didProofSigner,
       agent
     });

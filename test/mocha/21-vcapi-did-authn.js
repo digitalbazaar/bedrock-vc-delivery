@@ -90,13 +90,7 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
 
     // FIXME: digitally-sign VP w/DID authn proof
 
-    // FIXME: update with real signer
-    const didProofSigner = {
-      algorithm: 'EdDSA', id: 'did:key:1234#5678',
-      async sign(data) {
-        return new Uint8Array(64);
-      }
-    };
+    const {did, signer: didProofSigner} = await helpers.createDidProofSigner();
 
     // FIXME: call helper to post VP and get VP w/VCs in response
 
