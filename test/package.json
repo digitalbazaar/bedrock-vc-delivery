@@ -38,7 +38,7 @@
     "@bedrock/service-core": "^7.0.1",
     "@bedrock/ssm-mongodb": "^10.0.0",
     "@bedrock/test": "^8.0.5",
-    "@bedrock/validation": "^7.0.0",
+    "@bedrock/validation": "^7.1.0",
     "@bedrock/vc-delivery": "file:..",
     "@bedrock/vc-issuer": "^20.0.0",
     "@bedrock/vc-revocation-list-context": "^3.1.0",

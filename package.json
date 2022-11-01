@@ -30,6 +30,7 @@
     "@digitalbazaar/ezcap": "^3.0.1",
     "bnid": "^3.0.0",
     "body-parser": "^1.20.1",
+    "cors": "^2.8.5",
     "jose": "^4.10.4",
     "jsonata": "^1.8.6"
   },
@@ -42,7 +43,7 @@
     "@bedrock/oauth2-verifier": "^1.0.0",
     "@bedrock/service-agent": "^6.0.0",
     "@bedrock/service-core": "^7.0.1",
-    "@bedrock/validation": "^7.0.0"
+    "@bedrock/validation": "^7.1.0"
   },
   "directories": {
     "lib": "./lib"

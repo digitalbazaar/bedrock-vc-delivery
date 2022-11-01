@@ -1,6 +1,8 @@
 /*!
  * Copyright (c) 2022 Digital Bazaar, Inc. All rights reserved.
  */
+import {schemas} from '@bedrock/validation';
+
 const oidc4vciExchangeOptions = {
   title: 'OIDC4VCI Exchange options',
   type: 'object',
@@ -135,4 +137,49 @@ export const steps = {
 export const initialStep = {
   title: 'Initial Exchange Step',
   type: 'string'
+};
+
+export function useExchangeBody() {
+  return {
+    title: 'Use Exchange',
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      verifiablePresentation: schemas.verifiablePresentation()
+    }
+  };
+}
+
+export const oidc4vciCredentialBody = {
+  title: 'OIDC4VCI Credential Request',
+  type: 'object',
+  additionalProperties: false,
+  required: ['type', 'format'],
+  properties: {
+    type: {
+      type: 'string'
+    },
+    format: {
+      type: 'string',
+      enum: ['ldp_vc']
+    },
+    did: {
+      type: 'string'
+    },
+    proof: {
+      title: 'DID Authn Proof JWT',
+      type: 'object',
+      additionalProperties: false,
+      required: ['proof_type', 'jwt'],
+      properties: {
+        proof_type: {
+          type: 'string',
+          enum: ['jwt']
+        },
+        jwt: {
+          type: 'string'
+        }
+      }
+    }
+  }
 };
