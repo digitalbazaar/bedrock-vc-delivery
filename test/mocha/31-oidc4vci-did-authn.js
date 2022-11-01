@@ -87,7 +87,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
       userId: 'urn:123',
       credentialType: 'https://did.example.org/healthCard',
       preAuthorized: true,
-      userPinRequired: true,
+      userPinRequired: false,
       capabilityAgent,
       exchangerId,
       exchangerRootZcap
@@ -107,13 +107,10 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
       {url: parsedChapiRequest.OIDC4VCI});
     console.log('parsed initiate issuance info', initiateIssuanceInfo);
 
-    // FIXME: get user pin if required
-    const userPin = '493536';
-
     // FIXME: wallet gets access token
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
     const client = await OIDC4VCIClient.fromPreAuthorizedCode({
-      issuer, preAuthorizedCode, userPin, agent
+      issuer, preAuthorizedCode, agent
     });
 
     // FIXME: add negative tests with invalid `preAuthorizedCode` and / or
