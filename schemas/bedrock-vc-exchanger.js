@@ -183,3 +183,31 @@ export const oidc4vciCredentialBody = {
     }
   }
 };
+
+export const oidc4vciTokenBody = {
+  title: 'OIDC4VCI Token Request',
+  type: 'object',
+  additionalProperties: false,
+  required: ['grant_type'],
+  properties: {
+    grant_type: {
+      type: 'string'
+    },
+    'pre-authorized_code': {
+      type: 'string'
+    },
+    user_pin: {
+      type: 'string'
+    },
+    // params for `authorization_code` grant type
+    code: {
+      type: 'string'
+    },
+    verifier: {
+      type: 'string'
+    },
+    redirect_uri: {
+      type: 'string'
+    }
+  }
+};
