@@ -42,7 +42,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
 
-  it('should pass w/ pre-authorized code flow', async () => {
+  it.only('should pass w/ pre-authorized code flow', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     /* This flow demonstrates passing an OIDC4VCI issuance initiation URL
@@ -61,7 +61,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
       userId: 'urn:123',
       credentialType: 'https://did.example.org/healthCard',
       preAuthorized: true,
-      userPinRequired: true,
+      userPinRequired: false,
       capabilityAgent,
       exchangerId,
       exchangerRootZcap
@@ -81,14 +81,11 @@ describe('exchange w/OIDC4VCI delivery', () => {
       {url: parsedChapiRequest.OIDC4VCI});
     console.log('parsed initiate issuance info', initiateIssuanceInfo);
 
-    // FIXME: get user pin if required
-    const userPin = '493536';
-
     // FIXME: wallet gets access token
     // FIXME: add negative tests that use invalid and missing access tokens
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
     const client = await OIDC4VCIClient.fromPreAuthorizedCode({
-      issuer, preAuthorizedCode, userPin, agent
+      issuer, preAuthorizedCode, agent
     });
 
     // FIXME: wallet receives credential
