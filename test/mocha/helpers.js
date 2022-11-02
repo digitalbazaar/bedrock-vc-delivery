@@ -542,7 +542,7 @@ export async function provisionVerifier({capabilityAgent, keystoreAgent}) {
   const exchangerVerifyPresentationZcap = await delegate({
     capability: verifierRootZcap,
     controller: exchangerServiceAgent.id,
-    invocationTarget: `${verifierId}/presentations/verify`,
+    invocationTarget: verifierId,
     delegator: capabilityAgent
   });
 
