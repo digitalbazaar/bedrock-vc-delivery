@@ -27,6 +27,8 @@
   },
   "homepage": "https://github.com/digitalbazaar/bedrock-vc-delivery",
   "dependencies": {
+    "@digitalbazaar/ed25519-signature-2020": "^4.0.1",
+    "@digitalbazaar/ed25519-verification-key-2020": "^4.1.0",
     "@digitalbazaar/ezcap": "^3.0.1",
     "bnid": "^3.0.0",
     "body-parser": "^1.20.1",
@@ -38,6 +40,7 @@
   "peerDependencies": {
     "@bedrock/app-identity": "4.0.0",
     "@bedrock/core": "^6.0.1",
+    "@bedrock/did-io": "^9.0.1",
     "@bedrock/express": "^8.0.0",
     "@bedrock/https-agent": "^4.0.0",
     "@bedrock/mongodb": "^10.0.0",
