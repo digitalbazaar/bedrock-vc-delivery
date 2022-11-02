@@ -91,6 +91,8 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
       capabilityAgent,
       exchangerId,
       exchangerRootZcap
+      // FIXME: add test with a `requiredDid` -- any presented VPs must include
+      // DID Authn with a DID that matches the `requiredDid` value
     });
     console.log('exchangeId', exchangeId);
     const chapiRequest = {OIDC4VCI: issuanceUrl};
@@ -113,8 +115,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
       issuer, preAuthorizedCode, agent
     });
 
-    // FIXME: add negative tests with invalid `preAuthorizedCode` and / or
-    // `userPin`
+    // FIXME: add negative tests with invalid `preAuthorizedCode`
 
     const {did, signer: didProofSigner} = await helpers.createDidProofSigner();
 
