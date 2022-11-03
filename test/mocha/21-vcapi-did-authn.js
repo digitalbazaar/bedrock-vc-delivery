@@ -84,7 +84,6 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
       // this might be generalized into some other kind of VPR satisfaction
       // mechanism
     });
-    console.log('exchangeId', exchangeId);
 
     const chapiRequest = {
       VerifiablePresentation: {
@@ -125,7 +124,6 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     } = parsedChapiRequest;
     const response = await httpClient.post(
       url, {agent, json: {verifiablePresentation}});
-    console.log('response.data', response.data);
     should.exist(response?.data?.verifiablePresentation);
     // ensure DID in VC matches `did`
     const {verifiablePresentation: vp} = response.data;
@@ -159,7 +157,6 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
       exchangerId,
       exchangerRootZcap
     });
-    console.log('exchangeId', exchangeId);
 
     const chapiRequest = {
       VerifiablePresentation: {
@@ -194,19 +191,16 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
       }
     } = parsedChapiRequest;
     const vprResponse = await httpClient.post(url, {agent, json: {}});
-    console.log('vprResponse.data', vprResponse.data);
     should.exist(vprResponse?.data?.verifiablePresentationRequest);
 
     // generate VP
     const {domain, challenge} = vprResponse.data.verifiablePresentationRequest;
-    console.log('domain', domain);
     const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
       {domain, challenge});
 
     // post VP to get VP w/VCs in response
     const vpResponse = await httpClient.post(
       url, {agent, json: {verifiablePresentation}});
-    console.log('vpResponse.data', vpResponse.data);
     should.exist(vpResponse?.data?.verifiablePresentation);
     const {verifiablePresentation: vp} = vpResponse.data;
     // ensure DID in VC matches `did`
