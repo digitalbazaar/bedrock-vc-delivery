@@ -114,11 +114,6 @@ const step = {
           items: {
             type: 'string'
           }
-        },
-        expectedClaims: {
-          title: 'Expected JWT claims',
-          type: 'object',
-          additionalProperties: true
         }
       }
     },

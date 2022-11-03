@@ -95,7 +95,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     // FIXME: assert on result
   });
 
-  it('should pass w/ wallet-initiated flow', async () => {
+  it.skip('should pass w/ wallet-initiated flow', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     // FIXME: wallet sends request for a credential

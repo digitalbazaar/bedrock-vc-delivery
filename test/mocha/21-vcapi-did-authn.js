@@ -49,7 +49,7 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
             type: 'DIDAuthentication',
             acceptedMethods: [{method: 'key'}]
           },
-          domain: 'https://example.com'
+          domain: baseUrl
         }
       }
     };
@@ -63,7 +63,7 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
 
-  it.only('should pass when sending VP in single call', async () => {
+  it('should pass when sending VP in single call', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     /* This flow demonstrates passing a DID Authn request and interact VC-API
@@ -194,7 +194,8 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     should.exist(vprResponse?.data?.verifiablePresentationRequest);
 
     // generate VP
-    const {domain, challenge} = vprResponse.data;
+    const {domain, challenge} = vprResponse.data.verifiablePresentationRequest;
+    console.log('domain', domain);
     const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
       {domain, challenge});
 
@@ -202,7 +203,7 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     const vpResponse = await httpClient.post(
       url, {agent, json: {verifiablePresentation}});
     console.log('vpResponse.data', vpResponse.data);
-    should.exist(response?.data?.verifiablePresentation);
+    should.exist(vpResponse?.data?.verifiablePresentation);
 
     // FIXME: assert on result
     // FIXME: assert DID in VC matches `did`
