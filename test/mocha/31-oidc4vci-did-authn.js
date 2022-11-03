@@ -3,18 +3,12 @@
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
-import {createRequire} from 'node:module';
 import {
   OIDC4VCIClient, parseInitiateIssuanceUrl
 } from '@digitalbazaar/oidc4vci-client';
 import {mockData} from './mock.data.js';
-const require = createRequire(import.meta.url);
 
-const {baseUrl} = mockData;
-
-// NOTE: using embedded context in mockCredential:
-// https://www.w3.org/2018/credentials/examples/v1
-const mockCredential = require('./mock-credential.json');
+const {baseUrl, didAuthnCredentialTemplate} = mockData;
 
 describe('exchange w/OIDC4VCI delivery + DID authn', () => {
   let capabilityAgent;
@@ -39,7 +33,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
     };
     const credentialTemplates = [{
       type: 'jsonata',
-      template: JSON.stringify(mockCredential)
+      template: didAuthnCredentialTemplate
     }];
     // require semantically-named exchanger steps
     const steps = {
@@ -85,8 +79,8 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
       oidc4vciUrl: issuanceUrl,
       exchangeId
     } = await helpers.createCredentialOffer({
-      // FIXME: identify target user in local system
-      userId: 'urn:123',
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
       preAuthorized: true,
       userPinRequired: false,
@@ -113,24 +107,26 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
       {url: parsedChapiRequest.OIDC4VCI});
     console.log('parsed initiate issuance info', initiateIssuanceInfo);
 
-    // FIXME: wallet gets access token
+    // wallet / client gets access token
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
     const client = await OIDC4VCIClient.fromPreAuthorizedCode({
       issuer, preAuthorizedCode, agent
     });
 
-    // FIXME: add negative tests with invalid `preAuthorizedCode`
-
     const {did, signer: didProofSigner} = await helpers.createDidProofSigner();
 
-    // FIXME: wallet receives credential
+    // wallet / client receives credential
     const result = await client.requestDelivery({
       did,
       didProofSigner,
       agent
     });
-    // FIXME: assert on result
-    // FIXME: assert DID in VC matches `did`
+    should.exist(result);
+    result.should.include.keys(['format', 'credential']);
+    result.format.should.equal('ldp_vc');
+    // ensure credential subject ID matches generated DID
+    should.exist(result.credential?.credentialSubject?.id);
+    result.credential.credentialSubject.id.should.equal(did);
   });
 
   it.skip('should pass w/ wallet-initiated flow', async () => {

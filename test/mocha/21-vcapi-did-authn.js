@@ -4,15 +4,9 @@
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
-import {createRequire} from 'node:module';
 import {mockData} from './mock.data.js';
-const require = createRequire(import.meta.url);
 
-const {baseUrl} = mockData;
-
-// NOTE: using embedded context in mockCredential:
-// https://www.w3.org/2018/credentials/examples/v1
-const mockCredential = require('./mock-credential.json');
+const {baseUrl, didAuthnCredentialTemplate} = mockData;
 
 describe('exchange w/ VC-API delivery + DID authn', () => {
   let capabilityAgent;
@@ -37,7 +31,7 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     };
     const credentialTemplates = [{
       type: 'jsonata',
-      template: JSON.stringify(mockCredential)
+      template: didAuthnCredentialTemplate
     }];
     // require semantically-named exchanger steps
     const steps = {
@@ -74,8 +68,8 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     `credential_handler.launchType='redirect'` (TBD). */
 
     const {exchangeId} = await helpers.createCredentialOffer({
-      // FIXME: identify target user in local system
-      userId: 'urn:123',
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
       preAuthorized: true,
       userPinRequired: false,
@@ -130,9 +124,11 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
       url, {agent, json: {verifiablePresentation}});
     console.log('response.data', response.data);
     should.exist(response?.data?.verifiablePresentation);
-
-    // FIXME: assert on result
-    // FIXME: assert DID in VC matches `did`
+    // ensure DID in VC matches `did`
+    const {verifiablePresentation: vp} = response.data;
+    should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
+    const {verifiableCredential: [vc]} = vp;
+    vc.credentialSubject.id.should.equal(did);
   });
 
   it('should pass when sending VP in second call', async () => {
@@ -146,8 +142,8 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     `credential_handler.launchType='redirect'` (TBD). */
 
     const {exchangeId} = await helpers.createCredentialOffer({
-      // FIXME: identify target user in local system
-      userId: 'urn:123',
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
       preAuthorized: true,
       userPinRequired: false,
@@ -199,13 +195,15 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
       {domain, challenge});
 
-    // FIXME: post VP to get  VP w/VCs in response
+    // post VP to get VP w/VCs in response
     const vpResponse = await httpClient.post(
       url, {agent, json: {verifiablePresentation}});
     console.log('vpResponse.data', vpResponse.data);
     should.exist(vpResponse?.data?.verifiablePresentation);
-
-    // FIXME: assert on result
-    // FIXME: assert DID in VC matches `did`
+    // ensure DID in VC matches `did`
+    const {verifiablePresentation: vp} = vpResponse.data;
+    should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
+    const {verifiableCredential: [vc]} = vp;
+    vc.credentialSubject.id.should.equal(did);
   });
 });
