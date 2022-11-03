@@ -2,6 +2,8 @@
  * Copyright (c) 2022 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
+import {agent} from '@bedrock/https-agent';
+import {httpClient} from '@digitalbazaar/http-client';
 import {createRequire} from 'node:module';
 const require = createRequire(import.meta.url);
 
@@ -18,6 +20,7 @@ describe('exchange w/ VC-API delivery', () => {
     const {
       exchangerIssueZcap,
       exchangerCredentialStatusZcap,
+      exchangerCreateChallengeZcap,
       exchangerVerifyPresentationZcap
     } = deps;
     ({capabilityAgent} = deps);
@@ -26,6 +29,7 @@ describe('exchange w/ VC-API delivery', () => {
     const zcaps = {
       issue: exchangerIssueZcap,
       credentialStatus: exchangerCredentialStatusZcap,
+      createChallenge: exchangerCreateChallengeZcap,
       verifyPresentation: exchangerVerifyPresentationZcap
     };
     const credentialTemplates = [{
@@ -53,7 +57,7 @@ describe('exchange w/ VC-API delivery', () => {
       userId: 'urn:123',
       credentialType: 'https://did.example.org/healthCard',
       preAuthorized: true,
-      userPinRequired: true,
+      userPinRequired: false,
       capabilityAgent,
       exchangerId,
       exchangerRootZcap
@@ -65,7 +69,6 @@ describe('exchange w/ VC-API delivery', () => {
         interact: {
           service: [{
             type: 'VerifiableCredentialApiExchangeService',
-            // FIXME: add transaction ID?
             serviceEndpoint: exchangeId
           }]
         }
@@ -80,7 +83,16 @@ describe('exchange w/ VC-API delivery', () => {
     const parsedChapiRequest = JSON.parse(
       parsedClaimedUrl.searchParams.get('request'));
 
-    // FIXME: call helper to post empty body and get VP w/VCs in response
+    // post empty body and get VP w/VCs in response
+    const {
+      VerifiablePresentation: {
+        interact: {
+          service: [{serviceEndpoint: url}]
+        }
+      }
+    } = parsedChapiRequest;
+    const response = await httpClient.post(url, {agent, json: {}});
+    console.log('response.data', JSON.stringify(response.data, null, 2));
 
     // FIXME: assert on result
   });

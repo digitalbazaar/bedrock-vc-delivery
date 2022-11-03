@@ -22,6 +22,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
     const {
       exchangerIssueZcap,
       exchangerCredentialStatusZcap,
+      exchangerCreateChallengeZcap,
       exchangerVerifyPresentationZcap
     } = deps;
     ({capabilityAgent} = deps);
@@ -30,6 +31,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
     const zcaps = {
       issue: exchangerIssueZcap,
       credentialStatus: exchangerCredentialStatusZcap,
+      createChallenge: exchangerCreateChallengeZcap,
       verifyPresentation: exchangerVerifyPresentationZcap
     };
     const credentialTemplates = [{
@@ -40,9 +42,9 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
     const steps = {
       // DID Authn step
       didAuthn: {
-        generateChallenge: true,
+        createChallenge: true,
         // will be used by VC-API
-        verifiablePresenationRequest: {
+        verifiablePresentationRequest: {
           query: {
             type: 'DIDAuthentication',
             acceptedMethods: [{method: 'key'}]
@@ -68,7 +70,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
 
-  it.only('should pass w/ pre-authorized code flow', async () => {
+  it('should pass w/ pre-authorized code flow', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     /* This flow demonstrates passing an OIDC4VCI issuance initiation URL
@@ -92,7 +94,9 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
       exchangerId,
       exchangerRootZcap
       // FIXME: add test with a `requiredDid` -- any presented VPs must include
-      // DID Authn with a DID that matches the `requiredDid` value
+      // DID Authn with a DID that matches the `requiredDid` value -- however,
+      // this might be generalized into some other kind of VPR satisfaction
+      // mechanism
     });
     console.log('exchangeId', exchangeId);
     const chapiRequest = {OIDC4VCI: issuanceUrl};
@@ -126,6 +130,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
       agent
     });
     // FIXME: assert on result
+    // FIXME: assert DID in VC matches `did`
   });
 
   it('should pass w/ wallet-initiated flow', async () => {

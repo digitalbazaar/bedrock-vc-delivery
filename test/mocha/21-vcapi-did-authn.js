@@ -2,6 +2,8 @@
  * Copyright (c) 2022 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
+import {agent} from '@bedrock/https-agent';
+import {httpClient} from '@digitalbazaar/http-client';
 import {createRequire} from 'node:module';
 import {mockData} from './mock.data.js';
 const require = createRequire(import.meta.url);
@@ -21,6 +23,7 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     const {
       exchangerIssueZcap,
       exchangerCredentialStatusZcap,
+      exchangerCreateChallengeZcap,
       exchangerVerifyPresentationZcap
     } = deps;
     ({capabilityAgent} = deps);
@@ -29,6 +32,7 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     const zcaps = {
       issue: exchangerIssueZcap,
       credentialStatus: exchangerCredentialStatusZcap,
+      createChallenge: exchangerCreateChallengeZcap,
       verifyPresentation: exchangerVerifyPresentationZcap
     };
     const credentialTemplates = [{
@@ -39,8 +43,8 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     const steps = {
       // DID Authn step
       didAuthn: {
-        generateChallenge: true,
-        verifiablePresenationRequest: {
+        createChallenge: true,
+        verifiablePresentationRequest: {
           query: {
             type: 'DIDAuthentication',
             acceptedMethods: [{method: 'key'}]
@@ -59,7 +63,7 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
 
-  it('should pass', async () => {
+  it.only('should pass when sending VP in single call', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     /* This flow demonstrates passing a DID Authn request and interact VC-API
@@ -74,7 +78,79 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
       userId: 'urn:123',
       credentialType: 'https://did.example.org/healthCard',
       preAuthorized: true,
-      userPinRequired: true,
+      userPinRequired: false,
+      capabilityAgent,
+      exchangerId,
+      exchangerRootZcap
+      // FIXME: add test with a `requiredDid` -- any presented VPs must include
+      // DID Authn with a DID that matches the `requiredDid` value -- however,
+      // this might be generalized into some other kind of VPR satisfaction
+      // mechanism
+    });
+    console.log('exchangeId', exchangeId);
+
+    const chapiRequest = {
+      VerifiablePresentation: {
+        query: {
+          type: 'DIDAuthentication'
+        },
+        challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
+        domain: baseUrl,
+        interact: {
+          service: [{
+            type: 'VerifiableCredentialApiExchangeService',
+            serviceEndpoint: exchangeId
+          }]
+        }
+      }
+    };
+    // CHAPI could potentially be used to deliver the URL to a native app
+    // that registered a "claimed URL" of `https://myapp.examples/ch`
+    // like so:
+    const claimedUrlFromChapi = 'https://myapp.example/ch?request=' +
+      encodeURIComponent(JSON.stringify(chapiRequest));
+    const parsedClaimedUrl = new URL(claimedUrlFromChapi);
+    const parsedChapiRequest = JSON.parse(
+      parsedClaimedUrl.searchParams.get('request'));
+
+    // generate VP
+    const {domain, challenge} = parsedChapiRequest.VerifiablePresentation;
+    const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
+      {domain, challenge});
+
+    // post VP to get VP in response
+    const {
+      VerifiablePresentation: {
+        interact: {
+          service: [{serviceEndpoint: url}]
+        }
+      }
+    } = parsedChapiRequest;
+    const response = await httpClient.post(
+      url, {agent, json: {verifiablePresentation}});
+    console.log('response.data', response.data);
+    should.exist(response?.data?.verifiablePresentation);
+
+    // FIXME: assert on result
+    // FIXME: assert DID in VC matches `did`
+  });
+
+  it('should pass when sending VP in second call', async () => {
+    // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+
+    /* This flow demonstrates passing a DID Authn request and interact VC-API
+    exchange URL through CHAPI. The request is passed to a "Claimed URL"
+    which was registered on a user's device by a native app. The native app's
+    domain also published a "manifest.json" file that expressed the same
+    "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
+    `credential_handler.launchType='redirect'` (TBD). */
+
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // FIXME: identify target user in local system
+      userId: 'urn:123',
+      credentialType: 'https://did.example.org/healthCard',
+      preAuthorized: true,
+      userPinRequired: false,
       capabilityAgent,
       exchangerId,
       exchangerRootZcap
@@ -91,7 +167,6 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
         interact: {
           service: [{
             type: 'VerifiableCredentialApiExchangeService',
-            // FIXME: add transaction ID?
             serviceEndpoint: exchangeId
           }]
         }
@@ -106,12 +181,30 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     const parsedChapiRequest = JSON.parse(
       parsedClaimedUrl.searchParams.get('request'));
 
-    // FIXME: digitally-sign VP w/DID authn proof
+    // post empty body to get VPR in response
+    const {
+      VerifiablePresentation: {
+        interact: {
+          service: [{serviceEndpoint: url}]
+        }
+      }
+    } = parsedChapiRequest;
+    const vprResponse = await httpClient.post(url, {agent, json: {}});
+    console.log('vprResponse.data', vprResponse.data);
+    should.exist(vprResponse?.data?.verifiablePresentationRequest);
 
-    const {did, signer: didProofSigner} = await helpers.createDidProofSigner();
+    // generate VP
+    const {domain, challenge} = vprResponse.data;
+    const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
+      {domain, challenge});
 
-    // FIXME: call helper to post VP and get VP w/VCs in response
+    // FIXME: post VP to get  VP w/VCs in response
+    const vpResponse = await httpClient.post(
+      url, {agent, json: {verifiablePresentation}});
+    console.log('vpResponse.data', vpResponse.data);
+    should.exist(response?.data?.verifiablePresentation);
 
     // FIXME: assert on result
+    // FIXME: assert DID in VC matches `did`
   });
 });
