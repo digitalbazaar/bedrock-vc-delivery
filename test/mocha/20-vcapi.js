@@ -62,7 +62,6 @@ describe('exchange w/ VC-API delivery', () => {
       exchangerId,
       exchangerRootZcap
     });
-    console.log('exchangeId', exchangeId);
 
     const chapiRequest = {
       VerifiablePresentation: {
@@ -92,7 +91,6 @@ describe('exchange w/ VC-API delivery', () => {
       }
     } = parsedChapiRequest;
     const response = await httpClient.post(url, {agent, json: {}});
-    console.log('response.data', JSON.stringify(response.data, null, 2));
     const {verifiablePresentation: vp} = response.data;
     // ensure credential subject ID matches static DID
     should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);

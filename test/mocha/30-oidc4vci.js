@@ -68,7 +68,6 @@ describe('exchange w/OIDC4VCI delivery', () => {
       exchangerId,
       exchangerRootZcap
     });
-    console.log('exchangeId', exchangeId);
     const chapiRequest = {OIDC4VCI: issuanceUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
@@ -78,10 +77,8 @@ describe('exchange w/OIDC4VCI delivery', () => {
     const parsedClaimedUrl = new URL(claimedUrlFromChapi);
     const parsedChapiRequest = JSON.parse(
       parsedClaimedUrl.searchParams.get('request'));
-    console.log('raw parsed URL', new URL(parsedChapiRequest.OIDC4VCI));
     const initiateIssuanceInfo = parseInitiateIssuanceUrl(
       {url: parsedChapiRequest.OIDC4VCI});
-    console.log('parsed initiate issuance info', initiateIssuanceInfo);
 
     // wallet / client gets access token
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
