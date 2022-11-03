@@ -4,13 +4,13 @@
 import * as bedrock from '@bedrock/core';
 import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
 import {createPresentation, signPresentation} from '@digitalbazaar/vc';
-import {driver} from '@digitalbazaar/did-method-key';
 import {exportJWK, generateKeyPair, importJWK, SignJWT} from 'jose';
 import {KeystoreAgent, KmsClient} from '@digitalbazaar/webkms-client';
 import {agent} from '@bedrock/https-agent';
 import {CapabilityAgent} from '@digitalbazaar/webkms-client';
 import {decodeList} from '@digitalbazaar/vc-status-list';
 import {didIo} from '@bedrock/did-io';
+import {driver} from '@digitalbazaar/did-method-key';
 import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {EdvClient} from '@digitalbazaar/edv-client';
 import {generateId} from 'bnid';

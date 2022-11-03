@@ -2,10 +2,10 @@
  * Copyright (c) 2022 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
-import {agent} from '@bedrock/https-agent';
 import {
   OIDC4VCIClient, parseInitiateIssuanceUrl
 } from '@digitalbazaar/oidc4vci-client';
+import {agent} from '@bedrock/https-agent';
 import {mockData} from './mock.data.js';
 import {v4 as uuid} from 'uuid';
 
@@ -77,10 +77,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
 
     // pre-authorized flow, issuer-initiated
     const credentialId = `urn:uuid:${uuid()}`;
-    const {
-      oidc4vciUrl: issuanceUrl,
-      exchangeId
-    } = await helpers.createCredentialOffer({
+    const {oidc4vciUrl: issuanceUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
@@ -165,12 +162,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
       &client_id=s6BhdRkqt3
       &code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
       &code_challenge_method=S256
-      &authorization_details=%5B%7B%22type%22:%22openid_credential%22,%22credential_type
-      %22:%22https://did.example.org/healthCard%22,%22format%22:%22ldp_vc%22%7D,%7B%22ty
-      pe%22:%22openid_credential%22,%22credential_type%22:%22https://did.example.org/mDL
-      %22%7D%5D
-      &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
-      });
+      &authorization_details=...
 
     ... OR ... scope option (map credential type to an oauth2 scope):
 
@@ -197,13 +189,13 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
         error=invalid_request
         &error_description=Unsupported%20response_type%20value
     */
-    const url = '';
+    //const url = '';
 
     // FIXME: implement OIDC4VCIClient.fromAuthorizationCode()
-    const client = await OIDC4VCIClient.fromAuthorizationCode({url, agent});
+    //const client = await OIDC4VCIClient.fromAuthorizationCode({url, agent});
 
     // FIXME: request delivery
-    const result = await client.requestDelivery();
+    //const result = await client.requestDelivery();
     // FIXME: assert on result
   });
 });
