@@ -3,6 +3,7 @@
  */
 import * as bedrock from '@bedrock/core';
 import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
+import {createPresentation, signPresentation} from '@digitalbazaar/vc';
 import {driver} from '@digitalbazaar/did-method-key';
 import {exportJWK, generateKeyPair, importJWK, SignJWT} from 'jose';
 import {KeystoreAgent, KmsClient} from '@digitalbazaar/webkms-client';
@@ -216,6 +217,16 @@ export async function getOAuth2AccessToken({
   return builder.sign(key);
 }
 
+export async function createDidAuthnVP({domain, challenge}) {
+  const {did, signer} = await createDidProofSigner();
+  const presentation = createPresentation({holder: did});
+  const verifiablePresentation = await signPresentation({
+    suite: new Ed25519Signature2020({signer}),
+    presentation, domain, challenge
+  });
+  return {verifiablePresentation, did};
+}
+
 export async function createDidProofSigner() {
   const {didDocument, methodFor} = await didKeyDriver.generate();
   const authenticationKeyPair = methodFor({purpose: 'authentication'});
@@ -388,9 +399,21 @@ export async function provisionDependencies() {
   // create keystore for capability agent
   const keystoreAgent = await createKeystoreAgent({capabilityAgent});
 
+  // FIXME: a verifier instance isn't necessary for single-step exchanges or
+  // exchanges that do not do any DID Authn, but this method provisions a
+  // verifier anyway; this could be parameterized later to better test when
+  // this is needed and when it isn't
   const [
-    {issuerConfig, exchangerIssueZcap, exchangerCredentialStatusZcap},
-    {verifierConfig, exchangerVerifyPresentationZcap}
+    {
+      issuerConfig,
+      exchangerIssueZcap,
+      exchangerCredentialStatusZcap
+    },
+    {
+      verifierConfig,
+      exchangerCreateChallengeZcap,
+      exchangerVerifyPresentationZcap
+    }
   ] = await Promise.all([
     provisionIssuer({capabilityAgent, keystoreAgent}),
     provisionVerifier({capabilityAgent, keystoreAgent})
@@ -398,7 +421,8 @@ export async function provisionDependencies() {
 
   return {
     issuerConfig, exchangerIssueZcap, exchangerCredentialStatusZcap,
-    verifierConfig, exchangerVerifyPresentationZcap,
+    verifierConfig, exchangerCreateChallengeZcap,
+    exchangerVerifyPresentationZcap,
     capabilityAgent
   };
 }
@@ -539,14 +563,28 @@ export async function provisionVerifier({capabilityAgent, keystoreAgent}) {
     `${mockData.baseUrl}/service-agents/${encodeURIComponent('vc-exchanger')}`;
   const {data: exchangerServiceAgent} = await httpClient.get(
     exchangerServiceAgentUrl, {agent});
-  const exchangerVerifyPresentationZcap = await delegate({
+
+  // zcap to create a challenge
+  const exchangerCreateChallengeZcap = await delegate({
     capability: verifierRootZcap,
     controller: exchangerServiceAgent.id,
-    invocationTarget: verifierId,
+    invocationTarget: `${verifierId}/challenges`,
     delegator: capabilityAgent
   });
 
-  return {verifierConfig, exchangerVerifyPresentationZcap};
+  // zcap to verify a presentation
+  const exchangerVerifyPresentationZcap = await delegate({
+    capability: verifierRootZcap,
+    controller: exchangerServiceAgent.id,
+    invocationTarget: `${verifierId}/presentations/verify`,
+    delegator: capabilityAgent
+  });
+
+  return {
+    verifierConfig,
+    exchangerCreateChallengeZcap,
+    exchangerVerifyPresentationZcap
+  };
 }
 
 export async function revokeDelegatedCapability({
