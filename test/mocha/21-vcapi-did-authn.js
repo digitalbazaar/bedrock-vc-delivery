@@ -5,6 +5,7 @@ import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
 import {mockData} from './mock.data.js';
+import {v4 as uuid} from 'uuid';
 
 const {baseUrl, didAuthnCredentialTemplate} = mockData;
 
@@ -67,10 +68,12 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
     `credential_handler.launchType='redirect'` (TBD). */
 
+    const credentialId = `urn:uuid:${uuid()}`;
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
+      credentialId,
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
@@ -129,6 +132,9 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
     const {verifiableCredential: [vc]} = vp;
     vc.credentialSubject.id.should.equal(did);
+    // ensure VC ID matches
+    should.exist(vc.id);
+    vc.id.should.equal(credentialId);
   });
 
   it('should pass when sending VP in second call', async () => {
@@ -141,10 +147,12 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
     `credential_handler.launchType='redirect'` (TBD). */
 
+    const credentialId = `urn:uuid:${uuid()}`;
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
+      credentialId,
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
@@ -200,10 +208,13 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
       url, {agent, json: {verifiablePresentation}});
     console.log('vpResponse.data', vpResponse.data);
     should.exist(vpResponse?.data?.verifiablePresentation);
-    // ensure DID in VC matches `did`
     const {verifiablePresentation: vp} = vpResponse.data;
+    // ensure DID in VC matches `did`
     should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
     const {verifiableCredential: [vc]} = vp;
     vc.credentialSubject.id.should.equal(did);
+    // ensure VC ID matches
+    should.exist(vc.id);
+    vc.id.should.equal(credentialId);
   });
 });

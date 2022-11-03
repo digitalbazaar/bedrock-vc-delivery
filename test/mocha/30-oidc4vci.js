@@ -7,6 +7,7 @@ import {
   OIDC4VCIClient, parseInitiateIssuanceUrl
 } from '@digitalbazaar/oidc4vci-client';
 import {mockData} from './mock.data.js';
+import {v4 as uuid} from 'uuid';
 
 const {credentialTemplate} = mockData;
 
@@ -52,6 +53,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     `credential_handler.launchType='redirect'` (TBD). */
 
     // pre-authorized flow, issuer-initiated
+    const credentialId = `urn:uuid:${uuid()}`;
     const {
       oidc4vciUrl: issuanceUrl,
       exchangeId
@@ -59,6 +61,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
+      credentialId,
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
@@ -95,12 +98,15 @@ describe('exchange w/OIDC4VCI delivery', () => {
     should.exist(result.credential?.credentialSubject?.id);
     result.credential.credentialSubject.id.should.equal(
       'did:example:ebfeb1f712ebc6f1c276e12ec21');
+    // ensure VC ID matches
+    should.exist(result.credential.id);
+    result.credential.id.should.equal(credentialId);
   });
 
   it.skip('should pass w/ wallet-initiated flow', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
-    // FIXME: wallet sends request for a credential
+    // FIXME: wallet / client sends request for a credential
     /*
     {
      "type":"openid_credential",
@@ -122,7 +128,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     ]
     */
 
-    // FIXME: wallet receives response
+    // FIXME: wallet /client receives response
     /*
     HTTP/1.1 302 Found
     Location: https://server.example.com/authorize?
