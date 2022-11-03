@@ -7,7 +7,10 @@ import {createRequire} from 'node:module';
 import {
   OIDC4VCIClient, parseInitiateIssuanceUrl
 } from '@digitalbazaar/oidc4vci-client';
+import {mockData} from './mock.data.js';
 const require = createRequire(import.meta.url);
+
+const {baseUrl} = mockData;
 
 // NOTE: using embedded context in mockCredential:
 // https://www.w3.org/2018/credentials/examples/v1
@@ -49,14 +52,11 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
             type: 'DIDAuthentication',
             acceptedMethods: [{method: 'key'}]
           },
-          domain: 'https://example.com'
+          domain: baseUrl
         },
         // will be used by OIDC4VCI
         jwtDidProofRequest: {
-          acceptedMethods: [{method: 'key'}],
-          expectedClaims: {
-            aud: 'https://example.com'
-          }
+          acceptedMethods: [{method: 'key'}]
         }
       }
     };
@@ -133,7 +133,7 @@ describe('exchange w/OIDC4VCI delivery + DID authn', () => {
     // FIXME: assert DID in VC matches `did`
   });
 
-  it('should pass w/ wallet-initiated flow', async () => {
+  it.skip('should pass w/ wallet-initiated flow', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     // FIXME: wallet sends request for a credential
