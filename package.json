@@ -1,5 +1,5 @@
 {
-  "name": "bedrock-vc-delivery",
+  "name": "@bedrock/vc-delivery",
   "version": "0.0.1-0",
   "type": "module",
   "description": "Bedrock Verifiable Credential Delivery",
