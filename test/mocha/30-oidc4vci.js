@@ -22,6 +22,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     const {
       exchangerIssueZcap,
       exchangerCredentialStatusZcap,
+      exchangerCreateChallengeZcap,
       exchangerVerifyPresentationZcap
     } = deps;
     ({capabilityAgent} = deps);
@@ -30,6 +31,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     const zcaps = {
       issue: exchangerIssueZcap,
       credentialStatus: exchangerCredentialStatusZcap,
+      createChallenge: exchangerCreateChallengeZcap,
       verifyPresentation: exchangerVerifyPresentationZcap
     };
     const credentialTemplates = [{
@@ -42,7 +44,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
 
-  it.only('should pass w/ pre-authorized code flow', async () => {
+  it('should pass w/ pre-authorized code flow', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     /* This flow demonstrates passing an OIDC4VCI issuance initiation URL

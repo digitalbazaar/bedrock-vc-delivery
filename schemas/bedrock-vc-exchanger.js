@@ -82,10 +82,10 @@ const step = {
   type: 'object',
   additionalProperties: false,
   properties: {
-    generateChallenge: {
+    createChallenge: {
       type: 'boolean'
     },
-    verifiablePresenationRequest: {
+    verifiablePresentationRequest: {
       type: 'object'
     },
     jwtDidProofRequest: {
@@ -121,7 +121,11 @@ const step = {
           additionalProperties: true
         }
       }
-    }
+    },
+    // FIXME: `nextStep` feature not yet implemented
+    // nextStep: {
+    //   type: 'string'
+    // }
   }
 };
 
@@ -196,18 +200,19 @@ export const oidc4vciTokenBody = {
     'pre-authorized_code': {
       type: 'string'
     },
-    user_pin: {
-      type: 'string'
-    },
-    // params for `authorization_code` grant type
-    code: {
-      type: 'string'
-    },
-    verifier: {
-      type: 'string'
-    },
-    redirect_uri: {
-      type: 'string'
-    }
+    // FIXME: there is no implementation for using these fields yet:
+    // user_pin: {
+    //   type: 'string'
+    // },
+    // // params for `authorization_code` grant type
+    // code: {
+    //   type: 'string'
+    // },
+    // verifier: {
+    //   type: 'string'
+    // },
+    // redirect_uri: {
+    //   type: 'string'
+    // }
   }
 };
