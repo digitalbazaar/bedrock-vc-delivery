@@ -28,8 +28,11 @@ const kmsBaseUrl = `${mockData.baseUrl}/kms`;
 
 const FIVE_MINUTES = 1000 * 60 * 5;
 
+// Note: `userId` left here to model how systems would potentially integrate
+// with VC-API exchange services
 export async function createCredentialOffer({
-  userId, credentialType, preAuthorized, userPinRequired = false,
+  /*userId, */credentialType, credentialId,
+  preAuthorized, userPinRequired = false,
   capabilityAgent, exchangerId, exchangerRootZcap, oidc4vci = true
 } = {}) {
   // first, create an exchange with variables based on the local user ID;
@@ -39,7 +42,7 @@ export async function createCredentialOffer({
     ttl: 60 * 15,
     // template variables
     variables: {
-      credentialId: `urn:uuid:${uuid()}`,
+      credentialId: credentialId ?? `urn:uuid:${uuid()}`,
       issuanceDate: (new Date()).toISOString()
     }
   };

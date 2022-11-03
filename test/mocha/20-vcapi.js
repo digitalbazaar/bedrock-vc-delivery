@@ -5,6 +5,7 @@ import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
 import {mockData} from './mock.data.js';
+import {v4 as uuid} from 'uuid';
 
 const {credentialTemplate} = mockData;
 
@@ -49,10 +50,12 @@ describe('exchange w/ VC-API delivery', () => {
     "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
     `credential_handler.launchType='redirect'` (TBD). */
 
+    const credentialId = `urn:uuid:${uuid()}`;
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
+      credentialId,
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
@@ -96,5 +99,8 @@ describe('exchange w/ VC-API delivery', () => {
     const {verifiableCredential: [vc]} = vp;
     vc.credentialSubject.id.should.equal(
       'did:example:ebfeb1f712ebc6f1c276e12ec21');
+    // ensure VC ID matches
+    should.exist(vc.id);
+    vc.id.should.equal(credentialId);
   });
 });
