@@ -78,3 +78,67 @@ mockData.jwks = {
     key_ops: ['verify']
   }]
 };
+
+mockData.credentialTemplate = `
+  {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      {
+        "ex": "https://example.org/examples#",
+        "schema": "http://schema.org/",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+
+        "BachelorDegree": "ex:BachelorDegree",
+        "UniversityDegreeCredential": "ex:UniversityDegreeCredential",
+
+        "degree": "ex:degree",
+        "name": {"@id": "schema:name", "@type": "rdf:HTML"}
+      }
+    ],
+    "id": credentialId,
+    "type": [
+      "VerifiableCredential",
+      "UniversityDegreeCredential"
+    ],
+    "issuanceDate": issuanceDate,
+    "credentialSubject": {
+      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "degree": {
+        "type": "BachelorDegree",
+        "name": "Bachelor of Science and Arts"
+      }
+    }
+  }
+`;
+
+mockData.didAuthnCredentialTemplate = `
+  {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      {
+        "ex": "https://example.org/examples#",
+        "schema": "http://schema.org/",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+
+        "BachelorDegree": "ex:BachelorDegree",
+        "UniversityDegreeCredential": "ex:UniversityDegreeCredential",
+
+        "degree": "ex:degree",
+        "name": {"@id": "schema:name", "@type": "rdf:HTML"}
+      }
+    ],
+    "id": credentialId,
+    "type": [
+      "VerifiableCredential",
+      "UniversityDegreeCredential"
+    ],
+    "issuanceDate": issuanceDate,
+    "credentialSubject": {
+      "id": didAuthn.did,
+      "degree": {
+        "type": "BachelorDegree",
+        "name": "Bachelor of Science and Arts"
+      }
+    }
+  }
+`;

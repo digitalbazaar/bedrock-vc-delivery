@@ -17,6 +17,7 @@ import {generateId} from 'bnid';
 import {getAppIdentity} from '@bedrock/app-identity';
 import {httpClient} from '@digitalbazaar/http-client';
 import {httpsAgent} from '@bedrock/https-agent';
+import {v4 as uuid} from 'uuid';
 import {ZcapClient} from '@digitalbazaar/ezcap';
 
 import {mockData} from './mock.data.js';
@@ -37,7 +38,10 @@ export async function createCredentialOffer({
     // 15 minute expiry in seconds
     ttl: 60 * 15,
     // template variables
-    variables: {}
+    variables: {
+      credentialId: `urn:uuid:${uuid()}`,
+      issuanceDate: (new Date()).toISOString()
+    }
   };
   if(oidc4vci) {
     // generate keypair for AS

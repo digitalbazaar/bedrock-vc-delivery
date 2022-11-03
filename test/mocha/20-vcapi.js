@@ -4,12 +4,9 @@
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
-import {createRequire} from 'node:module';
-const require = createRequire(import.meta.url);
+import {mockData} from './mock.data.js';
 
-// NOTE: using embedded context in mockCredential:
-// https://www.w3.org/2018/credentials/examples/v1
-const mockCredential = require('./mock-credential.json');
+const {credentialTemplate} = mockData;
 
 describe('exchange w/ VC-API delivery', () => {
   let capabilityAgent;
@@ -34,7 +31,7 @@ describe('exchange w/ VC-API delivery', () => {
     };
     const credentialTemplates = [{
       type: 'jsonata',
-      template: JSON.stringify(mockCredential)
+      template: credentialTemplate
     }];
     const exchangerConfig = await helpers.createExchangerConfig(
       {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
@@ -53,8 +50,8 @@ describe('exchange w/ VC-API delivery', () => {
     `credential_handler.launchType='redirect'` (TBD). */
 
     const {exchangeId} = await helpers.createCredentialOffer({
-      // FIXME: identify target user in local system
-      userId: 'urn:123',
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
       preAuthorized: true,
       userPinRequired: false,
@@ -93,7 +90,11 @@ describe('exchange w/ VC-API delivery', () => {
     } = parsedChapiRequest;
     const response = await httpClient.post(url, {agent, json: {}});
     console.log('response.data', JSON.stringify(response.data, null, 2));
-
-    // FIXME: assert on result
+    const {verifiablePresentation: vp} = response.data;
+    // ensure credential subject ID matches static DID
+    should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
+    const {verifiableCredential: [vc]} = vp;
+    vc.credentialSubject.id.should.equal(
+      'did:example:ebfeb1f712ebc6f1c276e12ec21');
   });
 });

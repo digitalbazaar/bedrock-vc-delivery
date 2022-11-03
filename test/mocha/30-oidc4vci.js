@@ -3,15 +3,12 @@
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
-import {createRequire} from 'node:module';
 import {
   OIDC4VCIClient, parseInitiateIssuanceUrl
 } from '@digitalbazaar/oidc4vci-client';
-const require = createRequire(import.meta.url);
+import {mockData} from './mock.data.js';
 
-// NOTE: using embedded context in mockCredential:
-// https://www.w3.org/2018/credentials/examples/v1
-const mockCredential = require('./mock-credential.json');
+const {credentialTemplate} = mockData;
 
 describe('exchange w/OIDC4VCI delivery', () => {
   let capabilityAgent;
@@ -36,7 +33,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     };
     const credentialTemplates = [{
       type: 'jsonata',
-      template: JSON.stringify(mockCredential)
+      template: credentialTemplate
     }];
     const exchangerConfig = await helpers.createExchangerConfig(
       {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
@@ -59,8 +56,8 @@ describe('exchange w/OIDC4VCI delivery', () => {
       oidc4vciUrl: issuanceUrl,
       exchangeId
     } = await helpers.createCredentialOffer({
-      // FIXME: identify target user in local system
-      userId: 'urn:123',
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
       preAuthorized: true,
       userPinRequired: false,
@@ -83,16 +80,21 @@ describe('exchange w/OIDC4VCI delivery', () => {
       {url: parsedChapiRequest.OIDC4VCI});
     console.log('parsed initiate issuance info', initiateIssuanceInfo);
 
-    // FIXME: wallet gets access token
-    // FIXME: add negative tests that use invalid and missing access tokens
+    // wallet / client gets access token
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
     const client = await OIDC4VCIClient.fromPreAuthorizedCode({
       issuer, preAuthorizedCode, agent
     });
 
-    // FIXME: wallet receives credential
+    // wallet / client receives credential
     const result = await client.requestDelivery({agent});
-    // FIXME: assert on result
+    should.exist(result);
+    result.should.include.keys(['format', 'credential']);
+    result.format.should.equal('ldp_vc');
+    // ensure credential subject ID matches static DID
+    should.exist(result.credential?.credentialSubject?.id);
+    result.credential.credentialSubject.id.should.equal(
+      'did:example:ebfeb1f712ebc6f1c276e12ec21');
   });
 
   it.skip('should pass w/ wallet-initiated flow', async () => {
