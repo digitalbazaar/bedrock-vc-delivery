@@ -142,7 +142,8 @@ describe('provision', () => {
       should.not.exist(result);
       should.exist(err.data);
       err.data.name.should.equal('DataError');
-      err.data.message.should.contain(
+      const {message} = err.data.details.cause;
+      message.should.contain(
         'A capability to issue credentials is required when credential ' +
         'templates are provided.');
     });
