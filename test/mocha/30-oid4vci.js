@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {
@@ -11,7 +11,7 @@ import {v4 as uuid} from 'uuid';
 
 const {credentialTemplate} = mockData;
 
-describe('exchange w/OIDC4VCI delivery', () => {
+describe('exchange w/OID4VCI delivery', () => {
   let capabilityAgent;
   let exchangerId;
   let exchangerRootZcap;
@@ -45,8 +45,8 @@ describe('exchange w/OIDC4VCI delivery', () => {
   it('should pass w/ pre-authorized code flow', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
-    /* This flow demonstrates passing an OIDC4VCI issuance initiation URL
-    through a CHAPI OIDC4VCI request. The request is passed to a "Claimed URL"
+    /* This flow demonstrates passing an OID4VCI issuance initiation URL
+    through a CHAPI OID4VCI request. The request is passed to a "Claimed URL"
     which was registered on a user's device by a native app. The native app's
     domain also published a "manifest.json" file that expressed the same
     "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
@@ -54,7 +54,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
 
     // pre-authorized flow, issuer-initiated
     const credentialId = `urn:uuid:${uuid()}`;
-    const {oidc4vciUrl: issuanceUrl} = await helpers.createCredentialOffer({
+    const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
@@ -65,7 +65,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
       exchangerId,
       exchangerRootZcap
     });
-    const chapiRequest = {OIDC4VCI: issuanceUrl};
+    const chapiRequest = {OID4VC: issuanceUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
     // like so:
@@ -75,7 +75,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     const parsedChapiRequest = JSON.parse(
       parsedClaimedUrl.searchParams.get('request'));
     const initiateIssuanceInfo = parseInitiateIssuanceUrl(
-      {url: parsedChapiRequest.OIDC4VCI});
+      {url: parsedChapiRequest.OID4VC});
 
     // wallet / client gets access token
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
@@ -100,8 +100,8 @@ describe('exchange w/OIDC4VCI delivery', () => {
   it('should fail when reusing a completed exchange', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
-    /* This flow demonstrates passing an OIDC4VCI issuance initiation URL
-    through a CHAPI OIDC4VCI request. The request is passed to a "Claimed URL"
+    /* This flow demonstrates passing an OID4VCI issuance initiation URL
+    through a CHAPI OID4VCI request. The request is passed to a "Claimed URL"
     which was registered on a user's device by a native app. The native app's
     domain also published a "manifest.json" file that expressed the same
     "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
@@ -109,7 +109,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
 
     // pre-authorized flow, issuer-initiated
     const credentialId = `urn:uuid:${uuid()}`;
-    const {oidc4vciUrl: issuanceUrl} = await helpers.createCredentialOffer({
+    const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialType: 'https://did.example.org/healthCard',
@@ -120,7 +120,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
       exchangerId,
       exchangerRootZcap
     });
-    const chapiRequest = {OIDC4VCI: issuanceUrl};
+    const chapiRequest = {OID4VC: issuanceUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
     // like so:
@@ -130,7 +130,7 @@ describe('exchange w/OIDC4VCI delivery', () => {
     const parsedChapiRequest = JSON.parse(
       parsedClaimedUrl.searchParams.get('request'));
     const initiateIssuanceInfo = parseInitiateIssuanceUrl(
-      {url: parsedChapiRequest.OIDC4VCI});
+      {url: parsedChapiRequest.OID4VC});
 
     // wallet / client gets access token
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;

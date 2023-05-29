@@ -1,5 +1,15 @@
 # bedrock-vc-delivery ChangeLog
 
+## 3.0.0 - 2023-05-dd
+
+### Changed
+- **BREAKING**: Configurations must use `oid4` to specify
+  OID4VCI/OID4VC/OID4* options, not `oidc4vci`. This change
+  is incompatible with previous versions and any deployed
+  instances must be manually upgraded.
+- **BREAKING**: The `/oidc4vci` route has been changed to
+  `/openid`.
+
 ## 2.0.0 - 2023-04-18
 
 ### Changed

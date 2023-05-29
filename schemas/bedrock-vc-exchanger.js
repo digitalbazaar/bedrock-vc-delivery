@@ -1,10 +1,10 @@
 /*!
- * Copyright (c) 2022 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Digital Bazaar, Inc. All rights reserved.
  */
 import {schemas} from '@bedrock/validation';
 
-const oidc4vciExchangeOptions = {
-  title: 'OIDC4VCI Exchange options',
+const openIdExchangeOptions = {
+  title: 'OpenID Exchange options',
   type: 'object',
   additionalProperties: false,
   properties: {
@@ -12,7 +12,7 @@ const oidc4vciExchangeOptions = {
       type: 'string'
     },
     oauth2: {
-      title: 'OIDC4VCI Exchange OAuth2 Options',
+      title: 'OpenID Exchange OAuth2 Options',
       type: 'object',
       additionalProperties: false,
       required: ['keyPair'],
@@ -50,7 +50,7 @@ export const createExchangeBody = {
       type: 'object',
       additionalProperties: true
     },
-    oidc4vci: oidc4vciExchangeOptions
+    openId: openIdExchangeOptions
   }
 };
 
@@ -152,8 +152,8 @@ export function useExchangeBody() {
   };
 }
 
-export const oidc4vciCredentialBody = {
-  title: 'OIDC4VCI Credential Request',
+export const openIdCredentialBody = {
+  title: 'OpenID Credential Request',
   type: 'object',
   additionalProperties: false,
   required: ['type', 'format'],
@@ -186,8 +186,8 @@ export const oidc4vciCredentialBody = {
   }
 };
 
-export const oidc4vciTokenBody = {
-  title: 'OIDC4VCI Token Request',
+export const openIdTokenBody = {
+  title: 'OpenID Token Request',
   type: 'object',
   additionalProperties: false,
   required: ['grant_type'],
