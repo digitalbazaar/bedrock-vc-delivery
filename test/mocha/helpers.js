@@ -54,6 +54,10 @@ export async function createCredentialOffer({
       exportJWK(keyPair.publicKey),
     ]);
     exchange.openId = {
+      expectedCredentialRequests: [{
+        type: credentialType,
+        format: 'ldp_vc'
+      }],
       oauth2: {
         keyPair: {privateKeyJwk, publicKeyJwk}
       }

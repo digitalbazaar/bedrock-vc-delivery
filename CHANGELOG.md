@@ -2,13 +2,18 @@
 
 ## 3.0.0 - 2023-05-dd
 
+### Added
+- Add "batch credential" endpoint support for OpenID-based VC delivery.
+
 ### Changed
-- **BREAKING**: Configurations must use `oid4` to specify
-  OID4VCI/OID4VC/OID4* options, not `oidc4vci`. This change
-  is incompatible with previous versions and any deployed
-  instances must be manually upgraded.
-- **BREAKING**: The `/oidc4vci` route has been changed to
-  `/openid`.
+- **BREAKING**: Configurations must use `openId` to specify
+  OID4VCI/OID4VC/OID4* options, not `oidc4vci`. This change is incompatible
+  with previous versions and any deployed instances must be manually upgraded.
+- **BREAKING**: The `/oidc4vci` route has been changed to `/openid`.
+- **BREAKING**: Require `expectedCredentialRequests` in `openId` exchanger
+  config options. It must be an array with one or more elements with the
+  `type` and `format` expected. If more than one element is present, then
+  the exchange can only be fulfilled using the "batch credential" endpoint.
 
 ## 2.0.0 - 2023-04-18
 

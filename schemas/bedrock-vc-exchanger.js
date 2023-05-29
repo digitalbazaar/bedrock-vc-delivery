@@ -7,7 +7,27 @@ const openIdExchangeOptions = {
   title: 'OpenID Exchange options',
   type: 'object',
   additionalProperties: false,
+  required: ['expectedCredentialRequests', 'preAuthorizedCode', 'oauth2'],
   properties: {
+    expectedCredentialRequests: {
+      title: 'OpenID Expected Credential Requests',
+      type: 'array',
+      minItems: 1,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['type', 'format'],
+        properties: {
+          type: {
+            type: 'string'
+          },
+          format: {
+            type: 'string',
+            enum: ['ldp_vc']
+          }
+        }
+      }
+    },
     preAuthorizedCode: {
       type: 'string'
     },
