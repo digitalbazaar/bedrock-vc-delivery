@@ -84,7 +84,10 @@ describe('exchange w/OID4VCI delivery', () => {
     });
 
     // wallet / client receives credential
-    const result = await client.requestDelivery({agent});
+    const result = await client.requestDelivery({
+      type: 'https://did.example.org/healthCard',
+      agent
+    });
     should.exist(result);
     result.should.include.keys(['format', 'credential']);
     result.format.should.equal('ldp_vc');
@@ -139,7 +142,10 @@ describe('exchange w/OID4VCI delivery', () => {
     });
 
     // wallet / client receives credential
-    const result = await client.requestDelivery({agent});
+    const result = await client.requestDelivery({
+      type: 'https://did.example.org/healthCard',
+      agent
+    });
     should.exist(result);
     result.should.include.keys(['format', 'credential']);
     result.format.should.equal('ldp_vc');
@@ -154,7 +160,10 @@ describe('exchange w/OID4VCI delivery', () => {
     // now try to reuse the exchange
     let err;
     try {
-      await client.requestDelivery({agent});
+      await client.requestDelivery({
+        type: 'https://did.example.org/healthCard',
+        agent
+      });
     } catch(error) {
       err = error;
     }
