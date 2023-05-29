@@ -172,7 +172,7 @@ export function useExchangeBody() {
   };
 }
 
-export const openIdCredentialBody = {
+const openIdCredentialRequest = {
   title: 'OpenID Credential Request',
   type: 'object',
   additionalProperties: false,
@@ -202,6 +202,23 @@ export const openIdCredentialBody = {
           type: 'string'
         }
       }
+    }
+  }
+};
+
+export const openIdCredentialBody = openIdCredentialRequest;
+
+export const openIdBatchCredentialBody = {
+  title: 'OpenID Batch Credential Request',
+  type: 'object',
+  additionalProperties: false,
+  required: ['credential_requests'],
+  properties: {
+    credential_requests: {
+      title: 'OpenID Credential Requests',
+      type: 'array',
+      minItems: 1,
+      items: openIdCredentialRequest
     }
   }
 };
