@@ -114,6 +114,7 @@ describe('exchange w/OID4VCI delivery + DID authn', () => {
 
     // wallet / client receives credential
     const result = await client.requestDelivery({
+      type: 'https://did.example.org/healthCard',
       did,
       didProofSigner,
       agent
