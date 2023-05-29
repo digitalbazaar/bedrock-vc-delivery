@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2023 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
 import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
@@ -33,10 +33,10 @@ const FIVE_MINUTES = 1000 * 60 * 5;
 export async function createCredentialOffer({
   /*userId, */credentialType, credentialId,
   preAuthorized, userPinRequired = false,
-  capabilityAgent, exchangerId, exchangerRootZcap, oidc4vci = true
+  capabilityAgent, exchangerId, exchangerRootZcap, openId = true
 } = {}) {
   // first, create an exchange with variables based on the local user ID;
-  // indicate that OIDC4VCI delivery is permitted
+  // indicate that OID4VCI delivery is permitted
   const exchange = {
     // 15 minute expiry in seconds
     ttl: 60 * 15,
@@ -46,20 +46,20 @@ export async function createCredentialOffer({
       issuanceDate: (new Date()).toISOString()
     }
   };
-  if(oidc4vci) {
+  if(openId) {
     // generate keypair for AS
     const keyPair = await generateKeyPair('EdDSA', {extractable: true});
     const [privateKeyJwk, publicKeyJwk] = await Promise.all([
       exportJWK(keyPair.privateKey),
       exportJWK(keyPair.publicKey),
     ]);
-    exchange.oidc4vci = {
+    exchange.openId = {
       oauth2: {
         keyPair: {privateKeyJwk, publicKeyJwk}
       }
     };
     if(preAuthorized) {
-      exchange.oidc4vci.preAuthorizedCode = await _generateRandom();
+      exchange.openId.preAuthorizedCode = await _generateRandom();
     }
   }
   const result = await createExchange({
@@ -68,20 +68,21 @@ export async function createCredentialOffer({
   });
   const {id: exchangeId} = result;
 
-  // FIXME: only build this if OIDC4VCI is permitted for the exchange
+  // FIXME: only build this if OID4VCI is permitted for the exchange
   const searchParams = new URLSearchParams();
   searchParams.set('issuer', exchangeId);
   searchParams.set('credential_type', credentialType);
   if(preAuthorized) {
     searchParams.set(
-      'pre-authorized_code', exchange.oidc4vci.preAuthorizedCode);
+      'pre-authorized_code', exchange.openId.preAuthorizedCode);
   }
   if(userPinRequired) {
     searchParams.set('user_pin_required', true);
   }
-  const oidc4vciUrl = `openid-initiate-issuance://?${searchParams}`;
+  // FIXME: this may have changed in OID4VCI spec, get new prefix if so
+  const openIdUrl = `openid-initiate-issuance://?${searchParams}`;
 
-  return {oidc4vciUrl, exchangeId};
+  return {openIdUrl, exchangeId};
 }
 
 export async function createConfig({

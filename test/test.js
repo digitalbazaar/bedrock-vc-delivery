@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2016-2022 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2016-2023 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
 import {getServiceIdentities} from '@bedrock/app-identity';
@@ -39,7 +39,7 @@ bedrock.events.on('bedrock.init', async () => {
 });
 
 // mock oauth2 authz server routes; these are for creating exchangers, not
-// for performing OIDC4VCI delivery
+// for performing OID4VCI delivery
 bedrock.events.on('bedrock-express.configure.routes', async app => {
   app.get(mockData.oauth2IssuerConfigRoute, (req, res) => {
     res.json(mockData.oauth2Config);
