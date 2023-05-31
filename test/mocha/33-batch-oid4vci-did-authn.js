@@ -9,7 +9,7 @@ import {v4 as uuid} from 'uuid';
 
 const {baseUrl, didAuthnCredentialTemplate} = mockData;
 
-describe('exchange w/OID4VCI delivery + DID authn', () => {
+describe('exchange w/batch OID4VCI delivery + DID authn', () => {
   let capabilityAgent;
   let exchangerId;
   let exchangerRootZcap;
@@ -32,7 +32,12 @@ describe('exchange w/OID4VCI delivery + DID authn', () => {
     };
     const credentialTemplates = [{
       type: 'jsonata',
-      template: didAuthnCredentialTemplate
+      template: didAuthnCredentialTemplate.replace(
+        'credentialId', 'credentialId1')
+    }, {
+      type: 'jsonata',
+      template: didAuthnCredentialTemplate.replace(
+        'credentialId', 'credentialId2')
     }];
     // require semantically-named exchanger steps
     const steps = {
@@ -74,12 +79,19 @@ describe('exchange w/OID4VCI delivery + DID authn', () => {
     `credential_handler.launchType='redirect'` (TBD). */
 
     // pre-authorized flow, issuer-initiated
-    const credentialId = `urn:uuid:${uuid()}`;
+    const credentialId1 = `urn:uuid:${uuid()}`;
+    const credentialId2 = `urn:uuid:${uuid()}`;
     const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
-      credentialType: 'https://did.example.org/healthCard',
-      credentialId,
+      credentialType: [
+        'https://did.example.org/healthCard',
+        'https://did.example.org/healthCard'
+      ],
+      variables: {
+        credentialId1,
+        credentialId2
+      },
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
@@ -110,91 +122,29 @@ describe('exchange w/OID4VCI delivery + DID authn', () => {
 
     const {did, signer: didProofSigner} = await helpers.createDidProofSigner();
 
-    // wallet / client receives credential
-    const result = await client.requestCredential({
-      type: 'https://did.example.org/healthCard',
+    // wallet / client requests credentials
+    const result = await client.requestCredentials({
+      requests: [{
+        type: 'https://did.example.org/healthCard'
+      }, {
+        type: 'https://did.example.org/healthCard'
+      }],
       did,
       didProofSigner,
       agent
     });
     should.exist(result);
-    result.should.include.keys(['format', 'credential']);
-    result.format.should.equal('ldp_vc');
-    // ensure credential subject ID matches generated DID
-    should.exist(result.credential?.credentialSubject?.id);
-    result.credential.credentialSubject.id.should.equal(did);
-    // ensure VC ID matches
-    should.exist(result.credential.id);
-    result.credential.id.should.equal(credentialId);
-  });
-
-  it.skip('should pass w/ wallet-initiated flow', async () => {
-    // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
-
-    // FIXME: wallet / client sends request for a credential
-    /*
-    {
-     "type":"openid_credential",
-     "credential_type":"https://did.example.org/healthCard",
-     "format":"ldp_vc",
-     //"locations": ["aud1", "aud2", ...]
-    }
-    // ... OR ... request 2+ credentials
-    [
-      {
-          "type":"openid_credential",
-          "credential_type":"https://did.example.org/healthCard",
-          "format":"ldp_vc"
-      },
-      {
-          "type":"openid_credential",
-          "credential_type":"https://did.example.org/mDL"
-      }
-    ]
-    */
-
-    // FIXME: wallet / client receives response
-    /*
-    HTTP/1.1 302 Found
-    Location: https://server.example.com/authorize?
-      response_type=code
-      &client_id=s6BhdRkqt3
-      &code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
-      &code_challenge_method=S256
-      &authorization_details=...
-
-    ... OR ... scope option (map credential type to an oauth2 scope):
-
-    HTTP/1.1 302 Found
-    Location: https://server.example.com/authorize?
-      response_type=code
-      &scope=com.example.healthCardCredential
-      &client_id=s6BhdRkqt3
-      &code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
-      &code_challenge_method=S256
-      &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
-    */
-
-    // FIXME: authorization responses:
-    /*
-    success:
-    HTTP/1.1 302 Found
-      Location: https://Wallet.example.org/cb?
-        code=SplxlOBeZQQYbYS6WxSbIA
-
-    failure:
-    HTTP/1.1 302 Found
-    Location: https://client.example.net/cb?
-        error=invalid_request
-        &error_description=Unsupported%20response_type%20value
-    */
-    //const url = '';
-
-    // FIXME: implement OID4Client.fromAuthorizationCode()
-    //const client = await OID4Client.fromAuthorizationCode({url, agent});
-
-    // FIXME: request delivery
-    //const result = await client.requestCredential();
-    // FIXME: assert on result
+    result.should.have.keys(['credential_responses']);
+    result.credential_responses.should.be.an('array');
+    result.credential_responses.length.should.equal(2);
+    result.credential_responses.forEach(cr => {
+      cr.should.include.keys(['format', 'credential']);
+      cr.format.should.equal('ldp_vc');
+      // ensure credential subject ID matches static DID
+      should.exist(cr.credential?.credentialSubject?.id);
+      cr.credential.credentialSubject.id.should.equal(did);
+    });
+    result.credential_responses[0].credential.id.should.equal(credentialId1);
+    result.credential_responses[1].credential.id.should.equal(credentialId2);
   });
 });

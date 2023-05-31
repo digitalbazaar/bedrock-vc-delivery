@@ -36,7 +36,7 @@ const FIVE_MINUTES = 1000 * 60 * 5;
 // Note: `userId` left here to model how systems would potentially integrate
 // with VC-API exchange services
 export async function createCredentialOffer({
-  /*userId, */credentialType, credentialId,
+  /*userId, */credentialType, credentialId, variables,
   preAuthorized, userPinRequired = false,
   capabilityAgent, exchangerId, exchangerRootZcap,
   openId = true, openIdKeyPair
@@ -47,7 +47,10 @@ export async function createCredentialOffer({
     // 15 minute expiry in seconds
     ttl: 60 * 15,
     // template variables
-    variables: {
+    variables: variables ? {
+      issuanceDate: (new Date()).toISOString(),
+      ...variables
+    } : {
       credentialId: credentialId ?? `urn:uuid:${uuid()}`,
       issuanceDate: (new Date()).toISOString()
     }
@@ -59,13 +62,13 @@ export async function createCredentialOffer({
     } else {
       oauth2.generateKeyPair = {algorithm: 'ES256'};
     }
-    exchange.openId = {
-      expectedCredentialRequests: [{
-        type: credentialType,
-        format: 'ldp_vc'
-      }],
-      oauth2
-    };
+    // FIXME: fix usage of this in credential offer
+    if(!Array.isArray(credentialType)) {
+      credentialType = [credentialType];
+    }
+    const expectedCredentialRequests = credentialType.map(
+      type => ({type, format: 'ldp_vc'}));
+    exchange.openId = {expectedCredentialRequests, oauth2};
     if(preAuthorized) {
       exchange.openId.preAuthorizedCode = await _generateRandom();
     }
@@ -87,7 +90,9 @@ export async function createCredentialOffer({
   if(userPinRequired) {
     searchParams.set('user_pin_required', true);
   }
-  // FIXME: this may have changed in OID4VCI spec, get new prefix if so
+  // FIXME: change to use:
+  // eslint-disable-next-line max-len
+  // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-sending-credential-offer-by-
   const openIdUrl = `openid-initiate-issuance://?${searchParams}`;
 
   return {openIdUrl, exchangeId};
