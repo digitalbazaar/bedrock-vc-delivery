@@ -4,6 +4,7 @@
 
 ### Added
 - Add "batch credential" endpoint support for OpenID-based VC delivery.
+- Add `generateKeyPair` option to `openId.oauth2` when creating VC exchanges.
 
 ### Changed
 - **BREAKING**: Configurations must use `openId` to specify
