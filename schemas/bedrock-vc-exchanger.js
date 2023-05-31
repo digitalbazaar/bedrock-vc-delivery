@@ -35,8 +35,22 @@ const openIdExchangeOptions = {
       title: 'OpenID Exchange OAuth2 Options',
       type: 'object',
       additionalProperties: false,
-      required: ['keyPair'],
+      oneOf: [{
+        required: ['keyPair']
+      }, {
+        required: ['generateKeyPair']
+      }],
       properties: {
+        generateKeyPair: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['algorithm'],
+          properties: {
+            algorithm: {
+              enum: ['EdDSA', 'ES256', 'ES256K', 'ES384']
+            }
+          }
+        },
         keyPair: {
           type: 'object',
           additionalProperties: false,

@@ -3,8 +3,13 @@
  */
 import * as bedrock from '@bedrock/core';
 import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
+import {
+  generateKeyPair as _generateKeyPair,
+  exportJWK,
+  importJWK,
+  SignJWT
+} from 'jose';
 import {createPresentation, signPresentation} from '@digitalbazaar/vc';
-import {exportJWK, generateKeyPair, importJWK, SignJWT} from 'jose';
 import {KeystoreAgent, KmsClient} from '@digitalbazaar/webkms-client';
 import {agent} from '@bedrock/https-agent';
 import {CapabilityAgent} from '@digitalbazaar/webkms-client';
@@ -33,7 +38,8 @@ const FIVE_MINUTES = 1000 * 60 * 5;
 export async function createCredentialOffer({
   /*userId, */credentialType, credentialId,
   preAuthorized, userPinRequired = false,
-  capabilityAgent, exchangerId, exchangerRootZcap, openId = true
+  capabilityAgent, exchangerId, exchangerRootZcap,
+  openId = true, openIdKeyPair
 } = {}) {
   // first, create an exchange with variables based on the local user ID;
   // indicate that OID4VCI delivery is permitted
@@ -47,20 +53,18 @@ export async function createCredentialOffer({
     }
   };
   if(openId) {
-    // generate keypair for AS
-    const keyPair = await generateKeyPair('EdDSA', {extractable: true});
-    const [privateKeyJwk, publicKeyJwk] = await Promise.all([
-      exportJWK(keyPair.privateKey),
-      exportJWK(keyPair.publicKey),
-    ]);
+    const oauth2 = {};
+    if(openIdKeyPair) {
+      oauth2.keyPair = openIdKeyPair;
+    } else {
+      oauth2.generateKeyPair = {algorithm: 'ES256'};
+    }
     exchange.openId = {
       expectedCredentialRequests: [{
         type: credentialType,
         format: 'ldp_vc'
       }],
-      oauth2: {
-        keyPair: {privateKeyJwk, publicKeyJwk}
-      }
+      oauth2
     };
     if(preAuthorized) {
       exchange.openId.preAuthorizedCode = await _generateRandom();
@@ -189,6 +193,16 @@ export async function createVerifierConfig({
     serviceType: 'vc-verifier',
     url, capabilityAgent, ipAllowList, meterId, zcaps, oauth2
   });
+}
+
+export async function generateKeyPair({algorithm = 'EdDSA'} = {}) {
+  // generate keypair for AS
+  const keyPair = await _generateKeyPair(algorithm, {extractable: true});
+  const [privateKeyJwk, publicKeyJwk] = await Promise.all([
+    exportJWK(keyPair.privateKey),
+    exportJWK(keyPair.publicKey),
+  ]);
+  return {privateKeyJwk, publicKeyJwk};
 }
 
 export async function getConfig({id, capabilityAgent, accessToken}) {
