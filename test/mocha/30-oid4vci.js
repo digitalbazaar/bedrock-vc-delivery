@@ -2,9 +2,7 @@
  * Copyright (c) 2022-2023 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
-import {
-  OIDC4VCIClient, parseInitiateIssuanceUrl
-} from '@digitalbazaar/oidc4vci-client';
+import {OID4Client, parseInitiateIssuanceUrl} from '@digitalbazaar/oid4-client';
 import {agent} from '@bedrock/https-agent';
 import {mockData} from './mock.data.js';
 import {v4 as uuid} from 'uuid';
@@ -79,12 +77,12 @@ describe('exchange w/OID4VCI delivery', () => {
 
     // wallet / client gets access token
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
-    const client = await OIDC4VCIClient.fromPreAuthorizedCode({
+    const client = await OID4Client.fromPreAuthorizedCode({
       issuer, preAuthorizedCode, agent
     });
 
     // wallet / client receives credential
-    const result = await client.requestDelivery({
+    const result = await client.requestCredential({
       type: 'https://did.example.org/healthCard',
       agent
     });
@@ -99,6 +97,8 @@ describe('exchange w/OID4VCI delivery', () => {
     should.exist(result.credential.id);
     result.credential.id.should.equal(credentialId);
   });
+
+  // FIXME: add batch credential case
 
   it('should pass w/ pre-authorized code flow w/ AS key pair', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
@@ -141,12 +141,12 @@ describe('exchange w/OID4VCI delivery', () => {
 
     // wallet / client gets access token
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
-    const client = await OIDC4VCIClient.fromPreAuthorizedCode({
+    const client = await OID4Client.fromPreAuthorizedCode({
       issuer, preAuthorizedCode, agent
     });
 
     // wallet / client receives credential
-    const result = await client.requestDelivery({
+    const result = await client.requestCredential({
       type: 'https://did.example.org/healthCard',
       agent
     });
@@ -199,12 +199,12 @@ describe('exchange w/OID4VCI delivery', () => {
 
     // wallet / client gets access token
     const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
-    const client = await OIDC4VCIClient.fromPreAuthorizedCode({
+    const client = await OID4Client.fromPreAuthorizedCode({
       issuer, preAuthorizedCode, agent
     });
 
     // wallet / client receives credential
-    const result = await client.requestDelivery({
+    const result = await client.requestCredential({
       type: 'https://did.example.org/healthCard',
       agent
     });
@@ -222,7 +222,7 @@ describe('exchange w/OID4VCI delivery', () => {
     // now try to reuse the exchange
     let err;
     try {
-      await client.requestDelivery({
+      await client.requestCredential({
         type: 'https://did.example.org/healthCard',
         agent
       });
@@ -295,11 +295,11 @@ describe('exchange w/OID4VCI delivery', () => {
     */
     //const url = '';
 
-    // FIXME: implement OIDC4VCIClient.fromAuthorizationCode()
-    //const client = await OIDC4VCIClient.fromAuthorizationCode({url, agent});
+    // FIXME: implement OID4Client.fromAuthorizationCode()
+    //const client = await OID4Client.fromAuthorizationCode({url, agent});
 
     // FIXME: request delivery
-    //const result = await client.requestDelivery();
+    //const result = await client.requestCredential();
     // FIXME: assert on result
   });
 });
