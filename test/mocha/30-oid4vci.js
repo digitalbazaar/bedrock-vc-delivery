@@ -98,8 +98,6 @@ describe('exchange w/OID4VCI delivery', () => {
     result.credential.id.should.equal(credentialId);
   });
 
-  // FIXME: add batch credential case
-
   it('should pass w/ pre-authorized code flow w/ AS key pair', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
