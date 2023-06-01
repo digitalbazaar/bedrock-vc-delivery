@@ -528,9 +528,9 @@ export async function provisionIssuer({capabilityAgent, keystoreAgent}) {
   const {id: issuerId} = issuerConfig;
   const issuerRootZcap = `urn:zcap:root:${encodeURIComponent(issuerId)}`;
 
-  // insert mock context
-  const contextId = 'https://test.example/v1';
-  const context = {'@context': {term: 'https://test.example#term'}};
+  // insert examples context
+  const contextId = 'https://www.w3.org/2018/credentials/examples/v1';
+  const context = mockData.examplesContext;
   const client = createZcapClient({capabilityAgent});
   const url = `${issuerId}/contexts`;
   await client.write({
