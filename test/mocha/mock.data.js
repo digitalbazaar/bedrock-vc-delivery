@@ -1,5 +1,5 @@
 /*!
-* Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
+* Copyright (c) 2019-2023 Digital Bazaar, Inc. All rights reserved.
 */
 import {config} from '@bedrock/core';
 
@@ -79,6 +79,7 @@ mockData.jwks = {
   }]
 };
 
+// use 'https://www.w3.org/2018/credentials/examples/v1'
 mockData.credentialTemplate = `
   {
     "@context": [
@@ -111,6 +112,7 @@ mockData.credentialTemplate = `
   }
 `;
 
+// use 'https://www.w3.org/2018/credentials/examples/v1'
 mockData.didAuthnCredentialTemplate = `
   {
     "@context": [
@@ -142,3 +144,14 @@ mockData.didAuthnCredentialTemplate = `
     }
   }
 `;
+
+mockData.credentialDefinition = {
+  '@context': [
+    'https://www.w3.org/2018/credentials/v1',
+    'https://www.w3.org/2018/credentials/examples/v1'
+  ],
+  type: [
+    'VerifiableCredential',
+    'UniversityDegreeCredential'
+  ]
+};

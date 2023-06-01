@@ -36,7 +36,8 @@ const FIVE_MINUTES = 1000 * 60 * 5;
 // Note: `userId` left here to model how systems would potentially integrate
 // with VC-API exchange services
 export async function createCredentialOffer({
-  /*userId, */credentialType, credentialId, variables,
+  /*userId, */
+  credentialDefinition, credentialId, variables,
   preAuthorized, userPinRequired = false,
   capabilityAgent, exchangerId, exchangerRootZcap,
   openId = true, openIdKeyPair
@@ -55,47 +56,62 @@ export async function createCredentialOffer({
       issuanceDate: (new Date()).toISOString()
     }
   };
+  let offer;
   if(openId) {
+    // build OID4VCI oauth2 config
     const oauth2 = {};
     if(openIdKeyPair) {
       oauth2.keyPair = openIdKeyPair;
     } else {
       oauth2.generateKeyPair = {algorithm: 'ES256'};
     }
-    // FIXME: fix usage of this in credential offer
-    if(!Array.isArray(credentialType)) {
-      credentialType = [credentialType];
+    if(!Array.isArray(credentialDefinition)) {
+      credentialDefinition = [credentialDefinition];
     }
-    const expectedCredentialRequests = credentialType.map(
-      type => ({type, format: 'ldp_vc'}));
+    const expectedCredentialRequests = credentialDefinition.map(
+      credential_definition => ({format: 'ldp_vc', credential_definition}));
     exchange.openId = {expectedCredentialRequests, oauth2};
+
+    // start building OID4VCI credential offer
+    offer = {
+      credential_issuer: '',
+      // FIXME: use `credentials_supported` string IDs instead
+      credentials: credentialDefinition.map(
+        credential_definition => ({format: 'ldp_vc', credential_definition})),
+      grants: {}
+    };
+
     if(preAuthorized) {
       exchange.openId.preAuthorizedCode = await _generateRandom();
+      const grant = {'pre-authorized_code': exchange.openId.preAuthorizedCode};
+      offer.grants['urn:ietf:params:oauth:grant-type:pre-authorized_code'] =
+        grant;
+      // `user_pin_required` default is `false` per the OID4VCI spec
+      if(userPinRequired) {
+        grant.user_pin_required = true;
+      }
+    } else {
+      offer.grants.authorization_code = {
+        // FIXME: implement
+        issuer_state: 'eyJhbGciOiJSU0Et...FYUaBy'
+      };
     }
   }
-  const result = await createExchange({
+  const {id: exchangeId} = await createExchange({
     url: `${exchangerId}/exchanges`,
     capabilityAgent, capability: exchangerRootZcap, exchange
   });
-  const {id: exchangeId} = result;
 
-  // FIXME: only build this if OID4VCI is permitted for the exchange
-  const searchParams = new URLSearchParams();
-  searchParams.set('issuer', exchangeId);
-  searchParams.set('credential_type', credentialType);
-  if(preAuthorized) {
-    searchParams.set(
-      'pre-authorized_code', exchange.openId.preAuthorizedCode);
-  }
-  if(userPinRequired) {
-    searchParams.set('user_pin_required', true);
-  }
-  // FIXME: change to use:
-  // eslint-disable-next-line max-len
-  // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-sending-credential-offer-by-
-  const openIdUrl = `openid-initiate-issuance://?${searchParams}`;
+  const result = {exchangeId};
 
-  return {openIdUrl, exchangeId};
+  if(openId) {
+    offer.credential_issuer = exchangeId;
+    const searchParams = new URLSearchParams();
+    searchParams.set('credential_offer', JSON.stringify(offer));
+    result.openIdUrl = `openid-credential-offer://?${searchParams}`;
+  }
+
+  return result;
 }
 
 export async function createConfig({
