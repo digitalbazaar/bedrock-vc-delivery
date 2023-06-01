@@ -3,6 +3,29 @@
  */
 import {schemas} from '@bedrock/validation';
 
+const credentialDefinition = {
+  title: 'OID4VCI Verifiable Credential Definition',
+  type: 'object',
+  additionalProperties: false,
+  required: ['@context', 'type'],
+  properties: {
+    '@context': {
+      type: 'array',
+      minItems: 1,
+      item: {
+        type: 'string'
+      }
+    },
+    type: {
+      type: 'array',
+      minItems: 2,
+      item: {
+        type: 'string'
+      }
+    }
+  }
+};
+
 const openIdExchangeOptions = {
   title: 'OpenID Exchange options',
   type: 'object',
@@ -16,11 +39,9 @@ const openIdExchangeOptions = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['type', 'format'],
+        required: ['credential_definition', 'format'],
         properties: {
-          type: {
-            type: 'string'
-          },
+          credential_definition: credentialDefinition,
           format: {
             type: 'string',
             enum: ['ldp_vc']
@@ -190,11 +211,9 @@ const openIdCredentialRequest = {
   title: 'OpenID Credential Request',
   type: 'object',
   additionalProperties: false,
-  required: ['type', 'format'],
+  required: ['credential_definition', 'format'],
   properties: {
-    type: {
-      type: 'string'
-    },
+    credential_definition: credentialDefinition,
     format: {
       type: 'string',
       enum: ['ldp_vc']

@@ -2,7 +2,7 @@
  * Copyright (c) 2022-2023 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
-import {OID4Client, parseInitiateIssuanceUrl} from '@digitalbazaar/oid4-client';
+import {OID4Client, parseCredentialOfferUrl} from '@digitalbazaar/oid4-client';
 import {agent} from '@bedrock/https-agent';
 import {mockData} from './mock.data.js';
 import {v4 as uuid} from 'uuid';
@@ -61,9 +61,9 @@ describe('exchange w/batch OID4VCI delivery', () => {
     const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
-      credentialType: [
-        'https://did.example.org/healthCard',
-        'https://did.example.org/healthCard'
+      credentialDefinition: [
+        mockData.credentialDefinition,
+        mockData.credentialDefinition
       ],
       variables: {
         credentialId1,
@@ -84,21 +84,17 @@ describe('exchange w/batch OID4VCI delivery', () => {
     const parsedClaimedUrl = new URL(claimedUrlFromChapi);
     const parsedChapiRequest = JSON.parse(
       parsedClaimedUrl.searchParams.get('request'));
-    const initiateIssuanceInfo = parseInitiateIssuanceUrl(
-      {url: parsedChapiRequest.OID4VC});
+    const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VC});
 
     // wallet / client gets access token
-    const {issuer, preAuthorizedCode} = initiateIssuanceInfo;
-    const client = await OID4Client.fromPreAuthorizedCode({
-      issuer, preAuthorizedCode, agent
-    });
+    const client = await OID4Client.fromCredentialOffer({offer, agent});
 
     // wallet / client requests credentials
     const result = await client.requestCredentials({
       requests: [{
-        type: 'https://did.example.org/healthCard'
+        credential_definition: mockData.credentialDefinition
       }, {
-        type: 'https://did.example.org/healthCard'
+        credential_definition: mockData.credentialDefinition
       }],
       agent
     });

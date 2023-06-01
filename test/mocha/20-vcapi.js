@@ -54,7 +54,7 @@ describe('exchange w/ VC-API delivery', () => {
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
-      credentialType: 'https://did.example.org/healthCard',
+      credentialDefinition: mockData.credentialDefinition,
       credentialId,
       preAuthorized: true,
       userPinRequired: false,
@@ -116,7 +116,7 @@ describe('exchange w/ VC-API delivery', () => {
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
-      credentialType: 'https://did.example.org/healthCard',
+      credentialDefinition: mockData.credentialDefinition,
       credentialId,
       preAuthorized: true,
       userPinRequired: false,
