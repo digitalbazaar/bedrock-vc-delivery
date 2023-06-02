@@ -37,9 +37,7 @@ mockData.oauth2IssuerConfigRoute = '/.well-known/oauth-authorization-server';
 mockData.oauth2Config = {
   issuer: mockData.baseUrl,
   jwks_uri: `${mockData.baseUrl}/oauth2/jwks`,
-  token_endpoint: `${mockData.baseUrl}/oauth2/token`,
-  // FIXME: use different root path (change `/oauth2` to something else)?
-  credential_endpoint: `${mockData.baseUrl}/oauth2/credential`
+  token_endpoint: `${mockData.baseUrl}/oauth2/token`
 };
 
 // Ed25519 and EC keys
