@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 3.0.0 - 2023-05-dd
+## 3.0.0 - 2023-06-04
 
 ### Added
 - Add "batch credential" endpoint support for OpenID-based VC delivery.
