@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 3.0.2 - 2023-06-dd
+
+### Fixed
+- Fix missing dependencies and update old ones.
+
 ## 3.0.1 - 2023-06-26
 
 ### Fixed
