@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 3.0.1 - 2023-06-dd
+## 3.0.1 - 2023-06-26
 
 ### Fixed
 - Fix `package.json` exported files.
