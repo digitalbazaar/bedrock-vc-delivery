@@ -5,7 +5,8 @@
   "description": "Bedrock Verifiable Credential Delivery",
   "main": "./lib/index.js",
   "files": [
-    "lib/**/*.js"
+    "lib/**/*.js",
+    "schemas/**/*.js"
   ],
   "scripts": {
     "lint": "eslint ."
@@ -15,7 +16,14 @@
     "url": "https://github.com/digitalbazaar/bedrock-vc-delivery"
   },
   "keywords": [
-    "bedrock"
+    "bedrock",
+    "exchange",
+    "oid4vci",
+    "oid4vc",
+    "VC API",
+    "vc-api",
+    "verifiable credential",
+    "verifiable presentation"
   ],
   "author": {
     "name": "Digital Bazaar, Inc.",
@@ -61,6 +69,6 @@
     "jsdoc-to-markdown": "^8.0.0"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   }
 }
