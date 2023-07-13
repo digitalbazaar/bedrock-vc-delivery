@@ -210,5 +210,19 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     // ensure VC ID matches
     should.exist(vc.id);
     vc.id.should.equal(credentialId);
+
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
   });
 });

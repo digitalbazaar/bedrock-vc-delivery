@@ -125,6 +125,38 @@ describe('exchange w/ VC-API delivery', () => {
       exchangerRootZcap
     });
 
+    // exchange state should be pending
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('pending');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+
+    // exchange state should be pending using oauth2 access
+    {
+      let err;
+      try {
+        const exchangerId = exchangeId.slice(
+          0, exchangeId.lastIndexOf('/exchanges/'));
+        const accessToken = await helpers.getOAuth2AccessToken(
+          {configId: exchangerId, action: 'read', target: '/'});
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, accessToken});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('pending');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+
     const chapiRequest = {
       VerifiablePresentation: {
         interact: {
@@ -172,5 +204,33 @@ describe('exchange w/ VC-API delivery', () => {
     }
     should.exist(err);
     should.equal(err?.data?.name, 'DuplicateError');
+
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+
+    // getting exchange state w/o auth should fail
+    // FIXME: make this its own test
+    {
+      let err;
+      try {
+        await httpClient.get(exchangeId, {agent});
+      } catch(error) {
+        err = error;
+      }
+      should.exist(err);
+      should.exist(err.data?.name);
+      err.data.name.should.equal('NotAllowedError');
+    }
   });
 });
