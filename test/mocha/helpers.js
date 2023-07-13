@@ -237,6 +237,9 @@ export async function getConfig({id, capabilityAgent, accessToken}) {
     });
     return data;
   }
+  if(!capabilityAgent) {
+    throw new Error('Either "capabilityAgent" or "accessToken" is required.');
+  }
   // do zcap
   const zcapClient = createZcapClient({capabilityAgent});
   const {data} = await zcapClient.read({url: id});
@@ -288,6 +291,29 @@ export async function createExchange({
   const response = await zcapClient.write({url, json: exchange, capability});
   const exchangeId = response.headers.get('location');
   return {id: exchangeId};
+}
+
+export async function getExchange({id, capabilityAgent, accessToken} = {}) {
+  if(accessToken) {
+    // do OAuth2
+    const {data} = await httpClient.get(id, {
+      agent: httpsAgent,
+      headers: {
+        authorization: `Bearer ${accessToken}`
+      }
+    });
+    return data;
+  }
+  if(!capabilityAgent) {
+    throw new Error('Either "capabilityAgent" or "accessToken" is required.');
+  }
+  // do zcap
+  const zcapClient = createZcapClient({capabilityAgent});
+  // assume root zcap for associated exchanger
+  const exchangerId = id.slice(0, id.lastIndexOf('/exchanges/'));
+  const capability = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
+  const {data} = await zcapClient.read({url: id, capability});
+  return data;
 }
 
 export async function createEdv({

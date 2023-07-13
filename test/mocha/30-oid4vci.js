@@ -92,6 +92,20 @@ describe('exchange w/OID4VCI delivery', () => {
     // ensure VC ID matches
     should.exist(result.credential.id);
     result.credential.id.should.equal(credentialId);
+
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: offer.credential_issuer, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
   });
 
   it('should pass w/ pre-authorized code flow w/ AS key pair', async () => {

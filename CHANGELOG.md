@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 3.1.0 - 2023-07-dd
+
+### Added
+- Add GET endpoint for getting exchange information from any existing
+  exchange, particularly useful for obtaining its current state.
+
 ## 3.0.2 - 2023-06-26
 
 ### Fixed
