@@ -172,13 +172,12 @@ const step = {
         }
       }
     },
+    nextStep: {
+      type: 'string'
+    }
     // FIXME: add jsonata template to convert VPR or
     // `jwtDidProofRequest` to more variables to be
     // used when issuing VCs
-    // FIXME: `nextStep` feature not yet implemented
-    // nextStep: {
-    //   type: 'string'
-    // }
   }
 };
 

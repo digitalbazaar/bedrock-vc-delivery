@@ -112,7 +112,7 @@ mockData.didAuthnCredentialTemplate = `
     ],
     "issuanceDate": issuanceDate,
     "credentialSubject": {
-      "id": didAuthn.did,
+      "id": results.didAuthn.did,
       "degree": {
         "type": "BachelorDegree",
         "name": "Bachelor of Science and Arts"
