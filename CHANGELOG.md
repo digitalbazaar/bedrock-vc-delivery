@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 3.1.1 - 2023-07-dd
+## 3.1.1 - 2023-07-19
 
 ### Fixed
 - Fix meter usage aggregator function.
