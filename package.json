@@ -56,7 +56,7 @@
     "@bedrock/mongodb": "^10.0.0",
     "@bedrock/oauth2-verifier": "^1.0.0",
     "@bedrock/service-agent": "^7.0.0",
-    "@bedrock/service-core": "^8.0.0",
+    "@bedrock/service-core": "^8.0.2",
     "@bedrock/validation": "^7.1.0"
   },
   "directories": {
