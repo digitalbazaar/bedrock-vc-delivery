@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 3.2.0 - 2023-07-TBD
+
+### Added
+- Add dev application identity for `vc-exchanger`.
+
 ## 3.1.1 - 2023-07-19
 
 ### Fixed
