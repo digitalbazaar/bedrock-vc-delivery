@@ -114,7 +114,7 @@ mockData.prcCredentialTemplate = `
     "identifier": "83627465",
     "name": "Permanent Resident Card",
     "description": "Government of Utopia Permanent Resident Card.",
-    "issuanceDate": "2019-12-03T12:19:52Z",
+    "issuanceDate": issuanceDate,
     "credentialSubject": {
       "id": "did:example:b34ca6cd37bbf23",
       "type": [
