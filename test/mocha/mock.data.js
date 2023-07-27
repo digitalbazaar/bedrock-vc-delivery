@@ -106,7 +106,7 @@ mockData.prcCredentialTemplate = `
       "https://www.w3.org/2018/credentials/v1",
       "https://w3id.org/citizenship/v1"
     ],
-    "id": "credentialId",
+    "id": credentialId,
     "type": [
       "VerifiableCredential",
       "PermanentResidentCard"
