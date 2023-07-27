@@ -555,12 +555,20 @@ export async function provisionIssuer({capabilityAgent, keystoreAgent}) {
   const issuerRootZcap = `urn:zcap:root:${encodeURIComponent(issuerId)}`;
 
   // insert examples context
-  const contextId = 'https://www.w3.org/2018/credentials/examples/v1';
-  const context = mockData.examplesContext;
+  const examplesContextId = 'https://www.w3.org/2018/credentials/examples/v1';
+  const {examplesContext} = mockData;
   const client = createZcapClient({capabilityAgent});
   const url = `${issuerId}/contexts`;
   await client.write({
-    url, json: {id: contextId, context},
+    url, json: {id: examplesContextId, context: examplesContext},
+    capability: issuerRootZcap
+  });
+
+  // insert prc context
+  const prcContextId = 'https://w3id.org/citizenship/v1';
+  const {prcCredentialContext} = mockData;
+  await client.write({
+    url, json: {id: prcContextId, context: prcCredentialContext},
     capability: issuerRootZcap
   });
 
