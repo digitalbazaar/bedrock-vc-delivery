@@ -266,7 +266,7 @@ describe('exchange w/ VC-API delivery and prc template', () => {
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
 
-  it.only('should pass', async () => {
+  it('should pass', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
     /* This flow demonstrates passing a DID Authn request and interact VC-API
@@ -322,15 +322,13 @@ describe('exchange w/ VC-API delivery and prc template', () => {
     } catch(e) {
       err = e;
     }
-    console.log(err, '<><><><>err');
     should.exist(response);
     should.not.exist(err);
     const {verifiablePresentation: vp} = response.data;
     // ensure credential subject ID matches static DID
     should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
     const {verifiableCredential: [vc]} = vp;
-    vc.credentialSubject.id.should.equal(
-      'did:example:ebfeb1f712ebc6f1c276e12ec21');
+    vc.credentialSubject.id.should.equal('did:example:b34ca6cd37bbf23');
     // ensure VC ID matches
     should.exist(vc.id);
     vc.id.should.equal(credentialId);
