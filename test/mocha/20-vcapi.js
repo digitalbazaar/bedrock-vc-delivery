@@ -235,7 +235,7 @@ describe('exchange w/ VC-API delivery', () => {
   });
 });
 
-describe('exchange w/ VC-API delivery and prc template', () => {
+describe('exchange w/ VC-API delivery using prc template', () => {
   let capabilityAgent;
   let exchangerId;
   let exchangerRootZcap;
