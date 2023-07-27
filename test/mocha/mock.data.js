@@ -168,6 +168,17 @@ mockData.credentialDefinition = {
   ]
 };
 
+mockData.prcCredentialDefinition = {
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://w3id.org/citizenship/v1"
+  ],
+  type: [
+    'VerifiableCredential',
+    'PermanentResidentCard'
+  ]
+};
+
 /* eslint-disable */
 mockData.examplesContext = {
   // Note: minor edit to remove unused ODRL context
