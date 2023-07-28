@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 3.2.1 - 2023-07-TBD
+
+### Fixed
+- Fix the `if` statement to check if the object `steps` is not empty.
+
 ## 3.2.0 - 2023-07-19
 
 ### Added
