@@ -3,7 +3,7 @@
 ## 3.2.1 - 2023-07-TBD
 
 ### Fixed
-- Fix the `if` statement to check if the object `steps` is not empty.
+- Fix the `if` statement to check if the object `steps` is non-empty.
 
 ## 3.2.0 - 2023-07-19
 
