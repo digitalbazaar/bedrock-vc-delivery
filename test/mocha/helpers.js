@@ -152,7 +152,7 @@ export async function createConfig({
 
 export async function createExchangerConfig({
   capabilityAgent, ipAllowList, meterId, zcaps, credentialTemplates,
-  steps = {}, initialStep, oauth2 = false
+  steps, initialStep, oauth2 = false
 } = {}) {
   const url = `${mockData.baseUrl}/exchangers`;
   const configOptions = {credentialTemplates, steps, initialStep};

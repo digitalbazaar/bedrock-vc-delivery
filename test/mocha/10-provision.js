@@ -48,7 +48,7 @@ describe('provision', () => {
       assertNoError(err);
       should.exist(result);
       result.should.have.keys([
-        'controller', 'id', 'sequence', 'meterId', 'steps'
+        'controller', 'id', 'sequence', 'meterId'
       ]);
       result.sequence.should.equal(0);
       const {id: capabilityAgentId} = capabilityAgent;
@@ -68,7 +68,7 @@ describe('provision', () => {
       assertNoError(err);
       should.exist(result);
       result.should.have.keys([
-        'controller', 'id', 'sequence', 'meterId', 'zcaps', 'steps'
+        'controller', 'id', 'sequence', 'meterId', 'zcaps'
       ]);
       result.sequence.should.equal(0);
       const {id: capabilityAgentId} = capabilityAgent;
@@ -90,7 +90,7 @@ describe('provision', () => {
       assertNoError(err);
       should.exist(result);
       result.should.have.keys([
-        'controller', 'id', 'sequence', 'meterId', 'zcaps', 'steps'
+        'controller', 'id', 'sequence', 'meterId', 'zcaps'
       ]);
       result.sequence.should.equal(0);
       const {id: capabilityAgentId} = capabilityAgent;
@@ -118,7 +118,7 @@ describe('provision', () => {
       should.exist(result);
       result.should.have.keys([
         'controller', 'id', 'sequence', 'meterId', 'zcaps',
-        'credentialTemplates', 'steps'
+        'credentialTemplates'
       ]);
       result.sequence.should.equal(0);
       const {id: capabilityAgentId} = capabilityAgent;
@@ -161,7 +161,7 @@ describe('provision', () => {
       assertNoError(err);
       should.exist(result);
       result.should.have.keys([
-        'controller', 'id', 'ipAllowList', 'sequence', 'meterId', 'steps'
+        'controller', 'id', 'ipAllowList', 'sequence', 'meterId'
       ]);
       result.sequence.should.equal(0);
       const {id: capabilityAgentId} = capabilityAgent;
@@ -247,7 +247,7 @@ describe('provision', () => {
       assertNoError(err);
       should.exist(result);
       result.should.have.keys([
-        'controller', 'id', 'sequence', 'meterId', 'zcaps', 'steps'
+        'controller', 'id', 'sequence', 'meterId', 'zcaps'
       ]);
       result.id.should.equal(config.id);
     });
@@ -270,8 +270,7 @@ describe('provision', () => {
       assertNoError(err);
       should.exist(result);
       result.should.have.keys([
-        'authorization', 'controller', 'id', 'sequence', 'meterId', 'zcaps',
-        'steps'
+        'authorization', 'controller', 'id', 'sequence', 'meterId', 'zcaps'
       ]);
       result.id.should.equal(config.id);
     });
@@ -290,7 +289,7 @@ describe('provision', () => {
       assertNoError(err);
       should.exist(result);
       result.should.have.keys([
-        'controller', 'id', 'ipAllowList', 'sequence', 'meterId', 'steps'
+        'controller', 'id', 'ipAllowList', 'sequence', 'meterId'
       ]);
       result.should.have.property('id');
       result.id.should.equal(config.id);
@@ -359,7 +358,7 @@ describe('provision', () => {
       should.exist(result.data);
       result.status.should.equal(200);
       result.data.should.have.keys([
-        'id', 'controller', 'sequence', 'meterId', 'steps'
+        'id', 'controller', 'sequence', 'meterId'
       ]);
       const expectedConfig = {
         ...existingConfig,
@@ -455,7 +454,7 @@ describe('provision', () => {
       should.exist(result.data);
       result.status.should.equal(200);
       result.data.should.have.keys([
-        'id', 'controller', 'sequence', 'meterId', 'authorization', 'steps'
+        'id', 'controller', 'sequence', 'meterId', 'authorization'
       ]);
       let expectedConfig = {
         ...existingConfig,
@@ -494,7 +493,7 @@ describe('provision', () => {
       should.exist(result.data);
       result.status.should.equal(200);
       result.data.should.have.keys([
-        'id', 'controller', 'sequence', 'meterId', 'steps'
+        'id', 'controller', 'sequence', 'meterId'
       ]);
       expectedConfig = {
         ...existingConfig,
@@ -650,7 +649,7 @@ describe('provision', () => {
         should.exist(result.data);
         result.status.should.equal(200);
         result.data.should.have.keys([
-          'id', 'controller', 'sequence', 'meterId', 'ipAllowList', 'steps'
+          'id', 'controller', 'sequence', 'meterId', 'ipAllowList'
         ]);
         const expectedConfig = {
           ...existingConfig,
@@ -775,7 +774,7 @@ describe('provision', () => {
         {capabilityAgent: capabilityAgent2});
       const {data} = await zcapClient.read({capability: zcap});
       data.should.have.keys([
-        'controller', 'id', 'sequence', 'meterId', 'steps'
+        'controller', 'id', 'sequence', 'meterId'
       ]);
       data.id.should.equal(config.id);
 
