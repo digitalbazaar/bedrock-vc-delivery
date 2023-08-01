@@ -49,7 +49,6 @@ export async function createCredentialOffer({
     ttl: 60 * 15,
     // template variables
     variables: variables ? {
-      issuanceDate: (new Date()).toISOString(),
       ...variables
     } : {
       credentialId: credentialId ?? `urn:uuid:${uuid()}`,
@@ -66,8 +65,10 @@ export async function createCredentialOffer({
       oauth2.generateKeyPair = {algorithm: 'ES256'};
     }
     let expectedCredentialRequests;
-    if(credentialDefinition && !Array.isArray(credentialDefinition)) {
-      credentialDefinition = [credentialDefinition];
+    if(credentialDefinition) {
+      if(!Array.isArray(credentialDefinition)) {
+        credentialDefinition = [credentialDefinition];
+      }
       expectedCredentialRequests = credentialDefinition.map(
         credential_definition => ({format: 'ldp_vc', credential_definition}));
     }
