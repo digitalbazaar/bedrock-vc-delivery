@@ -382,7 +382,6 @@ describe('exchange w/ VC-API delivery using generic template', () => {
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
-      credentialDefinition: mockData.genericCredentialDefinition,
       credentialId,
       preAuthorized: true,
       userPinRequired: false,
@@ -390,8 +389,17 @@ describe('exchange w/ VC-API delivery using generic template', () => {
       exchangerId,
       exchangerRootZcap,
       variables: {
-        type: [ 'VerifiableCredential', 'GenericCredential'],
-        credentialId
+        vc: {
+          '@context': [
+            'https://www.w3.org/2018/credentials/v1',
+            'https://www.w3.org/2018/credentials/examples/v1'
+          ],
+          id: credentialId,
+          type: ['VerifiableCredential', 'UniversityDegreeCredential'],
+          credentialSubject: {
+            id: 'did:example:f2a5bcde9d43781'
+          }
+        }
       }
     });
     const chapiRequest = {
