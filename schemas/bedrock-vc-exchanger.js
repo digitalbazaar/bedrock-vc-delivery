@@ -26,34 +26,11 @@ const credentialDefinition = {
   }
 };
 
-const credentialDefinitionForExchangeOptions = {
-  title: 'OID4VCI Verifiable Credential Definition',
-  type: 'object',
-  additionalProperties: false,
-  required: ['@context'],
-  properties: {
-    '@context': {
-      type: 'array',
-      minItems: 1,
-      item: {
-        type: 'string'
-      }
-    },
-    type: {
-      type: 'array',
-      minItems: 2,
-      item: {
-        type: 'string'
-      }
-    }
-  }
-};
-
 const openIdExchangeOptions = {
   title: 'OpenID Exchange options',
   type: 'object',
   additionalProperties: false,
-  required: ['expectedCredentialRequests', 'preAuthorizedCode', 'oauth2'],
+  required: ['preAuthorizedCode', 'oauth2'],
   properties: {
     expectedCredentialRequests: {
       title: 'OpenID Expected Credential Requests',
@@ -64,7 +41,7 @@ const openIdExchangeOptions = {
         additionalProperties: false,
         required: ['credential_definition', 'format'],
         properties: {
-          credential_definition: credentialDefinitionForExchangeOptions,
+          credential_definition: credentialDefinition,
           format: {
             type: 'string',
             enum: ['ldp_vc']
