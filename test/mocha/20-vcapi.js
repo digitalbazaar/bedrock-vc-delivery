@@ -395,7 +395,7 @@ describe('exchange w/ VC-API delivery using generic template', () => {
             'https://www.w3.org/2018/credentials/examples/v1'
           ],
           id: credentialId,
-          type: ['VerifiableCredential', 'UniversityDegreeCredential'],
+          type: ['VerifiableCredential', 'GenericCredential'],
           credentialSubject: {
             id: 'did:example:f2a5bcde9d43781'
           }

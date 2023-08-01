@@ -1,5 +1,13 @@
 # bedrock-vc-delivery ChangeLog
 
+## 3.3.0 - 2023-07-TBD
+
+### Changed
+- Make `expectedCredentialRequests` optional in `openIdExchangeOptions` schema.
+
+### Added
+- Add `vc-api` delivery test to issue using `generic` credential template.
+
 ## 3.2.0 - 2023-07-19
 
 ### Added
