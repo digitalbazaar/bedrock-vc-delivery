@@ -65,19 +65,23 @@ export async function createCredentialOffer({
     } else {
       oauth2.generateKeyPair = {algorithm: 'ES256'};
     }
-    if(!Array.isArray(credentialDefinition)) {
+    let expectedCredentialRequests;
+    if(credentialDefinition && !Array.isArray(credentialDefinition)) {
       credentialDefinition = [credentialDefinition];
+      expectedCredentialRequests = credentialDefinition.map(
+        credential_definition => ({format: 'ldp_vc', credential_definition}));
     }
-    const expectedCredentialRequests = credentialDefinition.map(
-      credential_definition => ({format: 'ldp_vc', credential_definition}));
     exchange.openId = {expectedCredentialRequests, oauth2};
-
+    // FIXME: use `credentials_supported` string IDs instead
+    let credentials;
+    if(credentialDefinition) {
+      credentials = credentialDefinition.map(
+        credential_definition => ({format: 'ldp_vc', credential_definition}));
+    }
     // start building OID4VCI credential offer
     offer = {
       credential_issuer: '',
-      // FIXME: use `credentials_supported` string IDs instead
-      credentials: credentialDefinition.map(
-        credential_definition => ({format: 'ldp_vc', credential_definition})),
+      credentials,
       grants: {}
     };
 
