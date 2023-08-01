@@ -106,10 +106,7 @@ mockData.genericCredentialTemplate = `
       "https://www.w3.org/2018/credentials/examples/v1"
     ],
     "id": credentialId,
-    "type": [
-      "VerifiableCredential",
-      "GenericCredential"
-    ],
+    "type": type,
     "issuanceDate": issuanceDate,
     "credentialSubject": {
       "id": "did:example:f2a5bcde9d43781"
@@ -201,10 +198,6 @@ mockData.genericCredentialDefinition = {
   '@context': [
     'https://www.w3.org/2018/credentials/v1',
     'https://www.w3.org/2018/credentials/examples/v1'
-  ],
-  'type': [
-    'VerifiableCredential',
-    'GenericCredential'
   ]
 };
 

@@ -388,7 +388,11 @@ describe('exchange w/ VC-API delivery using generic template', () => {
       userPinRequired: false,
       capabilityAgent,
       exchangerId,
-      exchangerRootZcap
+      exchangerRootZcap,
+      variables: {
+        type: [ 'VerifiableCredential', 'GenericCredential'],
+        credentialId
+      }
     });
     const chapiRequest = {
       VerifiablePresentation: {

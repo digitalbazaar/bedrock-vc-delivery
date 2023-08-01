@@ -7,7 +7,7 @@ const credentialDefinition = {
   title: 'OID4VCI Verifiable Credential Definition',
   type: 'object',
   additionalProperties: false,
-  required: ['@context', 'type'],
+  required: ['@context'],
   properties: {
     '@context': {
       type: 'array',
