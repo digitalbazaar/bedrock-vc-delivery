@@ -7,6 +7,29 @@ const credentialDefinition = {
   title: 'OID4VCI Verifiable Credential Definition',
   type: 'object',
   additionalProperties: false,
+  required: ['@context', 'type'],
+  properties: {
+    '@context': {
+      type: 'array',
+      minItems: 1,
+      item: {
+        type: 'string'
+      }
+    },
+    type: {
+      type: 'array',
+      minItems: 2,
+      item: {
+        type: 'string'
+      }
+    }
+  }
+};
+
+const credentialDefinitionForExchangeOptions = {
+  title: 'OID4VCI Verifiable Credential Definition',
+  type: 'object',
+  additionalProperties: false,
   required: ['@context'],
   properties: {
     '@context': {
@@ -41,7 +64,7 @@ const openIdExchangeOptions = {
         additionalProperties: false,
         required: ['credential_definition', 'format'],
         properties: {
-          credential_definition: credentialDefinition,
+          credential_definition: credentialDefinitionForExchangeOptions,
           format: {
             type: 'string',
             enum: ['ldp_vc']
