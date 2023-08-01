@@ -99,6 +99,24 @@ mockData.credentialTemplate = `
   }
 `;
 
+mockData.genericCredentialTemplate = `
+  {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      "https://www.w3.org/2018/credentials/examples/v1"
+    ],
+    "id": credentialId,
+    "type": [
+      "VerifiableCredential",
+      "GenericCredential"
+    ],
+    "issuanceDate": issuanceDate,
+    "credentialSubject": {
+      "id": "did:example:f2a5bcde9d43781"
+    }
+  }
+`;
+
 /* eslint-disable */
 mockData.prcCredentialTemplate = `
   {
@@ -169,13 +187,24 @@ mockData.credentialDefinition = {
 };
 
 mockData.prcCredentialDefinition = {
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1",
-    "https://w3id.org/citizenship/v1"
+  '@context': [
+    'https://www.w3.org/2018/credentials/v1',
+    'https://w3id.org/citizenship/v1'
   ],
   type: [
     'VerifiableCredential',
     'PermanentResidentCard'
+  ]
+};
+
+mockData.genericCredentialDefinition = {
+  '@context': [
+    'https://www.w3.org/2018/credentials/v1',
+    'https://www.w3.org/2018/credentials/examples/v1'
+  ],
+  'type': [
+    'VerifiableCredential',
+    'GenericCredential'
   ]
 };
 
@@ -201,6 +230,7 @@ mockData.examplesContext = {
     "UniversityDegreeCredential": "ex:UniversityDegreeCredential",
     "AlumniCredential": "ex:AlumniCredential",
     "DisputeCredential": "ex:DisputeCredential",
+    "GenericCredential": "ex:GenericCredential",
     "PrescriptionCredential": "ex:PrescriptionCredential",
     "ZkpExampleSchema2018": "ex:ZkpExampleSchema2018",
 
