@@ -203,7 +203,6 @@ mockData.examplesContext = {
     "UniversityDegreeCredential": "ex:UniversityDegreeCredential",
     "AlumniCredential": "ex:AlumniCredential",
     "DisputeCredential": "ex:DisputeCredential",
-    "GenericCredential": "ex:GenericCredential",
     "PrescriptionCredential": "ex:PrescriptionCredential",
     "ZkpExampleSchema2018": "ex:ZkpExampleSchema2018",
 
