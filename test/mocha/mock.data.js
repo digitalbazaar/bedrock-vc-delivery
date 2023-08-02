@@ -99,7 +99,7 @@ mockData.credentialTemplate = `
   }
 `;
 
-mockData.genericCredentialTemplate = 'vc';
+mockData.genericCredentialTemplate = `$eval(vc)`;
 
 /* eslint-disable */
 mockData.prcCredentialTemplate = `
