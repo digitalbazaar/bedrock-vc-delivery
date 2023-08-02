@@ -389,17 +389,19 @@ describe('exchange w/ VC-API delivery using generic template', () => {
       exchangerId,
       exchangerRootZcap,
       variables: {
-        vc: {
+        credentialId,
+        vc: `{
           '@context': [
             'https://www.w3.org/2018/credentials/v1',
             'https://www.w3.org/2018/credentials/examples/v1'
           ],
-          id: credentialId,
-          type: ['VerifiableCredential', 'GenericCredential'],
-          credentialSubject: {
-            id: 'did:example:f2a5bcde9d43781'
+          'id': credentialId,
+          'issuanceDate': issuanceDate,
+          'type': ['VerifiableCredential', 'GenericCredential'],
+          'credentialSubject': {
+            'id': 'did:example:f2a5bcde9d43781'
           }
-        }
+        }`
       }
     });
     const chapiRequest = {
