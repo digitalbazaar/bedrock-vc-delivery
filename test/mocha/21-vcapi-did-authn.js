@@ -306,14 +306,14 @@ describe('exchange w/ VC-API delivery + DID authn using generic template',
               'https://www.w3.org/2018/credentials/v1',
               'https://www.w3.org/2018/credentials/examples/v1'
             ],
-            'id': credentialId,
-            'issuanceDate': issuanceDate,
+            'id': $credentialId,
+            'issuanceDate': $issuanceDate,
             'type': [
               'VerifiableCredential',
               'UniversityDegreeCredential'
             ],
             'credentialSubject': {
-              'id': results.didAuthn.did,
+              'id': $results.didAuthn.did,
               'degree': {
                 'type': 'BachelorDegree',
                 'name': 'Bachelor of Science and Arts'
