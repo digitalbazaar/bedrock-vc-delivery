@@ -6,9 +6,6 @@
 - Add `vc-api delivery` and ` VC-API delivery + DID authn` tests to issue
   using `generic` credential template.
 
-### Changed
-- Make `expectedCredentialRequests` optional in `openIdExchangeOptions` schema.
-
 ## 3.2.0 - 2023-07-19
 
 ### Added

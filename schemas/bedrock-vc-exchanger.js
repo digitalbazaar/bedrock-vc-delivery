@@ -30,7 +30,7 @@ const openIdExchangeOptions = {
   title: 'OpenID Exchange options',
   type: 'object',
   additionalProperties: false,
-  required: ['preAuthorizedCode', 'oauth2'],
+  required: ['expectedCredentialRequests', 'preAuthorizedCode', 'oauth2'],
   properties: {
     expectedCredentialRequests: {
       title: 'OpenID Expected Credential Requests',

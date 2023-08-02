@@ -382,6 +382,7 @@ describe('exchange w/ VC-API delivery using generic template', () => {
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
       credentialId,
       preAuthorized: true,
       userPinRequired: false,
@@ -396,10 +397,17 @@ describe('exchange w/ VC-API delivery using generic template', () => {
             'https://www.w3.org/2018/credentials/examples/v1'
           ],
           'id': $credentialId,
+          'type': [
+            'VerifiableCredential',
+            'UniversityDegreeCredential'
+          ],
           'issuanceDate': $issuanceDate,
-          'type': ['VerifiableCredential', 'GenericCredential'],
           'credentialSubject': {
-            'id': 'did:example:f2a5bcde9d43781'
+            'id': 'did:example:ebfeb1f712ebc6f1c276e12ec21',
+            'degree': {
+              'type': 'BachelorDegree',
+              'name': 'Bachelor of Science and Arts'
+            }
           }
         }`
       }
@@ -444,7 +452,8 @@ describe('exchange w/ VC-API delivery using generic template', () => {
     // ensure credential subject ID matches static DID
     should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
     const {verifiableCredential: [vc]} = vp;
-    vc.credentialSubject.id.should.equal('did:example:f2a5bcde9d43781');
+    vc.credentialSubject.id.should.equal(
+      'did:example:ebfeb1f712ebc6f1c276e12ec21');
     // ensure VC ID matches
     should.exist(vc.id);
     vc.id.should.equal(credentialId);
