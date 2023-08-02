@@ -49,6 +49,7 @@ export async function createCredentialOffer({
     ttl: 60 * 15,
     // template variables
     variables: variables ? {
+      issuanceDate: (new Date()).toISOString(),
       ...variables
     } : {
       credentialId: credentialId ?? `urn:uuid:${uuid()}`,
