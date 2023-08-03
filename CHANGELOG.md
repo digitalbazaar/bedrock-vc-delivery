@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 3.3.0 - 2023-08-TBD
+## 3.3.0 - 2023-08-03
 
 ### Added
 - Add `vc-api delivery` and ` VC-API delivery + DID authn` tests to issue
