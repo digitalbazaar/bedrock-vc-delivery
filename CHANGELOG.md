@@ -1,10 +1,18 @@
 # bedrock-vc-delivery ChangeLog
 
+## 3.4.0 - 2023-08-dd
+
+### Added
+- Serve OpenID credential issuer metadata from
+  `.well-known/openid-credential-issuer` in addition to
+  the older / previously used combined metadata config URL:
+  `.well-known/oauth-authorization-server`.
+
 ## 3.3.0 - 2023-08-03
 
 ### Added
-- Add `vc-api delivery` and ` VC-API delivery + DID authn` tests to issue
-  using `generic` credential template.
+- Add `vc-api delivery` and ` VC-API delivery + DID authn` tests
+  to issue using `generic` credential template.
 
 ### Changed
 - Pass binding variables to jsonata `evaluate()` function.
