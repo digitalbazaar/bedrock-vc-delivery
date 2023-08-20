@@ -109,8 +109,8 @@ export const createExchangeBody = {
   }
 };
 
-const credentialTemplate = {
-  title: 'Credential Template',
+const typedTemplate = {
+  title: 'Typed Template',
   type: 'object',
   required: ['type', 'template'],
   additionalProperties: false,
@@ -129,13 +129,32 @@ export const credentialTemplates = {
   title: 'Credential Templates',
   type: 'array',
   minItems: 1,
-  items: credentialTemplate
+  items: typedTemplate
 };
 
 const step = {
   title: 'Exchange Step',
   type: 'object',
   additionalProperties: false,
+  // step can either use a template so it will be generated using variables
+  // associated with the exchange, or static values can be provided
+  oneOf: [{
+    // `template` must be present and nothing else
+    required: ['template'],
+    not: {
+      required: [
+        'createChallenge',
+        'verifiablePresentationRequest',
+        'jwtDidProofRequest',
+        'nextStep'
+      ]
+    }
+  }, {
+    // anything except `template` can be used
+    not: {
+      required: ['template']
+    }
+  }],
   properties: {
     createChallenge: {
       type: 'boolean'
@@ -174,10 +193,8 @@ const step = {
     },
     nextStep: {
       type: 'string'
-    }
-    // FIXME: add jsonata template to convert VPR or
-    // `jwtDidProofRequest` to more variables to be
-    // used when issuing VCs
+    },
+    template: typedTemplate
   }
 };
 
