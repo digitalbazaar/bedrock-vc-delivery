@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 3.4.1 - 2023-08-dd
+## 3.4.1 - 2023-08-21
 
 ### Fixed
 - Fix uncaught unrejected promise bug when fetching exchange in parallel.
