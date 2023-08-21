@@ -194,6 +194,7 @@ const step = {
     nextStep: {
       type: 'string'
     },
+    // FIXME: `stepTemplate` instead?
     template: typedTemplate
   }
 };
