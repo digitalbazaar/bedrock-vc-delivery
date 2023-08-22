@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 3.5.0 - 2023-08-dd
+
+### Added
+- Add `stepTemplate` feature. Steps in exchanges may be optionally
+  specified as templates that will use the variables from the exchange.
+
 ## 3.4.1 - 2023-08-21
 
 ### Fixed
