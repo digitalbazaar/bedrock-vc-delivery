@@ -139,8 +139,8 @@ const step = {
   // step can either use a template so it will be generated using variables
   // associated with the exchange, or static values can be provided
   oneOf: [{
-    // `template` must be present and nothing else
-    required: ['template'],
+    // `stepTemplate` must be present and nothing else
+    required: ['stepTemplate'],
     not: {
       required: [
         'createChallenge',
@@ -150,9 +150,9 @@ const step = {
       ]
     }
   }, {
-    // anything except `template` can be used
+    // anything except `stepTemplate` can be used
     not: {
-      required: ['template']
+      required: ['stepTemplate']
     }
   }],
   properties: {
@@ -194,8 +194,7 @@ const step = {
     nextStep: {
       type: 'string'
     },
-    // FIXME: `stepTemplate` instead?
-    template: typedTemplate
+    stepTemplate: typedTemplate
   }
 };
 
