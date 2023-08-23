@@ -135,6 +135,7 @@ export const credentialTemplates = {
 const step = {
   title: 'Exchange Step',
   type: 'object',
+  minProperties: 1,
   additionalProperties: false,
   // step can either use a template so it will be generated using variables
   // associated with the exchange, or static values can be provided
