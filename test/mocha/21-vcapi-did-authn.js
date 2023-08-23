@@ -377,3 +377,116 @@ describe('exchange w/ VC-API delivery + DID authn + generic template', () => {
     vc.id.should.equal(credentialId);
   });
 });
+
+describe('exchange w/ VC-API presentation + templated DID authn', () => {
+  let capabilityAgent;
+  let exchangerId;
+  let exchangerRootZcap;
+  beforeEach(async () => {
+    const deps = await helpers.provisionDependencies();
+    const {
+      exchangerCreateChallengeZcap,
+      exchangerVerifyPresentationZcap
+    } = deps;
+    ({capabilityAgent} = deps);
+
+    // create exchanger instance w/ oauth2-based authz
+    const zcaps = {
+      createChallenge: exchangerCreateChallengeZcap,
+      verifyPresentation: exchangerVerifyPresentationZcap
+    };
+    // require semantically-named exchanger steps
+    const steps = {
+      // DID Authn step
+      didAuthn: {
+        stepTemplate: {
+          type: 'jsonata',
+          template: `
+          {
+            "createChallenge": true,
+            "verifiablePresentationRequest": {
+              "query": query,
+              "domain": domain
+            }
+          }`
+        }
+      }
+    };
+    // set initial step
+    const initialStep = 'didAuthn';
+    const exchangerConfig = await helpers.createExchangerConfig({
+      capabilityAgent, zcaps, steps, initialStep
+    });
+    exchangerId = exchangerConfig.id;
+    exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
+  });
+
+  it('should pass', async () => {
+    // create an exchange with appropriate variables for the step template
+    const exchange = {
+      // 15 minute expiry in seconds
+      ttl: 60 * 15,
+      // template variables
+      variables: {
+        query: {
+          type: 'DIDAuthentication',
+          acceptedMethods: [{method: 'key'}]
+        },
+        domain: baseUrl
+      }
+    };
+    const {id: exchangeId} = await helpers.createExchange({
+      url: `${exchangerId}/exchanges`,
+      capabilityAgent, capability: exchangerRootZcap, exchange
+    });
+
+    // post to exchange URL to get expected VPR
+    let response = await httpClient.post(
+      exchangeId, {agent, json: {}});
+    should.exist(response?.data?.verifiablePresentationRequest);
+    const {data: {verifiablePresentationRequest: vpr}} = response;
+    const expectedVpr = {
+      query: {
+        type: 'DIDAuthentication',
+        acceptedMethods: [{method: 'key'}]
+      },
+      domain: baseUrl
+    };
+    expectedVpr.query.should.deep.equal(vpr.query);
+    expectedVpr.domain.should.deep.equal(vpr.domain);
+    should.exist(vpr.challenge);
+
+    // generate VP
+    const {domain, challenge} = vpr;
+    const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
+      {domain, challenge});
+
+    response = await httpClient.post(
+      exchangeId, {agent, json: {verifiablePresentation}});
+    // should be no VP nor VPR in the response, indicating the end of the
+    // exchange (and nothing was issued, just presented)
+    should.not.exist(response?.data?.verifiablePresentation);
+    should.not.exist(response?.data?.verifiablePresentationRequest);
+
+    // exchange should be complete and contain the submitted VPR
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+        should.exist(exchange?.variables?.results?.didAuthn);
+        should.exist(
+          exchange?.variables?.results?.didAuthn?.verifiablePresentation);
+        exchange?.variables?.results?.didAuthn.did.should.equal(did);
+        exchange.variables.results.didAuthn.verifiablePresentation
+          .should.deep.equal(verifiablePresentation);
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+  });
+});
