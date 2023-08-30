@@ -432,7 +432,7 @@ describe('exchange w/ VC-API presentation + templated DID authn', () => {
           type: 'DIDAuthentication',
           acceptedMethods: [{method: 'key'}]
         },
-        domain: baseUrl
+        domain: 'some-random-string-that-should-work'
       }
     };
     const {id: exchangeId} = await helpers.createExchange({
@@ -450,7 +450,7 @@ describe('exchange w/ VC-API presentation + templated DID authn', () => {
         type: 'DIDAuthentication',
         acceptedMethods: [{method: 'key'}]
       },
-      domain: baseUrl
+      domain: exchange.variables.domain
     };
     expectedVpr.query.should.deep.equal(vpr.query);
     expectedVpr.domain.should.deep.equal(vpr.domain);
