@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 3.5.1 - 2023-08-dd
+## 3.5.1 - 2023-08-30
 
 ### Fixed
 - Ensure expected `domain` matches value from VPR in exchange.
