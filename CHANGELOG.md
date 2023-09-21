@@ -1,5 +1,13 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.0.0 - 2023-09-xx
+
+### Changed
+- **BREAKING**: Update peer deps:
+  - Use `@bedrock/oauth2-verifier@2`.
+  - Use `@bedrock/service-agent@8`.
+  - Use `@bedrock/service-core@9`.
+
 ## 3.5.1 - 2023-08-30
 
 ### Fixed
