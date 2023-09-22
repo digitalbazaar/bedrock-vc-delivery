@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.0.0 - 2023-09-xx
+## 4.0.0 - 2023-09-22
 
 ### Changed
 - **BREAKING**: Update peer deps:
