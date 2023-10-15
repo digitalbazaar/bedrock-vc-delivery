@@ -301,3 +301,59 @@ export const openIdTokenBody = {
     // }
   }
 };
+
+const presentationDescriptor = {
+  title: 'Presentation Submission Descriptor',
+  type: 'object',
+  additionalProperties: false,
+  required: ['id', 'format', 'path'],
+  properties: {
+    id: {
+      type: 'string'
+    },
+    format: {
+      type: 'string'
+    },
+    path: {
+      type: 'string'
+    },
+    path_nested: {
+      type: 'object'
+    }
+  }
+};
+
+const presentationSubmission = {
+  title: 'Presentation Submission',
+  type: 'object',
+  additionalProperties: false,
+  required: ['id', 'definition_id', 'descriptor_map'],
+  properties: {
+    id: {
+      type: 'string'
+    },
+    definition_id: {
+      type: 'string'
+    },
+    descriptor_map: {
+      title: 'Presentation Submission Descriptor Map',
+      type: 'array',
+      minItems: 0,
+      items: presentationDescriptor
+    }
+  }
+};
+
+export const openIdAuthorizationResponseBody = {
+  title: 'OID4VP Authorization Response',
+  type: 'object',
+  additionalProperties: false,
+  required: ['presentation_submission', 'vp_token'],
+  properties: {
+    presentation_submission: presentationSubmission,
+    vp_token: schemas.verifiablePresentation(),
+    state: {
+      type: 'string'
+    }
+  }
+};
