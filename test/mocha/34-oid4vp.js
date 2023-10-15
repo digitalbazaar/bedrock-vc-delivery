@@ -3,8 +3,7 @@
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
-// FIXME: remove if no longer used
-//import {httpClient} from '@digitalbazaar/http-client';
+import {httpClient} from '@digitalbazaar/http-client';
 import {mockData} from './mock.data.js';
 import {oid4vp} from '@digitalbazaar/oid4-client';
 
@@ -44,7 +43,7 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
               "client_id": globals.exchanger.id &
                 "/exchanges/" &
                 globals.exchange.id &
-                "/client/authorization/response"
+                "/openid/client/authorization/response"
             }
           }`
         }
@@ -86,9 +85,6 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
     const {authorizationRequest} = await getAuthorizationRequest(
       {url: authzReqUrl, agent});
 
-    // FIXME: remove me
-    //console.log('authorizationRequest', authorizationRequest);
-
     should.exist(authorizationRequest);
     should.exist(authorizationRequest.presentation_definition);
     authorizationRequest.presentation_definition.id.should.be.a('string');
@@ -98,25 +94,33 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
     authorizationRequest.nonce.should.be.a('string');
 
     // generate VPR from authorization request
-    //const vpr = await oid4vp.toVpr({authorizationRequest});
-    // FIXME: remove me
-    //console.log('vpr', JSON.stringify(vpr, null, 2));
-
-    /*
+    const {verifiablePresentationRequest} = await oid4vp.toVpr(
+      {authorizationRequest});
 
     // generate VP
-    const {domain, challenge} = vpr;
+    const {domain, challenge} = verifiablePresentationRequest;
     const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
       {domain, challenge});
 
-    response = await httpClient.post(
-      exchangeId, {agent, json: {verifiablePresentation}});
-    // should be no VP nor VPR in the response, indicating the end of the
-    // exchange (and nothing was issued, just presented)
-    should.not.exist(response?.data?.verifiablePresentation);
-    should.not.exist(response?.data?.verifiablePresentationRequest);
+    // create presentation submission
+    const {presentationSubmission} = oid4vp.createPresentationSubmission({
+      presentationDefinition: authorizationRequest.presentation_definition,
+      verifiablePresentation
+    });
 
-    // exchange should be complete and contain the submitted VPR
+    // FIXME: use oid4-client for this
+    const body = new URLSearchParams();
+    body.set('vp_token', JSON.stringify(verifiablePresentation));
+    body.set('presentation_submission', JSON.stringify(presentationSubmission));
+    const response = await httpClient.post(authorizationRequest.response_uri, {
+      agent, body, headers: {accept: 'application/json'}
+    });
+    // should be only an optional `redirect_uri` in the response
+    should.exist(response);
+    should.exist(response.data);
+    //should.exist(response.data.redirect_uri);
+
+    // exchange should be complete and contain the VP and open ID results
     // exchange state should be complete
     {
       let err;
@@ -131,10 +135,15 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
         exchange?.variables?.results?.didAuthn.did.should.equal(did);
         exchange.variables.results.didAuthn.verifiablePresentation
           .should.deep.equal(verifiablePresentation);
+        should.exist(exchange.variables.results.didAuthn.openId);
+        exchange.variables.results.didAuthn.openId.authorizationRequest
+          .should.deep.equal(authorizationRequest);
+        exchange.variables.results.didAuthn.openId.presentationSubmission
+          .should.deep.equal(presentationSubmission);
       } catch(error) {
         err = error;
       }
       should.not.exist(err);
-    }*/
+    }
   });
 });
