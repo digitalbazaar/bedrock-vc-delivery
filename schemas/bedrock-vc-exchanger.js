@@ -344,16 +344,18 @@ const presentationSubmission = {
   }
 };
 
-export const openIdAuthorizationResponseBody = {
-  title: 'OID4VP Authorization Response',
-  type: 'object',
-  additionalProperties: false,
-  required: ['presentation_submission', 'vp_token'],
-  properties: {
-    presentation_submission: presentationSubmission,
-    vp_token: schemas.verifiablePresentation(),
-    state: {
-      type: 'string'
+export function openIdAuthorizationResponseBody() {
+  return {
+    title: 'OID4VP Authorization Response',
+    type: 'object',
+    additionalProperties: false,
+    required: ['presentation_submission', 'vp_token'],
+    properties: {
+      presentation_submission: presentationSubmission,
+      vp_token: schemas.verifiablePresentation(),
+      state: {
+        type: 'string'
+      }
     }
-  }
-};
+  };
+}
