@@ -1,5 +1,17 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.1.0 - 2023-10-dd
+
+### Added
+- Add `redirectUrl` feature in VC API exchanges. A `redirectUrl` can
+  now be specified in a `step` to be included in the result of the
+  step that is passed to the client.
+- Add optional OID4VP presentation exchange. The current implementation
+  is largely experimental and subject to change, just as the OID4VP spec
+  is undergoing rapid development and is in a draft stage. The current
+  implementation was written against OID4VP draft 20 and only supports
+  a profile of OID4VP that uses data integrity / LDP protected VPs and VCs.
+
 ## 4.0.0 - 2023-09-22
 
 ### Changed
