@@ -52,7 +52,7 @@
     "@digitalbazaar/edv-client": "^16.0.0",
     "@digitalbazaar/ezcap": "^4.0.0",
     "@digitalbazaar/http-client": "^4.0.0",
-    "@digitalbazaar/oid4-client": "^3.0.1",
+    "@digitalbazaar/oid4-client": "digitalbazaar/oid4-client#oid4vp",
     "@digitalbazaar/vc": "^6.0.0",
     "@digitalbazaar/vc-status-list": "^7.0.0",
     "@digitalbazaar/webkms-client": "^13.0.0",
