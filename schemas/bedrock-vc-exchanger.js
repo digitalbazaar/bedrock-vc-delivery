@@ -323,7 +323,7 @@ const presentationDescriptor = {
   }
 };
 
-const presentationSubmission = {
+export const presentationSubmission = {
   title: 'Presentation Submission',
   type: 'object',
   additionalProperties: false,
@@ -351,8 +351,14 @@ export function openIdAuthorizationResponseBody() {
     additionalProperties: false,
     required: ['presentation_submission', 'vp_token'],
     properties: {
-      presentation_submission: presentationSubmission,
-      vp_token: schemas.verifiablePresentation(),
+      // is a JSON string in the x-www-form-urlencoded body
+      presentation_submission: {
+        type: 'string'
+      },
+      // is a JSON string in the x-www-form-urlencoded body
+      vp_token: {
+        type: 'string'
+      },
       state: {
         type: 'string'
       }
