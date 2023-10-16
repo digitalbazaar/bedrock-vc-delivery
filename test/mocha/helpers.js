@@ -9,7 +9,9 @@ import {
   importJWK,
   SignJWT
 } from 'jose';
-import {createPresentation, signPresentation} from '@digitalbazaar/vc';
+import {
+  createPresentation, defaultDocumentLoader, signPresentation
+} from '@digitalbazaar/vc';
 import {KeystoreAgent, KmsClient} from '@digitalbazaar/webkms-client';
 import {agent} from '@bedrock/https-agent';
 import {CapabilityAgent} from '@digitalbazaar/webkms-client';
@@ -32,6 +34,24 @@ const edvBaseUrl = `${mockData.baseUrl}/edvs`;
 const kmsBaseUrl = `${mockData.baseUrl}/kms`;
 
 const FIVE_MINUTES = 1000 * 60 * 5;
+
+// create document loader with contexts for VCs from `mock.data.js`
+const contexts = new Map();
+contexts.set(
+  'https://www.w3.org/2018/credentials/examples/v1', mockData.examplesContext);
+
+const documentLoader = async url => {
+  const document = contexts.get(url);
+  if(document !== undefined) {
+    return {
+      contextUrl: null,
+      documentUrl: url,
+      document,
+      tag: 'static'
+    };
+  }
+  return defaultDocumentLoader(url);
+};
 
 // Note: `userId` left here to model how systems would potentially integrate
 // with VC-API exchange services
@@ -267,12 +287,18 @@ export async function getOAuth2AccessToken({
   return builder.sign(key);
 }
 
-export async function createDidAuthnVP({domain, challenge}) {
+export async function createDidAuthnVP({
+  domain, challenge, verifiableCredential
+}) {
   const {did, signer} = await createDidProofSigner();
   const presentation = createPresentation({holder: did});
+  if(verifiableCredential) {
+    presentation.verifiableCredential = verifiableCredential;
+  }
   const verifiablePresentation = await signPresentation({
     suite: new Ed25519Signature2020({signer}),
-    presentation, domain, challenge
+    presentation, domain, challenge,
+    documentLoader
   });
   return {verifiablePresentation, did};
 }
