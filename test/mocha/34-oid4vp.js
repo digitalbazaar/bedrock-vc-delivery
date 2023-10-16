@@ -103,23 +103,15 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
     const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
       {domain, challenge});
 
-    // create presentation submission
-    const {presentationSubmission} = oid4vp.createPresentationSubmission({
-      presentationDefinition: authorizationRequest.presentation_definition,
-      verifiablePresentation
-    });
-
-    // FIXME: use oid4-client for this
-    const body = new URLSearchParams();
-    body.set('vp_token', JSON.stringify(verifiablePresentation));
-    body.set('presentation_submission', JSON.stringify(presentationSubmission));
-    const response = await httpClient.post(authorizationRequest.response_uri, {
-      agent, body, headers: {accept: 'application/json'}
+    // send authorization response
+    const {
+      result, presentationSubmission
+    } = await oid4vp.sendAuthorizationResponse({
+      verifiablePresentation, authorizationRequest, agent
     });
     // should be only an optional `redirect_uri` in the response
-    should.exist(response);
-    should.exist(response.data);
-    //should.exist(response.data.redirect_uri);
+    should.exist(result);
+    //should.exist(result.redirect_uri);
 
     // exchange should be complete and contain the VP and open ID results
     // exchange state should be complete
@@ -329,23 +321,15 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
     const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
       {domain, challenge, verifiableCredential});
 
-    // create presentation submission
-    const {presentationSubmission} = oid4vp.createPresentationSubmission({
-      presentationDefinition: authorizationRequest.presentation_definition,
-      verifiablePresentation
-    });
-
-    // FIXME: use oid4-client for this
-    const body = new URLSearchParams();
-    body.set('vp_token', JSON.stringify(verifiablePresentation));
-    body.set('presentation_submission', JSON.stringify(presentationSubmission));
-    const response = await httpClient.post(authorizationRequest.response_uri, {
-      agent, body, headers: {accept: 'application/json'}
+    // send authorization response
+    const {
+      result, presentationSubmission
+    } = await oid4vp.sendAuthorizationResponse({
+      verifiablePresentation, authorizationRequest, agent
     });
     // should be only an optional `redirect_uri` in the response
-    should.exist(response);
-    should.exist(response.data);
-    //should.exist(response.data.redirect_uri);
+    should.exist(result);
+    //should.exist(result.redirect_uri);
 
     // exchange should be complete and contain the VP and open ID results
     // exchange state should be complete
