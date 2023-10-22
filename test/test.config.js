@@ -5,6 +5,7 @@ import {config} from '@bedrock/core';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import '@bedrock/app-identity';
+import '@bedrock/did-io';
 import '@bedrock/https-agent';
 import '@bedrock/mongodb';
 import '@bedrock/service-agent';
@@ -47,3 +48,6 @@ config['app-identity'].seeds.services['vc-verifier'] = {
 
 // use local KMS for testing
 config['service-agent'].kms.baseUrl = 'https://localhost:18443/kms';
+
+// disable veres one fetching
+config['did-io'].methodOverrides.v1.disableFetch = true;
