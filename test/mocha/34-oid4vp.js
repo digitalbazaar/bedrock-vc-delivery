@@ -81,8 +81,18 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
       capabilityAgent, capability: exchangerRootZcap, exchange
     });
 
-    // get authorization request
+    // request URI
     const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
+
+    // `openid4vp` URL would be:
+    /*
+    const searchParams = new URLSearchParams({
+      client_id: `${exchangeId}/openid/client/authorization/response`,
+      request_uri: authzReqUrl
+    });
+    const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();*/
+
+    // get authorization request
     const {authorizationRequest} = await getAuthorizationRequest(
       {url: authzReqUrl, agent});
 
