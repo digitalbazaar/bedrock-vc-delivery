@@ -8,7 +8,7 @@ import {mockData} from './mock.data.js';
 import {oid4vp} from '@digitalbazaar/oid4-client';
 import {v4 as uuid} from 'uuid';
 
-const {baseUrl, credentialTemplate} = mockData;
+const {baseUrl, alumniCredentialTemplate} = mockData;
 const {getAuthorizationRequest} = oid4vp;
 
 describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
@@ -173,7 +173,7 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
     };
     const credentialTemplates = [{
       type: 'jsonata',
-      template: credentialTemplate
+      template: alumniCredentialTemplate
     }];
     const exchangerConfig = await helpers.createExchangerConfig(
       {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
@@ -268,7 +268,7 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
                   'https://www.w3.org/2018/credentials/v1',
                   'https://www.w3.org/2018/credentials/examples/v1'
                 ],
-                type: 'UniversityDegreeCredential'
+                type: 'AlumniCredential'
               }
             }],
           }],
@@ -280,9 +280,17 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
       url: `${exchangerId}/exchanges`,
       capabilityAgent, capability: exchangerRootZcap, exchange
     });
+    const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
+
+    // `openid4vp` URL would be:
+    /*const searchParams = new URLSearchParams({
+      client_id: `${exchangeId}/openid/client/authorization/response`,
+      request_uri: authzReqUrl
+    });
+    const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();
+    console.log('openid4vpUrl', openid4vpUrl);*/
 
     // get authorization request
-    const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
     const {authorizationRequest} = await getAuthorizationRequest(
       {url: authzReqUrl, agent});
 
@@ -315,7 +323,7 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
               'https://www.w3.org/2018/credentials/v1',
               'https://www.w3.org/2018/credentials/examples/v1'
             ],
-            type: 'UniversityDegreeCredential'
+            type: 'AlumniCredential'
           }
         }]
       }],

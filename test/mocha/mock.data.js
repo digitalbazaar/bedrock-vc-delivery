@@ -99,6 +99,27 @@ mockData.credentialTemplate = `
   }
 `;
 
+mockData.alumniCredentialTemplate = `
+  {
+    "@context": [
+      "https://www.w3.org/2018/credentials/v1",
+      "https://www.w3.org/2018/credentials/examples/v1"
+    ],
+    "id": credentialId,
+    "type": [
+      "VerifiableCredential",
+      "AlumniCredential"
+    ],
+    "issuanceDate": issuanceDate,
+    "credentialSubject": {
+      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "alumniOf": {
+        "name": "Example University"
+      }
+    }
+  }
+`;
+
 mockData.genericCredentialTemplate = `$eval(vc)`;
 
 /* eslint-disable */
