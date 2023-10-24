@@ -147,7 +147,8 @@ const step = {
         'createChallenge',
         'verifiablePresentationRequest',
         'jwtDidProofRequest',
-        'nextStep'
+        'nextStep',
+        'openId'
       ]
     }
   }, {
@@ -195,7 +196,37 @@ const step = {
     nextStep: {
       type: 'string'
     },
-    stepTemplate: typedTemplate
+    stepTemplate: typedTemplate,
+    // required to support OID4VP (but can be provided by step template instead)
+    openId: {
+      type: 'object',
+      additionalProperties: false,
+      // an authorization request or a directive to create one can be used,
+      // but not both
+      oneOf: [{
+        required: ['createAuthorizationRequest'],
+        // cannot also use `authorizationRequest
+        not: {
+          required: ['authorizationRequest']
+        }
+      }, {
+        required: ['authorizationRequest'],
+        // cannot also use `createAuthorizationRequest`
+        not: {
+          required: ['createAuthorizationRequest']
+        }
+      }],
+      properties: {
+        // value is name of variable to store the created authz request in
+        createAuthorizationRequest: {
+          type: 'string'
+        },
+        // ... or full authz request to use
+        authorizationRequest: {
+          type: 'object'
+        }
+      }
+    }
   }
 };
 
