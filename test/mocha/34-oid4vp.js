@@ -226,9 +226,7 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
           {
             "createChallenge": true,
             "verifiablePresentationRequest": verifiablePresentationRequest,
-            "openId": {
-              "createAuthorizationRequest": "authorizationRequest"
-            }
+            "openId": openId
           }`
         }
       }
@@ -268,6 +266,9 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
             }],
           }],
           domain: baseUrl
+        },
+        openId: {
+          createAuthorizationRequest: 'authorizationRequest'
         }
       }
     };
