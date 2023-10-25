@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.1.0 - 2023-10-dd
+## 4.1.0 - 2023-10-25
 
 ### Added
 - Add `redirectUrl` feature in VC API exchanges. A `redirectUrl` can
