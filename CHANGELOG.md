@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.1.2 - 2023-10-dd
+## 4.1.2 - 2023-10-25
 
 ### Fixed
 - Fix `client_id_scheme` default check.
