@@ -227,12 +227,7 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
             "createChallenge": true,
             "verifiablePresentationRequest": verifiablePresentationRequest,
             "openId": {
-              "createAuthorizationRequest": "authorizationRequest",
-              "client_id_scheme": "redirect_uri",
-              "client_id": globals.exchanger.id &
-                "/exchanges/" &
-                globals.exchange.id &
-                "/openid/client/authorization/response"
+              "createAuthorizationRequest": "authorizationRequest"
             }
           }`
         }

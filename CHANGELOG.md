@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.1.1 - 2023-10-dd
+
+### Fixed
+- Fix OID4VP defaults for `client_id` and `client_id_scheme`.
+
 ## 4.1.0 - 2023-10-25
 
 ### Added
