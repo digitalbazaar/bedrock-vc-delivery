@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.2.0 - 2023-11-dd
+## 4.2.0 - 2023-11-28
 
 ### Added
 - Add extra oauth/openid config `/.well-known` paths to
