@@ -1,5 +1,12 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.2.0 - 2023-11-dd
+
+### Added
+- Add extra oauth/openid config `/.well-known` paths to
+  accommodate clients that have implemented against what
+  is likely an OID4VCI draft bug.
+
 ## 4.1.2 - 2023-10-25
 
 ### Fixed
