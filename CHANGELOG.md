@@ -1,5 +1,14 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.3.0 - 2023-12-dd
+
+### Added
+- Add support for receiving the `types` property in posted credential
+  definitions during OID4VCI even if that does not match the served
+  credential definition in the protocol. The property should likely
+  be `type` to match the VC data model, but a OID4VCI draft uses
+  `types` in an example and clients have implemented this.
+
 ## 4.2.0 - 2023-11-28
 
 ### Added
