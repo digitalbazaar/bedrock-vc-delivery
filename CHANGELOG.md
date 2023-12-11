@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.3.0 - 2023-12-dd
+## 4.3.0 - 2023-12-11
 
 ### Added
 - Add support for receiving the `types` property in posted credential
