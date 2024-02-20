@@ -567,7 +567,7 @@ export async function provisionIssuer({capabilityAgent, keystoreAgent}) {
     invocationTarget: keyAgreementKey.kmsId,
     delegator: capabilityAgent
   });
-  zcaps[`assertionMethod:${assertionMethodKey.algorithm}`] = await delegate({
+  zcaps.assertionMethod = await delegate({
     capability: `urn:zcap:root:${encodeURIComponent(keystoreId)}`,
     controller: issuerServiceAgent.id,
     invocationTarget: assertionMethodKey.kmsId,
