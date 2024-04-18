@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2023 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
@@ -8,7 +8,9 @@ import {mockData} from './mock.data.js';
 import {v4 as uuid} from 'uuid';
 
 const {
-  credentialTemplate, genericCredentialTemplate, prcCredentialTemplate
+  credentialTemplate, credentialRequestTemplate,
+  genericCredentialRequestTemplate, genericCredentialTemplate,
+  prcCredentialTemplate
 } = mockData;
 
 describe('exchange w/ VC-API delivery', () => {
@@ -237,6 +239,100 @@ describe('exchange w/ VC-API delivery', () => {
   });
 });
 
+describe('exchange w/ VC-API delivery using credential request ' +
+  'template', () => {
+  let capabilityAgent;
+  let exchangerId;
+  let exchangerRootZcap;
+  beforeEach(async () => {
+    const deps = await helpers.provisionDependencies();
+    const {
+      exchangerIssueZcap,
+      exchangerCredentialStatusZcap,
+      exchangerCreateChallengeZcap,
+      exchangerVerifyPresentationZcap
+    } = deps;
+    ({capabilityAgent} = deps);
+
+    // create exchanger instance w/ oauth2-based authz
+    const zcaps = {
+      issue: exchangerIssueZcap,
+      credentialStatus: exchangerCredentialStatusZcap,
+      createChallenge: exchangerCreateChallengeZcap,
+      verifyPresentation: exchangerVerifyPresentationZcap
+    };
+    const credentialTemplates = [{
+      type: 'jsonata',
+      template: credentialRequestTemplate
+    }];
+    const exchangerConfig = await helpers.createExchangerConfig(
+      {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
+    exchangerId = exchangerConfig.id;
+    exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
+  });
+
+  it('should pass', async () => {
+    // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+
+    /* This flow demonstrates passing a DID Authn request and interact VC-API
+    exchange URL through CHAPI. The request is passed to a "Claimed URL"
+    which was registered on a user's device by a native app. The native app's
+    domain also published a "manifest.json" file that expressed the same
+    "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
+    `credential_handler.launchType='redirect'` (TBD). */
+
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      exchangerId,
+      exchangerRootZcap
+    });
+
+    const chapiRequest = {
+      VerifiablePresentation: {
+        interact: {
+          service: [{
+            type: 'VerifiableCredentialApiExchangeService',
+            serviceEndpoint: exchangeId
+          }]
+        }
+      }
+    };
+    // CHAPI could potentially be used to deliver the URL to a native app
+    // that registered a "claimed URL" of `https://myapp.examples/ch`
+    // like so:
+    const claimedUrlFromChapi = 'https://myapp.example/ch?request=' +
+      encodeURIComponent(JSON.stringify(chapiRequest));
+    const parsedClaimedUrl = new URL(claimedUrlFromChapi);
+    const parsedChapiRequest = JSON.parse(
+      parsedClaimedUrl.searchParams.get('request'));
+
+    // post empty body and get VP w/VCs in response
+    const {
+      VerifiablePresentation: {
+        interact: {
+          service: [{serviceEndpoint: url}]
+        }
+      }
+    } = parsedChapiRequest;
+    const response = await httpClient.post(url, {agent, json: {}});
+    const {verifiablePresentation: vp} = response.data;
+    // ensure credential subject ID matches static DID
+    should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
+    const {verifiableCredential: [vc]} = vp;
+    vc.credentialSubject.id.should.equal(
+      'did:example:ebfeb1f712ebc6f1c276e12ec21');
+    // ensure VC ID is NOT present
+    should.not.exist(vc.id);
+  });
+});
+
 describe('exchange w/ VC-API delivery using prc template', () => {
   let capabilityAgent;
   let exchangerId;
@@ -334,6 +430,133 @@ describe('exchange w/ VC-API delivery using prc template', () => {
     // ensure VC ID matches
     should.exist(vc.id);
     vc.id.should.equal(credentialId);
+  });
+});
+
+describe('exchange w/ VC-API delivery using generic credential request ' +
+  'template', () => {
+  let capabilityAgent;
+  let exchangerId;
+  let exchangerRootZcap;
+  beforeEach(async () => {
+    const deps = await helpers.provisionDependencies();
+    const {
+      exchangerIssueZcap,
+      exchangerCredentialStatusZcap,
+      exchangerCreateChallengeZcap,
+      exchangerVerifyPresentationZcap
+    } = deps;
+    ({capabilityAgent} = deps);
+
+    // create exchanger instance w/ oauth2-based authz
+    const zcaps = {
+      issue: exchangerIssueZcap,
+      credentialStatus: exchangerCredentialStatusZcap,
+      createChallenge: exchangerCreateChallengeZcap,
+      verifyPresentation: exchangerVerifyPresentationZcap
+    };
+    const credentialTemplates = [{
+      type: 'jsonata',
+      template: genericCredentialRequestTemplate
+    }];
+    const exchangerConfig = await helpers.createExchangerConfig(
+      {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
+    exchangerId = exchangerConfig.id;
+    exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
+  });
+
+  it('should pass', async () => {
+    // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+
+    /* This flow demonstrates passing a DID Authn request and interact VC-API
+    exchange URL through CHAPI. The request is passed to a "Claimed URL"
+    which was registered on a user's device by a native app. The native app's
+    domain also published a "manifest.json" file that expressed the same
+    "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
+    `credential_handler.launchType='redirect'` (TBD). */
+
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      exchangerId,
+      exchangerRootZcap,
+      variables: {
+        credentialId,
+        credentialRequest: `{
+          'options': {
+            'credentialId': $credentialId
+          },
+          'credential': {
+            '@context': [
+              'https://www.w3.org/2018/credentials/v1',
+              'https://www.w3.org/2018/credentials/examples/v1'
+            ],
+            'type': [
+              'VerifiableCredential',
+              'UniversityDegreeCredential'
+            ],
+            'issuanceDate': $issuanceDate,
+            'credentialSubject': {
+              'id': 'did:example:ebfeb1f712ebc6f1c276e12ec21',
+              'degree': {
+                'type': 'BachelorDegree',
+                'name': 'Bachelor of Science and Arts'
+              }
+            }
+          }
+        }`
+      }
+    });
+    const chapiRequest = {
+      VerifiablePresentation: {
+        interact: {
+          service: [{
+            type: 'VerifiableCredentialApiExchangeService',
+            serviceEndpoint: exchangeId
+          }]
+        }
+      }
+    };
+    // CHAPI could potentially be used to deliver the URL to a native app
+    // that registered a "claimed URL" of `https://myapp.examples/ch`
+    // like so:
+    const claimedUrlFromChapi = 'https://myapp.example/ch?request=' +
+      encodeURIComponent(JSON.stringify(chapiRequest));
+    const parsedClaimedUrl = new URL(claimedUrlFromChapi);
+    const parsedChapiRequest = JSON.parse(
+      parsedClaimedUrl.searchParams.get('request'));
+
+    // post empty body and get VP w/VCs in response
+    const {
+      VerifiablePresentation: {
+        interact: {
+          service: [{serviceEndpoint: url}]
+        }
+      }
+    } = parsedChapiRequest;
+    let response;
+    let err;
+    try {
+      response = await httpClient.post(url, {agent, json: {}});
+    } catch(e) {
+      err = e;
+    }
+    should.exist(response);
+    should.not.exist(err);
+    const {verifiablePresentation: vp} = response.data;
+    // ensure credential subject ID matches static DID
+    should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
+    const {verifiableCredential: [vc]} = vp;
+    vc.credentialSubject.id.should.equal(
+      'did:example:ebfeb1f712ebc6f1c276e12ec21');
+    // ensure VC ID is NOT present
+    should.not.exist(vc.id);
   });
 });
 
