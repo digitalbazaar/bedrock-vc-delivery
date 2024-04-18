@@ -1,5 +1,13 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.4.0 - 2024-mm-dd
+
+### Added
+- Allow an evaluated credential template to produce a VC API issue
+  credential request (i.e., including the `credential` param and
+  any other optional params) as an optional alternative to returning
+  only the value of the `credential` param for issuance.
+
 ## 4.3.0 - 2023-12-11
 
 ### Added

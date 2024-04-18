@@ -1,5 +1,5 @@
 /*!
-* Copyright (c) 2019-2023 Digital Bazaar, Inc. All rights reserved.
+* Copyright (c) 2019-2024 Digital Bazaar, Inc. All rights reserved.
 */
 import {config} from '@bedrock/core';
 
@@ -120,6 +120,33 @@ mockData.alumniCredentialTemplate = `
   }
 `;
 
+mockData.credentialRequestTemplate = `
+  {
+    "options": {
+      "credentialId": credentialId
+    },
+    "credential": {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://www.w3.org/2018/credentials/examples/v1"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "UniversityDegreeCredential"
+      ],
+      "issuanceDate": issuanceDate,
+      "credentialSubject": {
+        "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+        "degree": {
+          "type": "BachelorDegree",
+          "name": "Bachelor of Science and Arts"
+        }
+      }
+    }
+  }
+`;
+
+mockData.genericCredentialRequestTemplate = `$eval(credentialRequest)`;
 mockData.genericCredentialTemplate = `$eval(vc)`;
 
 /* eslint-disable */
