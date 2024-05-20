@@ -102,7 +102,7 @@ export async function createCredentialOffer({
     };
 
     if(preAuthorized) {
-      exchange.openId.preAuthorizedCode = await _generateRandom();
+      exchange.openId.preAuthorizedCode = await generateRandom();
       const grant = {'pre-authorized_code': exchange.openId.preAuthorizedCode};
       offer.grants['urn:ietf:params:oauth:grant-type:pre-authorized_code'] =
         grant;
@@ -172,10 +172,10 @@ export async function createConfig({
 
 export async function createExchangerConfig({
   capabilityAgent, ipAllowList, meterId, zcaps, credentialTemplates,
-  steps, initialStep, oauth2 = false
+  steps, initialStep, oauth2 = false,
+  configOptions = {credentialTemplates, steps, initialStep}
 } = {}) {
   const url = `${mockData.baseUrl}/exchangers`;
-  const configOptions = {credentialTemplates, steps, initialStep};
   return createConfig({
     serviceType: 'vc-exchanger',
     url, capabilityAgent, ipAllowList, meterId, zcaps, configOptions, oauth2
@@ -462,6 +462,16 @@ export async function delegate({
   });
 }
 
+export function generateRandom() {
+  // 128-bit random number, base58 multibase + multihash encoded
+  return generateId({
+    bitLength: 128,
+    encoding: 'base58',
+    multibase: true,
+    multihash: true
+  });
+}
+
 export async function getCredentialStatus({verifiableCredential}) {
   // get SLC for the VC
   const {credentialStatus} = verifiableCredential;
@@ -711,14 +721,4 @@ async function keyResolver({id}) {
   // support HTTP-based keys; currently a requirement for WebKMS
   const {data} = await httpClient.get(id, {agent: httpsAgent});
   return data;
-}
-
-function _generateRandom() {
-  // 128-bit random number, base58 multibase + multihash encoded
-  return generateId({
-    bitLength: 128,
-    encoding: 'base58',
-    multibase: true,
-    multihash: true
-  });
 }

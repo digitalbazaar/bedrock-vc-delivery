@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019-2022 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2024 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
 import * as helpers from './helpers.js';
@@ -42,6 +42,28 @@ describe('provision', () => {
       let result;
       try {
         result = await helpers.createExchangerConfig({capabilityAgent});
+      } catch(e) {
+        err = e;
+      }
+      assertNoError(err);
+      should.exist(result);
+      result.should.have.keys([
+        'controller', 'id', 'sequence', 'meterId'
+      ]);
+      result.sequence.should.equal(0);
+      const {id: capabilityAgentId} = capabilityAgent;
+      result.controller.should.equal(capabilityAgentId);
+    });
+    it('creates a config with a client-chosen ID', async () => {
+      let err;
+      let result;
+      try {
+        const localId = await helpers.generateRandom();
+        result = await helpers.createExchangerConfig({
+          capabilityAgent, configOptions: {
+            id: `${mockData.baseUrl}/exchangers/${localId}`
+          }
+        });
       } catch(e) {
         err = e;
       }
@@ -146,6 +168,55 @@ describe('provision', () => {
       message.should.contain(
         'A capability to issue credentials is required when credential ' +
         'templates are provided.');
+    });
+    it('throws if duplicate client-chosen ID is used', async () => {
+      let err;
+      let result;
+      try {
+        // create config (should pass)
+        result = await helpers.createExchangerConfig({
+          capabilityAgent, configOptions: {
+            id: `${mockData.baseUrl}/exchangers/z1A183gxYRXYFUnHUXsS7KVmA`
+          }
+        });
+        should.exist(result);
+        // try to create duplicate (should throw)
+        result = undefined;
+        result = await helpers.createExchangerConfig({
+          capabilityAgent, configOptions: {
+            id: `${mockData.baseUrl}/exchangers/z1A183gxYRXYFUnHUXsS7KVmA`
+          }
+        });
+      } catch(e) {
+        err = e;
+      }
+      should.exist(err);
+      should.not.exist(result);
+      should.exist(err.data);
+      err.status.should.equal(409);
+      err.data.name.should.equal('DuplicateError');
+      err.data.message.should.contain('Duplicate configuration');
+    });
+    it('throws if invalid client-chosen ID is used', async () => {
+      let err;
+      let result;
+      try {
+        result = await helpers.createExchangerConfig({
+          capabilityAgent, configOptions: {
+            id: `${mockData.baseUrl}/exchangers/foo`
+          }
+        });
+      } catch(e) {
+        err = e;
+      }
+      should.exist(err);
+      should.not.exist(result);
+      should.exist(err.data);
+      err.status.should.equal(400);
+      err.data.name.should.equal('DataError');
+      err.data.message.should.contain('Configuration validation failed');
+      err.data.details.cause.message.should.contain(
+        'Invalid client-provided configuration ID');
     });
     it('creates a config including proper ipAllowList', async () => {
       const ipAllowList = ['127.0.0.1/32', '::1/128'];
