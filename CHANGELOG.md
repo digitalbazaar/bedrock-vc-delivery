@@ -7,6 +7,9 @@
   credential request (i.e., including the `credential` param and
   any other optional params) as an optional alternative to returning
   only the value of the `credential` param for issuance.
+- Allow clients to provide local workflow IDs as long as they meet
+  the local ID validation requirements. This is to enable clients to
+  ensure that they do not create duplicate workflows.
 
 ## 4.3.0 - 2023-12-11
 
