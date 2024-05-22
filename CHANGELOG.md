@@ -10,6 +10,9 @@
 - Allow clients to provide local workflow IDs as long as they meet
   the local ID validation requirements. This is to enable clients to
   ensure that they do not create duplicate workflows.
+- Enable OID4VCI+OID4VP flows that include providing an OID4VP
+  authorization request during a credential request that must be
+  fulfilled prior to accepting the credential request(s).
 
 ## 4.3.0 - 2023-12-11
 
