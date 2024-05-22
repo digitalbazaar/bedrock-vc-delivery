@@ -288,9 +288,11 @@ export async function getOAuth2AccessToken({
 }
 
 export async function createDidAuthnVP({
-  domain, challenge, verifiableCredential
+  domain, challenge, verifiableCredential, did, signer
 }) {
-  const {did, signer} = await createDidProofSigner();
+  if(!(did && signer)) {
+    ({did, signer} = await createDidProofSigner());
+  }
   const presentation = createPresentation({holder: did});
   if(verifiableCredential) {
     presentation.verifiableCredential = verifiableCredential;
