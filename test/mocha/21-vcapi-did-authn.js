@@ -160,6 +160,20 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
       exchangerRootZcap
     });
 
+    // exchange state should be pending
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('pending');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+
     const chapiRequest = {
       VerifiablePresentation: {
         query: {
@@ -194,6 +208,22 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
     } = parsedChapiRequest;
     const vprResponse = await httpClient.post(url, {agent, json: {}});
     should.exist(vprResponse?.data?.verifiablePresentationRequest);
+
+    // exchange state should be active
+    {
+      // give exchange time to update as it can be an asynchronous state change
+      await new Promise(r => setTimeout(r, 500));
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('active');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
 
     // generate VP
     const {domain, challenge} = vprResponse.data.verifiablePresentationRequest;
