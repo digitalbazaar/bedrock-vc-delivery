@@ -285,9 +285,7 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
           const {exchange} = await helpers.getExchange(
             {id: exchangeId, capabilityAgent});
           should.exist(exchange?.state);
-          // FIXME: update to `active` instead of `pending`
-          //exchange.state.should.equal('active');
-          exchange.state.should.equal('pending');
+          exchange.state.should.equal('active');
           should.exist(exchange?.variables?.results?.didAuthn);
           should.exist(
             exchange?.variables?.results?.didAuthn?.verifiablePresentation);

@@ -92,9 +92,37 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
     });
     const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();*/
 
+    // exchange state should be pending
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('pending');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+
     // get authorization request
     const {authorizationRequest} = await getAuthorizationRequest(
       {url: authzReqUrl, agent});
+
+    // exchange state should be active
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('active');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
 
     should.exist(authorizationRequest);
     should.exist(authorizationRequest.presentation_definition);
