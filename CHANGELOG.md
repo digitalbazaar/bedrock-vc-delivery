@@ -13,6 +13,8 @@
 - Enable OID4VCI+OID4VP flows that include providing an OID4VP
   authorization request during a credential request that must be
   fulfilled prior to accepting the credential request(s).
+- Expose `exchangers` base route as `workflows`, keeping `exchangers` as a
+  deprecated alias.
 
 ## 4.3.0 - 2023-12-11
 
