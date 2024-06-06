@@ -56,7 +56,7 @@
     "@bedrock/https-agent": "^4.0.0",
     "@bedrock/mongodb": "^10.0.0",
     "@bedrock/oauth2-verifier": "^2.0.0",
-    "@bedrock/service-agent": "^8.0.0",
+    "@bedrock/service-agent": "github:digitalbazaar/bedrock-service-agent#debug",
     "@bedrock/service-core": "^9.0.0",
     "@bedrock/validation": "^7.1.0"
   },
