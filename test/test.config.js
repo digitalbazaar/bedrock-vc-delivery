@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2020-2022 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2020-2024 Digital Bazaar, Inc. All rights reserved.
  */
 import {config} from '@bedrock/core';
 import {fileURLToPath} from 'node:url';
@@ -16,6 +16,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 config.mocha.options.fullTrace = true;
 config.mocha.tests.push(path.join(__dirname, 'mocha'));
+config.mocha.tests.push(
+  path.join(__dirname, 'mocha', 'backwards-compatibility'));
 
 // MongoDB
 config.mongodb.name = 'bedrock_vc_delivery_test';
