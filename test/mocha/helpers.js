@@ -59,7 +59,7 @@ export async function createCredentialOffer({
   /*userId, */
   credentialDefinition, credentialId, variables,
   preAuthorized, userPinRequired = false,
-  capabilityAgent, exchangerId, exchangerRootZcap,
+  capabilityAgent, workflowId, workflowRootZcap,
   openId = true, openIdKeyPair
 } = {}) {
   // first, create an exchange with variables based on the local user ID;
@@ -118,8 +118,8 @@ export async function createCredentialOffer({
     }
   }
   const {id: exchangeId} = await createExchange({
-    url: `${exchangerId}/exchanges`,
-    capabilityAgent, capability: exchangerRootZcap, exchange
+    url: `${workflowId}/exchanges`,
+    capabilityAgent, capability: workflowRootZcap, exchange
   });
 
   const result = {exchangeId};
@@ -170,14 +170,14 @@ export async function createConfig({
   return response.data;
 }
 
-export async function createExchangerConfig({
+export async function createWorkflowConfig({
   capabilityAgent, ipAllowList, meterId, zcaps, credentialTemplates,
   steps, initialStep, oauth2 = false,
   configOptions = {credentialTemplates, steps, initialStep}
 } = {}) {
-  const url = `${mockData.baseUrl}/exchangers`;
+  const url = `${mockData.baseUrl}/workflows`;
   return createConfig({
-    serviceType: 'vc-exchanger',
+    serviceType: 'vc-workflow',
     url, capabilityAgent, ipAllowList, meterId, zcaps, configOptions, oauth2
   });
 }
@@ -337,9 +337,9 @@ export async function getExchange({id, capabilityAgent, accessToken} = {}) {
   }
   // do zcap
   const zcapClient = createZcapClient({capabilityAgent});
-  // assume root zcap for associated exchanger
-  const exchangerId = id.slice(0, id.lastIndexOf('/exchanges/'));
-  const capability = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
+  // assume root zcap for associated workflow
+  const workflowId = id.slice(0, id.lastIndexOf('/exchanges/'));
+  const capability = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
   const {data} = await zcapClient.read({url: id, capability});
   return data;
 }
@@ -517,13 +517,13 @@ export async function provisionDependencies() {
   const [
     {
       issuerConfig,
-      exchangerIssueZcap,
-      exchangerCredentialStatusZcap
+      workflowIssueZcap,
+      workflowCredentialStatusZcap
     },
     {
       verifierConfig,
-      exchangerCreateChallengeZcap,
-      exchangerVerifyPresentationZcap
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
     }
   ] = await Promise.all([
     provisionIssuer({capabilityAgent, keystoreAgent}),
@@ -531,9 +531,9 @@ export async function provisionDependencies() {
   ]);
 
   return {
-    issuerConfig, exchangerIssueZcap, exchangerCredentialStatusZcap,
-    verifierConfig, exchangerCreateChallengeZcap,
-    exchangerVerifyPresentationZcap,
+    issuerConfig, workflowIssueZcap, workflowCredentialStatusZcap,
+    verifierConfig, workflowCreateChallengeZcap,
+    workflowVerifyPresentationZcap,
     capabilityAgent
   };
 }
@@ -610,29 +610,29 @@ export async function provisionIssuer({capabilityAgent, keystoreAgent}) {
     capability: issuerRootZcap
   });
 
-  // delegate issuer root zcap to exchanger service
-  const exchangerServiceAgentUrl =
-    `${mockData.baseUrl}/service-agents/${encodeURIComponent('vc-exchanger')}`;
-  const {data: exchangerServiceAgent} = await httpClient.get(
-    exchangerServiceAgentUrl, {agent});
+  // delegate issuer root zcap to workflow service
+  const workflowServiceAgentUrl =
+    `${mockData.baseUrl}/service-agents/${encodeURIComponent('vc-workflow')}`;
+  const {data: workflowServiceAgent} = await httpClient.get(
+    workflowServiceAgentUrl, {agent});
 
   // zcap to issue a credential
-  const exchangerIssueZcap = await delegate({
+  const workflowIssueZcap = await delegate({
     capability: issuerRootZcap,
-    controller: exchangerServiceAgent.id,
+    controller: workflowServiceAgent.id,
     invocationTarget: `${issuerId}/credentials/issue`,
     delegator: capabilityAgent
   });
 
   // zcap to set the status of a credential
-  const exchangerCredentialStatusZcap = await delegate({
+  const workflowCredentialStatusZcap = await delegate({
     capability: issuerRootZcap,
-    controller: exchangerServiceAgent.id,
+    controller: workflowServiceAgent.id,
     invocationTarget: `${issuerId}/credentials/status`,
     delegator: capabilityAgent
   });
 
-  return {issuerConfig, exchangerIssueZcap, exchangerCredentialStatusZcap};
+  return {issuerConfig, workflowIssueZcap, workflowCredentialStatusZcap};
 }
 
 export async function provisionVerifier({capabilityAgent, keystoreAgent}) {
@@ -677,32 +677,32 @@ export async function provisionVerifier({capabilityAgent, keystoreAgent}) {
   const {id: verifierId} = verifierConfig;
   const verifierRootZcap = `urn:zcap:root:${encodeURIComponent(verifierId)}`;
 
-  // delegate verifier root zcap to exchanger service
-  const exchangerServiceAgentUrl =
-    `${mockData.baseUrl}/service-agents/${encodeURIComponent('vc-exchanger')}`;
-  const {data: exchangerServiceAgent} = await httpClient.get(
-    exchangerServiceAgentUrl, {agent});
+  // delegate verifier root zcap to workflow service
+  const workflowServiceAgentUrl =
+    `${mockData.baseUrl}/service-agents/${encodeURIComponent('vc-workflow')}`;
+  const {data: workflowServiceAgent} = await httpClient.get(
+    workflowServiceAgentUrl, {agent});
 
   // zcap to create a challenge
-  const exchangerCreateChallengeZcap = await delegate({
+  const workflowCreateChallengeZcap = await delegate({
     capability: verifierRootZcap,
-    controller: exchangerServiceAgent.id,
+    controller: workflowServiceAgent.id,
     invocationTarget: `${verifierId}/challenges`,
     delegator: capabilityAgent
   });
 
   // zcap to verify a presentation
-  const exchangerVerifyPresentationZcap = await delegate({
+  const workflowVerifyPresentationZcap = await delegate({
     capability: verifierRootZcap,
-    controller: exchangerServiceAgent.id,
+    controller: workflowServiceAgent.id,
     invocationTarget: `${verifierId}/presentations/verify`,
     delegator: capabilityAgent
   });
 
   return {
     verifierConfig,
-    exchangerCreateChallengeZcap,
-    exchangerVerifyPresentationZcap
+    workflowCreateChallengeZcap,
+    workflowVerifyPresentationZcap
   };
 }
 

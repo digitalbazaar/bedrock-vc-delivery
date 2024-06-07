@@ -32,10 +32,10 @@ config.mongodb.dropCollections.collections = [];
 config['https-agent'].rejectUnauthorized = false;
 
 // create test application identities
-config['app-identity'].seeds.services['vc-exchanger'] = {
+config['app-identity'].seeds.services['vc-workflow'] = {
   id: 'did:key:z6Mkw4VNHJ2JHnepRHsRkGfJhxLh6penJmp7wnozgspgn7hR',
   seedMultibase: 'z1AkfV2wAxeDTyMTBe7Sh2Qvn7wKoy34dHTQGhFbVD52NmA',
-  serviceType: 'vc-exchanger'
+  serviceType: 'vc-workflow'
 };
 config['app-identity'].seeds.services['vc-issuer'] = {
   id: 'did:key:z6MkiZ433VBt3jx19vBeHwshV37imwfA4FVYbN7nyEcccRg1',

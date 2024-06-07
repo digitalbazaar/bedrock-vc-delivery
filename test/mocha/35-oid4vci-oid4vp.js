@@ -22,25 +22,25 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
   beforeEach(async () => {
     const deps = await helpers.provisionDependencies();
     const {
-      exchangerIssueZcap,
-      exchangerCredentialStatusZcap,
-      exchangerCreateChallengeZcap,
-      exchangerVerifyPresentationZcap
+      workflowIssueZcap,
+      workflowCredentialStatusZcap,
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
     } = deps;
     ({capabilityAgent} = deps);
 
-    // create exchanger instance w/ oauth2-based authz
+    // create workflow instance w/ oauth2-based authz
     const zcaps = {
-      issue: exchangerIssueZcap,
-      credentialStatus: exchangerCredentialStatusZcap,
-      createChallenge: exchangerCreateChallengeZcap,
-      verifyPresentation: exchangerVerifyPresentationZcap
+      issue: workflowIssueZcap,
+      credentialStatus: workflowCredentialStatusZcap,
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
     };
     const credentialTemplates = [{
       type: 'jsonata',
       template: didAuthnCredentialTemplate
     }];
-    // require semantically-named exchanger steps
+    // require semantically-named workflow steps
     const steps = {
       // DID Authn step
       didAuthn: {
@@ -56,11 +56,11 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
     };
     // set initial step
     const initialStep = 'didAuthn';
-    const exchangerConfig = await helpers.createExchangerConfig({
+    const workflowConfig = await helpers.createWorkflowConfig({
       capabilityAgent, zcaps, credentialTemplates, steps, initialStep,
       oauth2: true
     });
-    const workflowId = exchangerConfig.id;
+    const workflowId = workflowConfig.id;
     const workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
 
     // use workflow to provision verifiable credential
@@ -73,8 +73,8 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
-      exchangerId: workflowId,
-      exchangerRootZcap: workflowRootZcap
+      workflowId,
+      workflowRootZcap
     });
 
     // generate VP
@@ -98,25 +98,25 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
   beforeEach(async () => {
     const deps = await helpers.provisionDependencies();
     const {
-      exchangerIssueZcap,
-      exchangerCredentialStatusZcap,
-      exchangerCreateChallengeZcap,
-      exchangerVerifyPresentationZcap
+      workflowIssueZcap,
+      workflowCredentialStatusZcap,
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
     } = deps;
     ({capabilityAgent} = deps);
 
-    // create exchanger instance w/ oauth2-based authz
+    // create workflow instance w/ oauth2-based authz
     const zcaps = {
-      issue: exchangerIssueZcap,
-      credentialStatus: exchangerCredentialStatusZcap,
-      createChallenge: exchangerCreateChallengeZcap,
-      verifyPresentation: exchangerVerifyPresentationZcap
+      issue: workflowIssueZcap,
+      credentialStatus: workflowCredentialStatusZcap,
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
     };
     const credentialTemplates = [{
       type: 'jsonata',
       template: didAuthnCredentialTemplate
     }];
-    // require semantically-named exchanger steps
+    // require semantically-named workflow steps
     const steps = {
       // DID Authn step
       didAuthn: {
@@ -129,7 +129,7 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
             "openId": {
               "createAuthorizationRequest": "authorizationRequest",
               "client_id_scheme": "redirect_uri",
-              "client_id": globals.exchanger.id &
+              "client_id": globals.workflow.id &
                 "/exchanges/" &
                 globals.exchange.id &
                 "/openid/client/authorization/response"
@@ -140,11 +140,11 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
     };
     // set initial step
     const initialStep = 'didAuthn';
-    const exchangerConfig = await helpers.createExchangerConfig({
+    const workflowConfig = await helpers.createWorkflowConfig({
       capabilityAgent, zcaps, credentialTemplates, steps, initialStep,
       oauth2: true
     });
-    workflowId = exchangerConfig.id;
+    workflowId = workflowConfig.id;
     workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
   });
 
@@ -182,8 +182,8 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
-      exchangerId: workflowId,
-      exchangerRootZcap: workflowRootZcap,
+      workflowId,
+      workflowRootZcap,
       variables: {
         credentialId,
         verifiablePresentationRequest: vpr,
