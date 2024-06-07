@@ -11,24 +11,24 @@ const {credentialTemplate} = mockData;
 
 describe('exchange w/batch OID4VCI delivery', () => {
   let capabilityAgent;
-  let exchangerId;
-  let exchangerRootZcap;
+  let workflowId;
+  let workflowRootZcap;
   beforeEach(async () => {
     const deps = await helpers.provisionDependencies();
     const {
-      exchangerIssueZcap,
-      exchangerCredentialStatusZcap,
-      exchangerCreateChallengeZcap,
-      exchangerVerifyPresentationZcap
+      workflowIssueZcap,
+      workflowCredentialStatusZcap,
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
     } = deps;
     ({capabilityAgent} = deps);
 
-    // create exchanger instance w/ oauth2-based authz
+    // create workflow instance w/ oauth2-based authz
     const zcaps = {
-      issue: exchangerIssueZcap,
-      credentialStatus: exchangerCredentialStatusZcap,
-      createChallenge: exchangerCreateChallengeZcap,
-      verifyPresentation: exchangerVerifyPresentationZcap
+      issue: workflowIssueZcap,
+      credentialStatus: workflowCredentialStatusZcap,
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
     };
     const credentialTemplates = [{
       type: 'jsonata',
@@ -39,10 +39,10 @@ describe('exchange w/batch OID4VCI delivery', () => {
       template: credentialTemplate.replace(
         'credentialId', 'credentialId2')
     }];
-    const exchangerConfig = await helpers.createExchangerConfig(
+    const workflowConfig = await helpers.createWorkflowConfig(
       {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
-    exchangerId = exchangerConfig.id;
-    exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
+    workflowId = workflowConfig.id;
+    workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
   });
 
   it('should pass w/ pre-authorized code flow', async () => {
@@ -72,8 +72,8 @@ describe('exchange w/batch OID4VCI delivery', () => {
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
-      exchangerId,
-      exchangerRootZcap
+      workflowId,
+      workflowRootZcap
     });
     const chapiRequest = {OID4VC: issuanceUrl};
     // CHAPI could potentially be used to deliver the URL to a native app

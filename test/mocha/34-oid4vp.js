@@ -13,22 +13,22 @@ const {getAuthorizationRequest} = oid4vp;
 
 describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
   let capabilityAgent;
-  let exchangerId;
-  let exchangerRootZcap;
+  let workflowId;
+  let workflowRootZcap;
   beforeEach(async () => {
     const deps = await helpers.provisionDependencies();
     const {
-      exchangerCreateChallengeZcap,
-      exchangerVerifyPresentationZcap
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
     } = deps;
     ({capabilityAgent} = deps);
 
-    // create exchanger instance w/ oauth2-based authz
+    // create workflow instance w/ oauth2-based authz
     const zcaps = {
-      createChallenge: exchangerCreateChallengeZcap,
-      verifyPresentation: exchangerVerifyPresentationZcap
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
     };
-    // require semantically-named exchanger steps
+    // require semantically-named workflow steps
     const steps = {
       // DID Authn step
       didAuthn: {
@@ -41,7 +41,7 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
             "openId": {
               "createAuthorizationRequest": "authorizationRequest",
               "client_id_scheme": "redirect_uri",
-              "client_id": globals.exchanger.id &
+              "client_id": globals.workflow.id &
                 "/exchanges/" &
                 globals.exchange.id &
                 "/openid/client/authorization/response"
@@ -52,11 +52,11 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
     };
     // set initial step
     const initialStep = 'didAuthn';
-    const exchangerConfig = await helpers.createExchangerConfig({
+    const workflowConfig = await helpers.createWorkflowConfig({
       capabilityAgent, zcaps, steps, initialStep, oauth2: true
     });
-    exchangerId = exchangerConfig.id;
-    exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
+    workflowId = workflowConfig.id;
+    workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
   });
 
   it('should pass', async () => {
@@ -77,8 +77,8 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
       }
     };
     const {id: exchangeId} = await helpers.createExchange({
-      url: `${exchangerId}/exchanges`,
-      capabilityAgent, capability: exchangerRootZcap, exchange
+      url: `${workflowId}/exchanges`,
+      capabilityAgent, capability: workflowRootZcap, exchange
     });
 
     // request URI
@@ -186,28 +186,28 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
     const deps = await helpers.provisionDependencies();
     const {
       capabilityAgent,
-      exchangerIssueZcap,
-      exchangerCredentialStatusZcap,
-      exchangerCreateChallengeZcap,
-      exchangerVerifyPresentationZcap
+      workflowIssueZcap,
+      workflowCredentialStatusZcap,
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
     } = deps;
 
-    // create exchanger instance to issue VCs
+    // create workflow instance to issue VCs
     const zcaps = {
-      issue: exchangerIssueZcap,
-      credentialStatus: exchangerCredentialStatusZcap,
-      createChallenge: exchangerCreateChallengeZcap,
-      verifyPresentation: exchangerVerifyPresentationZcap
+      issue: workflowIssueZcap,
+      credentialStatus: workflowCredentialStatusZcap,
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
     };
     const credentialTemplates = [{
       type: 'jsonata',
       template: alumniCredentialTemplate
     }];
-    const exchangerConfig = await helpers.createExchangerConfig(
+    const workflowConfig = await helpers.createWorkflowConfig(
       {capabilityAgent, zcaps, credentialTemplates, oauth2: true});
-    const exchangerId = exchangerConfig.id;
-    const exchangerRootZcap =
-      `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
+    const workflowId = workflowConfig.id;
+    const workflowRootZcap =
+      `urn:zcap:root:${encodeURIComponent(workflowId)}`;
 
     // create exchange to issue VC
     const credentialId = `urn:uuid:${uuid()}`;
@@ -219,8 +219,8 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
-      exchangerId,
-      exchangerRootZcap
+      workflowId,
+      workflowRootZcap
     });
 
     // post empty body and get VP w/VCs in response
@@ -230,22 +230,22 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
   });
 
   let capabilityAgent;
-  let exchangerId;
-  let exchangerRootZcap;
+  let workflowId;
+  let workflowRootZcap;
   beforeEach(async () => {
     const deps = await helpers.provisionDependencies();
     const {
-      exchangerCreateChallengeZcap,
-      exchangerVerifyPresentationZcap
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
     } = deps;
     ({capabilityAgent} = deps);
 
-    // create exchanger instance w/ oauth2-based authz
+    // create workflow instance w/ oauth2-based authz
     const zcaps = {
-      createChallenge: exchangerCreateChallengeZcap,
-      verifyPresentation: exchangerVerifyPresentationZcap
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
     };
-    // require semantically-named exchanger steps
+    // require semantically-named workflow steps
     const steps = {
       myStep: {
         stepTemplate: {
@@ -261,11 +261,11 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
     };
     // set initial step
     const initialStep = 'myStep';
-    const exchangerConfig = await helpers.createExchangerConfig({
+    const workflowConfig = await helpers.createWorkflowConfig({
       capabilityAgent, zcaps, steps, initialStep, oauth2: true
     });
-    exchangerId = exchangerConfig.id;
-    exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
+    workflowId = workflowConfig.id;
+    workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
   });
 
   it('should pass', async () => {
@@ -301,8 +301,8 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
       }
     };
     const {id: exchangeId} = await helpers.createExchange({
-      url: `${exchangerId}/exchanges`,
-      capabilityAgent, capability: exchangerRootZcap, exchange
+      url: `${workflowId}/exchanges`,
+      capabilityAgent, capability: workflowRootZcap, exchange
     });
     const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
 

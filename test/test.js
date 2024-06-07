@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2016-2023 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2016-2024 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
 import {getServiceIdentities} from '@bedrock/app-identity';
@@ -38,7 +38,7 @@ bedrock.events.on('bedrock.init', async () => {
   handlers.setUseHandler({handler: ({meter} = {}) => ({meter})});
 });
 
-// mock oauth2 authz server routes; these are for creating exchangers, not
+// mock oauth2 authz server routes; these are for creating workflows, not
 // for performing OID4VCI delivery
 bedrock.events.on('bedrock-express.configure.routes', async app => {
   app.get(mockData.oauth2IssuerConfigRoute, (req, res) => {

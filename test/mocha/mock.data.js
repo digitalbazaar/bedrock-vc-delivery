@@ -10,9 +10,9 @@ mockData.productIdMap = new Map([
   // edv service
   ['edv', 'urn:uuid:dbd15f08-ff67-11eb-893b-10bf48838a41'],
   ['urn:uuid:dbd15f08-ff67-11eb-893b-10bf48838a41', 'edv'],
-  // vc-exchanger service
-  ['vc-exchanger', 'urn:uuid:146b6a5b-eade-4612-a215-1f3b5f03d648'],
-  ['urn:uuid:146b6a5b-eade-4612-a215-1f3b5f03d648', 'vc-exchanger'],
+  // vc-workflow service
+  ['vc-workflow', 'urn:uuid:146b6a5b-eade-4612-a215-1f3b5f03d648'],
+  ['urn:uuid:146b6a5b-eade-4612-a215-1f3b5f03d648', 'vc-workflow'],
   // vc-issuer service
   ['vc-issuer', 'urn:uuid:66aad4d0-8ac1-11ec-856f-10bf48838a41'],
   ['urn:uuid:66aad4d0-8ac1-11ec-856f-10bf48838a41', 'vc-issuer'],

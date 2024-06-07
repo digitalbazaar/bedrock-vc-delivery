@@ -10,12 +10,12 @@ import {mockData} from './mock.data.js';
 
 describe('provision', () => {
   let capabilityAgent;
-  let exchangerIssueZcap;
-  let exchangerCredentialStatusZcap;
-  let exchangerVerifyPresentationZcap;
+  let workflowIssueZcap;
+  let workflowCredentialStatusZcap;
+  let workflowVerifyPresentationZcap;
   beforeEach(async () => {
     ({
-      exchangerIssueZcap, exchangerVerifyPresentationZcap, capabilityAgent
+      workflowIssueZcap, workflowVerifyPresentationZcap, capabilityAgent
     } = await helpers.provisionDependencies());
   });
 
@@ -24,7 +24,7 @@ describe('provision', () => {
       let err;
       let result;
       try {
-        result = await helpers.createExchangerConfig({
+        result = await helpers.createWorkflowConfig({
           capabilityAgent, zcaps: {invalid: ''}
         });
       } catch(e) {
@@ -41,7 +41,7 @@ describe('provision', () => {
       let err;
       let result;
       try {
-        result = await helpers.createExchangerConfig({capabilityAgent});
+        result = await helpers.createWorkflowConfig({capabilityAgent});
       } catch(e) {
         err = e;
       }
@@ -59,9 +59,9 @@ describe('provision', () => {
       let result;
       try {
         const localId = await helpers.generateRandom();
-        result = await helpers.createExchangerConfig({
+        result = await helpers.createWorkflowConfig({
           capabilityAgent, configOptions: {
-            id: `${mockData.baseUrl}/exchangers/${localId}`
+            id: `${mockData.baseUrl}/workflows/${localId}`
           }
         });
       } catch(e) {
@@ -81,9 +81,9 @@ describe('provision', () => {
       let result;
       try {
         const zcaps = {
-          issue: exchangerIssueZcap
+          issue: workflowIssueZcap
         };
-        result = await helpers.createExchangerConfig({capabilityAgent, zcaps});
+        result = await helpers.createWorkflowConfig({capabilityAgent, zcaps});
       } catch(e) {
         err = e;
       }
@@ -101,11 +101,11 @@ describe('provision', () => {
       let result;
       try {
         const zcaps = {
-          issue: exchangerIssueZcap,
-          credentialStatus: exchangerCredentialStatusZcap,
-          verifyPresentation: exchangerVerifyPresentationZcap
+          issue: workflowIssueZcap,
+          credentialStatus: workflowCredentialStatusZcap,
+          verifyPresentation: workflowVerifyPresentationZcap
         };
-        result = await helpers.createExchangerConfig({capabilityAgent, zcaps});
+        result = await helpers.createWorkflowConfig({capabilityAgent, zcaps});
       } catch(e) {
         err = e;
       }
@@ -123,15 +123,15 @@ describe('provision', () => {
       let result;
       try {
         const zcaps = {
-          issue: exchangerIssueZcap,
-          credentialStatus: exchangerCredentialStatusZcap,
-          verifyPresentation: exchangerVerifyPresentationZcap
+          issue: workflowIssueZcap,
+          credentialStatus: workflowCredentialStatusZcap,
+          verifyPresentation: workflowVerifyPresentationZcap
         };
         const credentialTemplates = [{
           type: 'jsonata',
           template: '{}'
         }];
-        result = await helpers.createExchangerConfig(
+        result = await helpers.createWorkflowConfig(
           {capabilityAgent, zcaps, credentialTemplates});
       } catch(e) {
         err = e;
@@ -154,7 +154,7 @@ describe('provision', () => {
           type: 'jsonata',
           template: '{}'
         }];
-        result = await helpers.createExchangerConfig({
+        result = await helpers.createWorkflowConfig({
           capabilityAgent, credentialTemplates
         });
       } catch(e) {
@@ -174,17 +174,17 @@ describe('provision', () => {
       let result;
       try {
         // create config (should pass)
-        result = await helpers.createExchangerConfig({
+        result = await helpers.createWorkflowConfig({
           capabilityAgent, configOptions: {
-            id: `${mockData.baseUrl}/exchangers/z1A183gxYRXYFUnHUXsS7KVmA`
+            id: `${mockData.baseUrl}/workflows/z1A183gxYRXYFUnHUXsS7KVmA`
           }
         });
         should.exist(result);
         // try to create duplicate (should throw)
         result = undefined;
-        result = await helpers.createExchangerConfig({
+        result = await helpers.createWorkflowConfig({
           capabilityAgent, configOptions: {
-            id: `${mockData.baseUrl}/exchangers/z1A183gxYRXYFUnHUXsS7KVmA`
+            id: `${mockData.baseUrl}/workflows/z1A183gxYRXYFUnHUXsS7KVmA`
           }
         });
       } catch(e) {
@@ -201,9 +201,9 @@ describe('provision', () => {
       let err;
       let result;
       try {
-        result = await helpers.createExchangerConfig({
+        result = await helpers.createWorkflowConfig({
           capabilityAgent, configOptions: {
-            id: `${mockData.baseUrl}/exchangers/foo`
+            id: `${mockData.baseUrl}/workflows/foo`
           }
         });
       } catch(e) {
@@ -224,7 +224,7 @@ describe('provision', () => {
       let err;
       let result;
       try {
-        result = await helpers.createExchangerConfig(
+        result = await helpers.createWorkflowConfig(
           {capabilityAgent, ipAllowList});
       } catch(e) {
         err = e;
@@ -246,7 +246,7 @@ describe('provision', () => {
       let err;
       let result;
       try {
-        result = await helpers.createExchangerConfig(
+        result = await helpers.createWorkflowConfig(
           {capabilityAgent, ipAllowList});
       } catch(e) {
         err = e;
@@ -266,7 +266,7 @@ describe('provision', () => {
       let err;
       let result;
       try {
-        result = await helpers.createExchangerConfig(
+        result = await helpers.createWorkflowConfig(
           {capabilityAgent, ipAllowList});
       } catch(e) {
         err = e;
@@ -280,7 +280,7 @@ describe('provision', () => {
       error.details.path.should.equal('.ipAllowList');
     });
     it('throws error on no "sequence"', async () => {
-      const url = `${bedrock.config.server.baseUri}/exchangers`;
+      const url = `${bedrock.config.server.baseUri}/workflows`;
       const config = {
         controller: capabilityAgent.id
       };
@@ -303,10 +303,10 @@ describe('provision', () => {
   describe('get config', () => {
     it('gets a config', async () => {
       const zcaps = {
-        issue: exchangerIssueZcap,
-        verifyPresentation: exchangerVerifyPresentationZcap
+        issue: workflowIssueZcap,
+        verifyPresentation: workflowVerifyPresentationZcap
       };
-      const config = await helpers.createExchangerConfig(
+      const config = await helpers.createWorkflowConfig(
         {capabilityAgent, zcaps});
       let err;
       let result;
@@ -324,10 +324,10 @@ describe('provision', () => {
     });
     it('gets a config w/oauth2', async () => {
       const zcaps = {
-        issue: exchangerIssueZcap,
-        verifyPresentation: exchangerVerifyPresentationZcap
+        issue: workflowIssueZcap,
+        verifyPresentation: workflowVerifyPresentationZcap
       };
-      const config = await helpers.createExchangerConfig(
+      const config = await helpers.createWorkflowConfig(
         {capabilityAgent, zcaps, oauth2: true});
       const accessToken = await helpers.getOAuth2AccessToken(
         {configId: config.id, action: 'read', target: '/'});
@@ -348,7 +348,7 @@ describe('provision', () => {
     it('gets a config with ipAllowList', async () => {
       const ipAllowList = ['127.0.0.1/32', '::1/128'];
 
-      const config = await helpers.createExchangerConfig(
+      const config = await helpers.createWorkflowConfig(
         {capabilityAgent, ipAllowList});
       let err;
       let result;
@@ -369,7 +369,7 @@ describe('provision', () => {
     it('returns NotAllowedError for invalid source IP', async () => {
       const ipAllowList = ['8.8.8.8/32'];
 
-      const config = await helpers.createExchangerConfig(
+      const config = await helpers.createWorkflowConfig(
         {capabilityAgent, ipAllowList});
       let err;
       let result;
@@ -395,7 +395,7 @@ describe('provision', () => {
       let result;
       let existingConfig;
       try {
-        existingConfig = result = await helpers.createExchangerConfig(
+        existingConfig = result = await helpers.createWorkflowConfig(
           {capabilityAgent});
       } catch(e) {
         err = e;
@@ -470,7 +470,7 @@ describe('provision', () => {
       let result;
       let existingConfig;
       try {
-        existingConfig = result = await helpers.createExchangerConfig(
+        existingConfig = result = await helpers.createWorkflowConfig(
           {capabilityAgent});
       } catch(e) {
         err = e;
@@ -594,7 +594,7 @@ describe('provision', () => {
       let err;
       let result;
       try {
-        result = await helpers.createExchangerConfig({capabilityAgent});
+        result = await helpers.createWorkflowConfig({capabilityAgent});
       } catch(e) {
         err = e;
       }
@@ -641,7 +641,7 @@ describe('provision', () => {
       let err;
       let result;
       try {
-        result = await helpers.createExchangerConfig({capabilityAgent});
+        result = await helpers.createWorkflowConfig({capabilityAgent});
       } catch(e) {
         err = e;
       }
@@ -686,7 +686,7 @@ describe('provision', () => {
         let result;
         let existingConfig;
         try {
-          existingConfig = result = await helpers.createExchangerConfig(
+          existingConfig = result = await helpers.createWorkflowConfig(
             {capabilityAgent, ipAllowList});
         } catch(e) {
           err = e;
@@ -765,7 +765,7 @@ describe('provision', () => {
         let err;
         let result;
         try {
-          result = await helpers.createExchangerConfig(
+          result = await helpers.createWorkflowConfig(
             {capabilityAgent, ipAllowList});
         } catch(e) {
           err = e;
@@ -805,7 +805,7 @@ describe('provision', () => {
 
   describe('revocations', () => {
     it('throws error with invalid zcap when revoking', async () => {
-      const config = await helpers.createExchangerConfig({capabilityAgent});
+      const config = await helpers.createWorkflowConfig({capabilityAgent});
       const zcap = {
         '@context': ['https://w3id.org/zcap/v1'],
         id: 'urn:uuid:895d985c-8e20-11ec-b82f-10bf48838a41',
@@ -829,7 +829,7 @@ describe('provision', () => {
         'A validation error occured in the \'Delegated ZCAP\' validator.');
     });
     it('revokes a zcap', async () => {
-      const config = await helpers.createExchangerConfig({capabilityAgent});
+      const config = await helpers.createWorkflowConfig({capabilityAgent});
 
       const capabilityAgent2 = await CapabilityAgent.fromSecret(
         {secret: 's2', handle: 'h2'});

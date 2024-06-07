@@ -11,24 +11,24 @@ const {baseUrl, didAuthnCredentialTemplate} = mockData;
 
 describe('exchange w/batch OID4VCI delivery + DID authn', () => {
   let capabilityAgent;
-  let exchangerId;
-  let exchangerRootZcap;
+  let workflowId;
+  let workflowRootZcap;
   beforeEach(async () => {
     const deps = await helpers.provisionDependencies();
     const {
-      exchangerIssueZcap,
-      exchangerCredentialStatusZcap,
-      exchangerCreateChallengeZcap,
-      exchangerVerifyPresentationZcap
+      workflowIssueZcap,
+      workflowCredentialStatusZcap,
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
     } = deps;
     ({capabilityAgent} = deps);
 
-    // create exchanger instance w/ oauth2-based authz
+    // create workflow instance w/ oauth2-based authz
     const zcaps = {
-      issue: exchangerIssueZcap,
-      credentialStatus: exchangerCredentialStatusZcap,
-      createChallenge: exchangerCreateChallengeZcap,
-      verifyPresentation: exchangerVerifyPresentationZcap
+      issue: workflowIssueZcap,
+      credentialStatus: workflowCredentialStatusZcap,
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
     };
     const credentialTemplates = [{
       type: 'jsonata',
@@ -39,7 +39,7 @@ describe('exchange w/batch OID4VCI delivery + DID authn', () => {
       template: didAuthnCredentialTemplate.replace(
         'credentialId', 'credentialId2')
     }];
-    // require semantically-named exchanger steps
+    // require semantically-named workflow steps
     const steps = {
       // DID Authn step
       didAuthn: {
@@ -60,12 +60,12 @@ describe('exchange w/batch OID4VCI delivery + DID authn', () => {
     };
     // set initial step
     const initialStep = 'didAuthn';
-    const exchangerConfig = await helpers.createExchangerConfig({
+    const workflowConfig = await helpers.createWorkflowConfig({
       capabilityAgent, zcaps, credentialTemplates, steps, initialStep,
       oauth2: true
     });
-    exchangerId = exchangerConfig.id;
-    exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
+    workflowId = workflowConfig.id;
+    workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
   });
 
   it('should pass w/ pre-authorized code flow', async () => {
@@ -95,8 +95,8 @@ describe('exchange w/batch OID4VCI delivery + DID authn', () => {
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
-      exchangerId,
-      exchangerRootZcap
+      workflowId,
+      workflowRootZcap
       // FIXME: add test with a `requiredDid` -- any presented VPs must include
       // DID Authn with a DID that matches the `requiredDid` value -- however,
       // this might be generalized into some other kind of VPR satisfaction
