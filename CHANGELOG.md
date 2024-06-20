@@ -20,6 +20,9 @@
   presentation. This is useful for enabling the submission of VCs
   to holder workflow services for storage.
 
+### Changed
+- Improve errors returned from failed verification during exchanges.
+
 ## 4.3.0 - 2023-12-11
 
 ### Added
