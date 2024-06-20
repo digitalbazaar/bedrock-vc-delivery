@@ -299,6 +299,9 @@ describe('exchange w/ VC-API delivery + ' +
       err = e;
     }
     should.exist(err);
+    err.data.name.should.equal('DataError');
+    err.data.details.verified.should.equal(false);
+    should.exist(err.data.details.errors);
   });
 
   it('should pass when unprotected presentation is allowed', async () => {
