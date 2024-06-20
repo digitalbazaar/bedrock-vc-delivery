@@ -152,6 +152,7 @@ const step = {
     required: ['stepTemplate'],
     not: {
       required: [
+        'allowUnprotectedPresentation',
         'createChallenge',
         'verifiablePresentationRequest',
         'jwtDidProofRequest',
@@ -166,6 +167,9 @@ const step = {
     }
   }],
   properties: {
+    allowUnprotectedPresentation: {
+      type: 'boolean'
+    },
     createChallenge: {
       type: 'boolean'
     },

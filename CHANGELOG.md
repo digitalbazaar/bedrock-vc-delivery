@@ -15,6 +15,10 @@
   fulfilled prior to accepting the credential request(s).
 - Expose `exchangers` base route as `workflows`, keeping `exchangers` as a
   deprecated alias.
+- Allow workflow steps to include a `allowUnprotectedPresentation`
+  boolean that determines whether a workflow will accept an unprotected
+  presentation. This is useful for enabling the submission of VCs
+  to holder workflow services for storage.
 
 ## 4.3.0 - 2023-12-11
 
