@@ -22,6 +22,15 @@
 
 ### Changed
 - Improve errors returned from failed verification during exchanges.
+- **NOTE**: Deployment configurations that want an easy path to supporting
+  the new `workflows` alias should be updated to change the `vc-exchanger`
+  service under `app-identity` to `vc-workflow` to ensure that a service
+  agent with development-level credentials is not added to the database.
+  Without issuing any meters associated with the `vc-workflow` service
+  the `workflows` endpoints will be unusable, but later upgrades to
+  allow their use will require removing this erroneous record, so it is
+  advisable to make this change prior to updating if the `workflows`
+  endpoints are ever intended to be used in a deployment.
 
 ## 4.3.0 - 2023-12-11
 
