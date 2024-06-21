@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.5.0 - 2024-06-dd
+## 4.5.0 - 2024-06-21
 
 ### Added
 - Support `Multikey`-typed and `publicKeyJwk`-specified public keys
