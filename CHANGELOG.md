@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.4.0 - 2024-mm-dd
+## 4.4.0 - 2024-06-21
 
 ### Added
 - Allow an evaluated credential template to produce a VC API issue
