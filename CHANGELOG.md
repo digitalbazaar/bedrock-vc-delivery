@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.5.0 - 2024-06-dd
+
+### Added
+- Support `Multikey`-typed and `publicKeyJwk`-specified public keys
+  in "DID proof JWTs" for OID4VCI.
+
 ## 4.4.0 - 2024-06-21
 
 ### Added
