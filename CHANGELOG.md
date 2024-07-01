@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.6.0 - 2024-mm-dd
+## 4.6.0 - 2024-07-01
 
 ### Added
 - Include `'pre-authorized_grant_anonymous_access_supported': true` to
