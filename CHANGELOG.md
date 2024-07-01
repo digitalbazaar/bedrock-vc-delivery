@@ -1,5 +1,12 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.6.0 - 2024-mm-dd
+
+### Added
+- Include `'pre-authorized_grant_anonymous_access_supported': true` to
+  OID4VCI issuer config meta data. This flag indicates to clients that
+  they do not need to send a `client_id` in their request for credentials.
+
 ## 4.5.0 - 2024-06-21
 
 ### Added
