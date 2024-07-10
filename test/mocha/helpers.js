@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019-2023 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2024 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
 import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
@@ -9,12 +9,12 @@ import {
   importJWK,
   SignJWT
 } from 'jose';
+import {AsymmetricKey, CapabilityAgent} from '@digitalbazaar/webkms-client';
 import {
   createPresentation, defaultDocumentLoader, signPresentation
 } from '@digitalbazaar/vc';
 import {KeystoreAgent, KmsClient} from '@digitalbazaar/webkms-client';
 import {agent} from '@bedrock/https-agent';
-import {CapabilityAgent} from '@digitalbazaar/webkms-client';
 import {decodeList} from '@digitalbazaar/vc-status-list';
 import {didIo} from '@bedrock/did-io';
 import {driver} from '@digitalbazaar/did-method-key';
@@ -183,12 +183,12 @@ export async function createWorkflowConfig({
 }
 
 export async function createIssuerConfig({
-  capabilityAgent, ipAllowList, meterId, zcaps,
+  capabilityAgent, ipAllowList, meterId, zcaps, configOptions,
   statusListOptions, oauth2 = false
 } = {}) {
   const url = `${mockData.baseUrl}/issuers`;
   // issuer-specific options
-  const configOptions = {
+  configOptions = configOptions ?? {
     issueOptions: {
       suiteName: 'Ed25519Signature2020'
     },
@@ -502,7 +502,7 @@ export async function getCredentialStatus({verifiableCredential}) {
   return {status, statusListCredential: slcUrl};
 }
 
-export async function provisionDependencies() {
+export async function provisionDependencies({issuerOptions} = {}) {
   const secret = '53ad64ce-8e1d-11ec-bb12-10bf48838a41';
   const handle = 'test';
   const capabilityAgent = await CapabilityAgent.fromSecret({secret, handle});
@@ -526,7 +526,7 @@ export async function provisionDependencies() {
       workflowVerifyPresentationZcap
     }
   ] = await Promise.all([
-    provisionIssuer({capabilityAgent, keystoreAgent}),
+    provisionIssuer({capabilityAgent, keystoreAgent, issuerOptions}),
     provisionVerifier({capabilityAgent, keystoreAgent})
   ]);
 
@@ -538,12 +538,68 @@ export async function provisionDependencies() {
   };
 }
 
-export async function provisionIssuer({capabilityAgent, keystoreAgent}) {
-  // generate key for signing VCs (make it a did:key DID for simplicity)
-  const assertionMethodKey = await keystoreAgent.generateKey({
-    type: 'asymmetric',
-    publicAliasTemplate: 'did:key:{publicKeyMultibase}#{publicKeyMultibase}'
-  });
+export async function provisionIssuer({
+  capabilityAgent, keystoreAgent, issuerOptions = {}
+}) {
+  // get service agent to delegate to
+  const issuerServiceAgentUrl =
+    `${mockData.baseUrl}/service-agents/${encodeURIComponent('vc-issuer')}`;
+  const {data: issuerServiceAgent} = await httpClient.get(
+    issuerServiceAgentUrl, {agent});
+
+  const zcaps = {};
+  const {keystoreId} = keystoreAgent;
+  const keystoreRootZcap = createRootZcap({url: keystoreId});
+
+  // generate asymmetric key(s) for issuance
+  let assertionMethodKey;
+  const {issueOptions} = issuerOptions;
+  if(!issueOptions) {
+    // generate key for signing VCs (make it a did:key DID for simplicity)
+    assertionMethodKey = await keystoreAgent.generateKey({
+      type: 'asymmetric',
+      publicAliasTemplate: 'did:key:{publicKeyMultibase}#{publicKeyMultibase}'
+    });
+    // delegate assertion method key to issuer service agent
+    zcaps.assertionMethod = await delegate({
+      capability: keystoreRootZcap,
+      controller: issuerServiceAgent.id,
+      invocationTarget: assertionMethodKey.kmsId,
+      delegator: capabilityAgent
+    });
+  } else {
+    const {did, cryptosuites = [], envelope} = issueOptions;
+    const suites = cryptosuites.slice();
+    if(envelope) {
+      suites.push(envelope);
+    }
+    if(suites.length > 0) {
+      // auto-generate DID using `did:key` if no `did` given
+      const publicAliasTemplate = did ?
+        `${did}#{publicKeyMultibase}` :
+        'did:key:{publicKeyMultibase}#{publicKeyMultibase}';
+
+      // generate an assertion method key for each cryptosuite and / or envelope
+      for(const suite of suites) {
+        const {algorithm} = suite;
+        if(suite.assertionMethodKey) {
+          // key already set
+          continue;
+        }
+        suite.assertionMethodKey = await generateAsymmetricKey({
+          keystoreAgent, algorithm, publicAliasTemplate
+        });
+        // use any assertion method key
+        assertionMethodKey = suite.assertionMethodKey;
+      }
+
+      // delegate zcaps for each cryptosuite
+      await delegateAssertionMethodZcaps({
+        envelope, cryptosuites, serviceAgent: issuerServiceAgent,
+        capabilityAgent, zcaps
+      });
+    }
+  }
 
   // create EDV for storage (creating hmac and kak in the process)
   const {
@@ -552,45 +608,60 @@ export async function provisionIssuer({capabilityAgent, keystoreAgent}) {
     keyAgreementKey
   } = await createEdv({capabilityAgent, keystoreAgent});
 
-  // get service agent to delegate to
-  const issuerServiceAgentUrl =
-    `${mockData.baseUrl}/service-agents/${encodeURIComponent('vc-issuer')}`;
-  const {data: issuerServiceAgent} = await httpClient.get(
-    issuerServiceAgentUrl, {agent});
-
   // delegate edv, hmac, and key agreement key zcaps to service agent
   const {id: edvId} = edvConfig;
-  const zcaps = {};
   zcaps.edv = await delegate({
     controller: issuerServiceAgent.id,
     delegator: capabilityAgent,
     invocationTarget: edvId
   });
-  const {keystoreId} = keystoreAgent;
   zcaps.hmac = await delegate({
-    capability: `urn:zcap:root:${encodeURIComponent(keystoreId)}`,
+    capability: keystoreRootZcap,
     controller: issuerServiceAgent.id,
     invocationTarget: hmac.id,
     delegator: capabilityAgent
   });
   zcaps.keyAgreementKey = await delegate({
-    capability: `urn:zcap:root:${encodeURIComponent(keystoreId)}`,
+    capability: keystoreRootZcap,
     controller: issuerServiceAgent.id,
     invocationTarget: keyAgreementKey.kmsId,
     delegator: capabilityAgent
   });
-  zcaps.assertionMethod = await delegate({
-    capability: `urn:zcap:root:${encodeURIComponent(keystoreId)}`,
-    controller: issuerServiceAgent.id,
-    invocationTarget: assertionMethodKey.kmsId,
-    delegator: capabilityAgent
-  });
+
+  // generate config options based on issue options
+  let configOptions;
+  if(issueOptions) {
+    const keyDescription = await assertionMethodKey.getKeyDescription();
+    const {issuer, cryptosuites, envelope} = issueOptions;
+    configOptions = {
+      issueOptions: {
+        issuer: issuer ?? keyDescription.controller
+      }
+    };
+    if(cryptosuites) {
+      configOptions.issueOptions.cryptosuites = cryptosuites.map(suite => {
+        const {name, options, zcapReferenceIds} = suite;
+        const cryptosuite = {name, zcapReferenceIds};
+        if(options) {
+          cryptosuite.options = options;
+        }
+        return cryptosuite;
+      });
+    }
+    if(envelope) {
+      configOptions.issueOptions.envelope = {
+        format: envelope.format,
+        options: envelope.options,
+        zcapReferenceIds: envelope.zcapReferenceIds
+      };
+    }
+  }
 
   // create issuer instance w/ oauth2-based authz
   const issuerConfig = await createIssuerConfig(
-    {capabilityAgent, zcaps, oauth2: true});
+    {capabilityAgent, zcaps, oauth2: true, configOptions});
   const {id: issuerId} = issuerConfig;
-  const issuerRootZcap = `urn:zcap:root:${encodeURIComponent(issuerId)}`;
+  const issuerRootZcap = createRootZcap({url: issuerId});
 
   // insert examples context
   const examplesContextId = 'https://www.w3.org/2018/credentials/examples/v1';
@@ -723,4 +794,86 @@ async function keyResolver({id}) {
   // support HTTP-based keys; currently a requirement for WebKMS
   const {data} = await httpClient.get(id, {agent: httpsAgent});
   return data;
+}
+
+function createRootZcap({url}) {
+  return `urn:zcap:root:${encodeURIComponent(url)}`;
+}
+
+async function delegateAssertionMethodZcaps({
+  envelope, cryptosuites = [], serviceAgent,
+  capabilityAgent, zcaps = {}
+} = {}) {
+  // can treat any envelope input as a cryptosuite here
+  const suites = (cryptosuites || []).slice();
+  if(envelope) {
+    suites.push(envelope);
+  }
+
+  // delegate any assertion method keys not yet delegated
+  for(const suite of suites) {
+    // only delegate zcap once as the service agent is always the same
+    let referenceId = suite.zcapReferenceIds?.assertionMethod;
+    if(!referenceId) {
+      const {assertionMethodKey} = suite;
+      const zcap = await delegate({
+        capability: createRootZcap({
+          url: parseKeystoreId(assertionMethodKey.kmsId)
+        }),
+        controller: serviceAgent.id,
+        invocationTarget: assertionMethodKey.kmsId,
+        delegator: capabilityAgent
+      });
+      referenceId = zcap.id;
+      suite.zcaps = suite.zcaps ?? {};
+      suite.zcaps[referenceId] = zcap;
+      suite.zcapReferenceIds = suite.zcapReferenceIds ?? {};
+      suite.zcapReferenceIds.assertionMethod = referenceId;
+    }
+    zcaps[referenceId] = suite.zcaps[referenceId];
+  }
+  return zcaps;
+}
+
+async function generateAsymmetricKey({
+  keystoreAgent, algorithm, publicAliasTemplate
+}) {
+  if(['P-256', 'P-384', 'Bls12381G2'].includes(algorithm)) {
+    return _generateMultikey({
+      keystoreAgent,
+      type: `urn:webkms:multikey:${algorithm}`,
+      publicAliasTemplate
+    });
+  }
+  return keystoreAgent.generateKey({
+    type: 'asymmetric',
+    publicAliasTemplate
+  });
+}
+
+function parseKeystoreId(keyId) {
+  // key ID format: <baseUrl>/<keystores-path>/<keystore-id>/keys/<key-id>
+  const idx = keyId.lastIndexOf('/keys/');
+  if(idx === -1) {
+    throw new Error(`Invalid key ID "${keyId}".`);
+  }
+  return keyId.slice(0, idx);
+}
+
+async function _generateMultikey({
+  keystoreAgent, type, publicAliasTemplate
+}) {
+  const {capabilityAgent, kmsClient} = keystoreAgent;
+  const invocationSigner = capabilityAgent.getSigner();
+  const {keyId, keyDescription} = await kmsClient.generateKey({
+    type,
+    suiteContextUrl: 'https://w3id.org/security/multikey/v1',
+    invocationSigner,
+    publicAliasTemplate
+  });
+  const {id} = keyDescription;
+  ({type} = keyDescription);
+  return new AsymmetricKey({
+    id, kmsId: keyId, type, invocationSigner, kmsClient, keyDescription
+  });
 }
