@@ -1,6 +1,7 @@
 /*!
  * Copyright (c) 2022-2024 Digital Bazaar, Inc. All rights reserved.
  */
+import {MAX_ISSUER_INSTANCES} from '../lib/constants.js';
 import {schemas} from '@bedrock/validation';
 
 const credentialDefinition = {
@@ -34,6 +35,20 @@ const credentialDefinition = {
   }
 };
 
+const expectedCredentialRequest = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['credential_definition', 'format'],
+  properties: {
+    credential_definition: credentialDefinition,
+    format: {
+      type: 'string',
+      // FIXME: add other options
+      enum: ['ldp_vc']
+    }
+  }
+};
+
 const openIdExchangeOptions = {
   title: 'OpenID Exchange options',
   type: 'object',
@@ -45,16 +60,16 @@ const openIdExchangeOptions = {
       type: 'array',
       minItems: 1,
       items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['credential_definition', 'format'],
-        properties: {
-          credential_definition: credentialDefinition,
-          format: {
-            type: 'string',
-            enum: ['ldp_vc']
-          }
-        }
+        // items must either be a single expected request or an array of
+        // possible candidates for a particular VC
+        oneOf: [{
+          expectedCredentialRequest
+        }, {
+          title: 'Expected Credential Request Candidates',
+          type: 'array',
+          minItems: 2,
+          items: expectedCredentialRequest
+        }]
       }
     },
     preAuthorizedCode: {
@@ -138,6 +153,52 @@ export const credentialTemplates = {
   type: 'array',
   minItems: 1,
   items: typedTemplate
+};
+
+// to be updated in specific locations with `properties` and `required`
+const zcapReferenceIds = {
+  title: 'Authorization Capability Reference IDs',
+  type: 'object',
+  additionalProperties: false
+};
+
+const vcFormats = {
+  title: 'Verifiable Credential formats',
+  type: 'array',
+  minItems: 1,
+  items: {
+    type: 'string'
+  }
+};
+
+const issuerInstance = {
+  title: 'Issuer Instance',
+  type: 'object',
+  required: ['zcapReferenceIds'],
+  additionalProperties: false,
+  properties: {
+    id: {
+      type: 'string'
+    },
+    supportedFormats: vcFormats,
+    zcapReferenceIds: {
+      ...zcapReferenceIds,
+      required: ['issue'],
+      properties: {
+        issue: {
+          type: 'string'
+        }
+      }
+    }
+  }
+};
+
+export const issuerInstances = {
+  title: 'Issuer Instances',
+  type: 'array',
+  minItems: 1,
+  maxItems: MAX_ISSUER_INSTANCES,
+  items: issuerInstance
 };
 
 const step = {
