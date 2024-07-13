@@ -43,8 +43,7 @@ const expectedCredentialRequest = {
     credential_definition: credentialDefinition,
     format: {
       type: 'string',
-      // FIXME: add other options
-      enum: ['ldp_vc']
+      enum: ['ldp_vc', 'jwt_vc_json-ld']
     }
   }
 };
