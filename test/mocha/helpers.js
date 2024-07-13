@@ -60,6 +60,7 @@ export async function createCredentialOffer({
   credentialDefinition, credentialId, variables,
   preAuthorized, userPinRequired = false,
   capabilityAgent, workflowId, workflowRootZcap,
+  credentialFormat = 'ldp_vc',
   openId = true, openIdKeyPair
 } = {}) {
   // first, create an exchange with variables based on the local user ID;
@@ -89,7 +90,9 @@ export async function createCredentialOffer({
       credentialDefinition = [credentialDefinition];
     }
     const expectedCredentialRequests = credentialDefinition.map(
-      credential_definition => ({format: 'ldp_vc', credential_definition}));
+      credential_definition => ({
+        format: credentialFormat, credential_definition
+      }));
     exchange.openId = {expectedCredentialRequests, oauth2};
 
     // start building OID4VCI credential offer
@@ -97,7 +100,9 @@ export async function createCredentialOffer({
       credential_issuer: '',
       // FIXME: use `credentials_supported` string IDs instead
       credentials: credentialDefinition.map(
-        credential_definition => ({format: 'ldp_vc', credential_definition})),
+        credential_definition => ({
+          format: credentialFormat, credential_definition
+        })),
       grants: {}
     };
 
