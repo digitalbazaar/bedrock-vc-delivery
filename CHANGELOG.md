@@ -1,5 +1,27 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.7.0 - 2024-mm-dd
+
+### Added
+- Add workflow configuration option to specify `issuerInstances` with
+  supported formats (such as `application/vc`, `ldp_vc`, and `jwt_vc_json-ld`
+  as well as `zcapReferenceIds` with at least one `issue` reference ID
+  that identifies the zcap in the main config `zcaps` map to use to
+  issue VCs using that issuer instance. When multiple issuer instances
+  are provided, a workflow exchange can accept different requested
+  formats from the client.
+
+### Changed
+- The supported formats expressed in `issuerInstances` (or the default
+  of `ldp_vc` will be used when checking expected credential requests
+  during OID4VCI. This behavior doesn't change from the previous
+  version because the previous version only allowed `ldp_vc` to be
+  included in expected credential requests. Now `jwt_vc_json-ld`
+  can also be passed in an expected credential request, but format
+  can also be omitted entirely since it is no longer used when checking
+  credential requests are valid against the supported list of formats
+  from the issuer instances.
+
 ## 4.6.0 - 2024-07-01
 
 ### Added

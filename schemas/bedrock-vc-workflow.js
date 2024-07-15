@@ -38,7 +38,7 @@ const credentialDefinition = {
 const expectedCredentialRequest = {
   type: 'object',
   additionalProperties: false,
-  required: ['credential_definition', 'format'],
+  required: ['credential_definition'],
   properties: {
     credential_definition: credentialDefinition,
     format: {
@@ -58,18 +58,7 @@ const openIdExchangeOptions = {
       title: 'OpenID Expected Credential Requests',
       type: 'array',
       minItems: 1,
-      items: {
-        // items must either be a single expected request or an array of
-        // possible candidates for a particular VC
-        oneOf: [{
-          expectedCredentialRequest
-        }, {
-          title: 'Expected Credential Request Candidates',
-          type: 'array',
-          minItems: 2,
-          items: expectedCredentialRequest
-        }]
-      }
+      items: expectedCredentialRequest
     },
     preAuthorizedCode: {
       type: 'string'
@@ -137,6 +126,9 @@ const typedTemplate = {
   required: ['type', 'template'],
   additionalProperties: false,
   properties: {
+    id: {
+      type: 'string'
+    },
     type: {
       type: 'string',
       enum: ['jsonata']
@@ -336,7 +328,7 @@ const openIdCredentialRequest = {
     credential_definition: credentialDefinition,
     format: {
       type: 'string',
-      enum: ['ldp_vc']
+      enum: ['ldp_vc', 'jwt_vc_json-ld']
     },
     did: {
       type: 'string'
