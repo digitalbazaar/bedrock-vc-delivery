@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.7.0 - 2024-mm-dd
+## 4.7.0 - 2024-07-15
 
 ### Added
 - Add workflow configuration option to specify `issuerInstances` with
