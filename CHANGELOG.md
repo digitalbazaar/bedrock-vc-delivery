@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.8.0 - 2024-07-dd
+
+### Added
+- Add `presentationSchema` option to workflow step to enable passing
+  a JSON schema to be run against a submitted presentation.
+
 ## 4.7.0 - 2024-07-15
 
 ### Added

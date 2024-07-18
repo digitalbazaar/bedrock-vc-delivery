@@ -228,6 +228,19 @@ const step = {
     verifiablePresentationRequest: {
       type: 'object'
     },
+    presentationSchema: {
+      type: 'object',
+      required: ['type', 'jsonSchema'],
+      additionalProperties: false,
+      properties: {
+        type: {
+          type: 'string'
+        },
+        jsonSchema: {
+          type: 'object'
+        }
+      }
+    },
     jwtDidProofRequest: {
       type: 'object',
       additionalProperties: false,

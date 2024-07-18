@@ -342,4 +342,101 @@ mockData.prcCredentialContext = {
     "Person": "http://schema.org/Person"
   }
 };
+
+mockData.strictDegreeCredentialSchema = {
+  title: 'Strict Degree Credential',
+  type: 'object',
+  required: ['@context', 'type', 'issuer', 'credentialSubject'],
+  additionalProperties: false,
+  properties: {
+    '@context': {
+      type: 'array',
+      items: [{
+        const: 'https://www.w3.org/2018/credentials/v1'
+      }, {
+        const: 'https://www.w3.org/2018/credentials/examples/v1'
+      }]
+    },
+    id: {
+      type: 'string'
+    },
+    // a real system would make `issuer` value a very specific requirement
+    issuer: {
+      type: 'string'
+    },
+    type: {
+      type: 'array',
+      items: [{
+        const: 'VerifiableCredential'
+      }, {
+        const: 'UniversityDegreeCredential'
+      }]
+    },
+    issuanceDate: {
+      type: 'string'
+    },
+    credentialSubject: {
+      type: 'object',
+      required: ['degree'],
+      additionalProperties: false,
+      properties: {
+        id: {
+          type: 'string'
+        },
+        degree: {
+          type: 'object',
+          required: ['type', 'name'],
+          additionalProperties: false,
+          properties: {
+            type: {
+              const: 'BachelorDegree'
+            },
+            name: {
+              const: 'Bachelor of Science and Arts'
+            }
+          }
+        }
+      }
+    },
+    proof: {
+      oneOf: [{
+        type: 'object',
+      }, {
+        type: 'array'
+      }]
+    }
+  }
+};
+
+mockData.strictDegreePresentationSchema = {
+  title: 'Presentation',
+  type: 'object',
+  required: ['@context', 'type', 'verifiableCredential'],
+  additionalProperties: false,
+  properties: {
+    '@context': {
+      type: 'array'
+    },
+    holder: {
+      type: 'string'
+    },
+    type: {
+      type: 'array'
+    },
+    proof: {
+      oneOf: [{
+        type: 'object',
+      }, {
+        type: 'array'
+      }]
+    },
+    verifiableCredential: {
+      oneOf: [mockData.strictDegreeCredentialSchema, {
+        type: 'array',
+        minItems: 1,
+        items: mockData.strictDegreeCredentialSchema
+      }]
+    }
+  }
+};
 /* eslint-enable */
