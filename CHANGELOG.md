@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.8.0 - 2024-07-dd
+## 4.8.0 - 2024-07-18
 
 ### Added
 - Add `presentationSchema` option to workflow step to enable passing
