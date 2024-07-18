@@ -4,11 +4,12 @@
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
+import {klona} from 'klona';
 import {mockData} from './mock.data.js';
 import {v4 as uuid} from 'uuid';
 
 const {
-  baseUrl, didAuthnCredentialTemplate
+  baseUrl, didAuthnCredentialTemplate, strictDegreePresentationSchema
 } = mockData;
 
 describe('exchange w/ VC-API delivery + DID authn + VC request', () => {
@@ -115,6 +116,12 @@ describe('exchange w/ VC-API delivery + DID authn + VC request', () => {
       type: 'jsonata',
       template: didAuthnCredentialTemplate
     }];
+    const jsonSchema = klona(strictDegreePresentationSchema);
+    // FIXME: create a function to inject required `issuer` value
+    jsonSchema.properties.verifiableCredential.oneOf[0]
+      .properties.issuer = {const: verifiableCredential.issuer};
+    jsonSchema.properties.verifiableCredential.oneOf[1].items
+      .properties.issuer = {const: verifiableCredential.issuer};
     // require semantically-named workflow steps
     const steps = {
       // DID Authn step, additionally require VC that was issued from
@@ -139,6 +146,10 @@ describe('exchange w/ VC-API delivery + DID authn + VC request', () => {
             }]
           }],
           domain: baseUrl
+        },
+        presentationSchema: {
+          type: 'JsonSchema',
+          jsonSchema
         }
       }
     };
@@ -205,6 +216,49 @@ describe('exchange w/ VC-API delivery + DID authn + VC request', () => {
       }
       should.not.exist(err);
     }
+  });
+
+  it('should fail when sending VC w/unacceptable issuer', async () => {
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap
+    });
+
+    const invalidVerifiableCredential = klona(verifiableCredential);
+    invalidVerifiableCredential.issuer = 'invalid:issuer';
+
+    // generate VP
+    const {verifiablePresentation} = await helpers.createDidAuthnVP({
+      domain: baseUrl,
+      challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
+      did, signer, verifiableCredential: invalidVerifiableCredential
+    });
+
+    // post VP to get VP in response, should produce a validation error on
+    // the "issuer" field
+    let err;
+    let response;
+    try {
+      response = await httpClient.post(
+        exchangeId, {agent, json: {verifiablePresentation}});
+    } catch(e) {
+      err = e;
+    }
+    should.not.exist(response);
+    should.exist(err);
+    err.status.should.equal(400);
+    err.data.name.should.equal('ValidationError');
+    const issuerError = err.data.details.errors[0];
+    issuerError.name.should.equal('ValidationError');
+    issuerError.details.path.should.equal('.verifiableCredential.issuer');
   });
 
   it('should pass when sending VP in second call', async () => {
