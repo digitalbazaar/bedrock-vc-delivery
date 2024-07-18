@@ -7,10 +7,13 @@ import {
 } from '@digitalbazaar/oid4-client';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
+import {klona} from 'klona';
 import {mockData} from './mock.data.js';
 import {v4 as uuid} from 'uuid';
 
-const {baseUrl, didAuthnCredentialTemplate} = mockData;
+const {
+  baseUrl, didAuthnCredentialTemplate, strictDegreePresentationSchema
+} = mockData;
 
 describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
   let capabilityAgent;
@@ -126,6 +129,7 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
           {
             "createChallenge": true,
             "verifiablePresentationRequest": verifiablePresentationRequest,
+            "presentationSchema": presentationSchema,
             "openId": {
               "createAuthorizationRequest": "authorizationRequest",
               "client_id_scheme": "redirect_uri",
@@ -147,6 +151,8 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
     workflowId = workflowConfig.id;
     workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
   });
+
+  // FIXME: add invalid issuer test that will fail against `presentationSchema`
 
   it('should pass w/ pre-authorized code flow', async () => {
     // pre-authorized flow, issuer-initiated
@@ -171,6 +177,12 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
       }],
       domain: baseUrl
     };
+    const jsonSchema = klona(strictDegreePresentationSchema);
+    // FIXME: create a function to inject required `issuer` value
+    jsonSchema.properties.verifiableCredential.oneOf[0]
+      .properties.issuer = {const: verifiableCredential.issuer};
+    jsonSchema.properties.verifiableCredential.oneOf[1].items
+      .properties.issuer = {const: verifiableCredential.issuer};
     const {
       exchangeId,
       openIdUrl: issuanceUrl
@@ -187,6 +199,10 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
       variables: {
         credentialId,
         verifiablePresentationRequest: vpr,
+        presentationSchema: {
+          type: 'JsonSchema',
+          jsonSchema
+        },
         openId: {
           createAuthorizationRequest: 'authorizationRequest'
         }
