@@ -222,9 +222,10 @@ describe('exchanger backwards-compatibility: ' +
     }
     should.exist(error);
     should.exist(error.cause);
-    error.cause.status.should.equal(400);
-    error.cause.data.error.should.equal('presentation_required');
-    should.exist(error.cause.data.authorization_request);
+    error.cause.name.should.equal('NotAllowedError');
+    should.exist(error.cause.cause);
+    error.cause.cause.data.error.should.equal('presentation_required');
+    should.exist(error.cause.cause.data.authorization_request);
 
     // wallet / client responds to `authorization_request` by performing
     // OID4VP:
@@ -232,7 +233,9 @@ describe('exchanger backwards-compatibility: ' +
     {
       // generate VPR from authorization request
       const {
-        cause: {data: {authorization_request: authorizationRequest}}
+        cause: {
+          cause: {data: {authorization_request: authorizationRequest}}
+        }
       } = error;
       const {verifiablePresentationRequest} = await oid4vp.toVpr(
         {authorizationRequest});
