@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 4.8.1 - 2024-07-dd
+
+### Fixed
+- Fix JSON schema to allow VCs with only a single type.
+
 ## 4.8.0 - 2024-07-18
 
 ### Added

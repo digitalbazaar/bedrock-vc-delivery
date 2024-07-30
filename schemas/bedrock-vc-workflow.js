@@ -19,7 +19,7 @@ const credentialDefinition = {
     },
     type: {
       type: 'array',
-      minItems: 2,
+      minItems: 1,
       item: {
         type: 'string'
       }
@@ -27,7 +27,7 @@ const credentialDefinition = {
     // allow `types` to be flexible for OID4VCI draft 20 implementers
     types: {
       type: 'array',
-      minItems: 2,
+      minItems: 1,
       item: {
         type: 'string'
       }
