@@ -10,11 +10,12 @@ import {
   SignJWT
 } from 'jose';
 import {AsymmetricKey, CapabilityAgent} from '@digitalbazaar/webkms-client';
-import {
-  createPresentation, defaultDocumentLoader, signPresentation
-} from '@digitalbazaar/vc';
+import {createPresentation, signPresentation} from '@digitalbazaar/vc';
 import {KeystoreAgent, KmsClient} from '@digitalbazaar/webkms-client';
 import {agent} from '@bedrock/https-agent';
+import {
+  documentLoader as brDocumentLoader
+} from '@bedrock/jsonld-document-loader';
 import {decodeList} from '@digitalbazaar/vc-status-list';
 import {didIo} from '@bedrock/did-io';
 import {driver} from '@digitalbazaar/did-method-key';
@@ -50,7 +51,7 @@ const documentLoader = async url => {
       tag: 'static'
     };
   }
-  return defaultDocumentLoader(url);
+  return brDocumentLoader(url);
 };
 
 // Note: `userId` left here to model how systems would potentially integrate
@@ -300,8 +301,14 @@ export async function createDidAuthnVP({
   }
   const presentation = createPresentation({holder: did});
   if(verifiableCredential) {
+    // use v2 context if VC is v2
+    if(verifiableCredential['@context'].includes(
+      'https://www.w3.org/ns/credentials/v2')) {
+      presentation['@context'][0] = 'https://www.w3.org/ns/credentials/v2';
+    }
     presentation.verifiableCredential = verifiableCredential;
   }
+  // FIXME: add `envelope` (vc-jwt) option
   const verifiablePresentation = await signPresentation({
     suite: new Ed25519Signature2020({signer}),
     presentation, domain, challenge,
