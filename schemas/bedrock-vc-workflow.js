@@ -8,26 +8,20 @@ const VC_CONTEXT_1 = 'https://www.w3.org/2018/credentials/v1';
 const VC_CONTEXT_2 = 'https://www.w3.org/ns/credentials/v2';
 
 const vcContext = {
-  oneOf: [{
-    type: 'array',
-    minItems: 1,
-    // the first context must be the VC context
-    items: [{
-      oneOf: [{
-        const: VC_CONTEXT_1
-      }, {
-        const: VC_CONTEXT_2
-      }]
-    }],
-    // additional contexts maybe strings or objects
-    additionalItems: {
-      anyOf: [{type: 'string'}, {type: 'object'}]
-    }
-  }, {
-    const: VC_CONTEXT_1
-  }, {
-    const: VC_CONTEXT_2
-  }]
+  type: 'array',
+  minItems: 1,
+  // the first context must be the VC context
+  items: [{
+    oneOf: [{
+      const: VC_CONTEXT_1
+    }, {
+      const: VC_CONTEXT_2
+    }]
+  }],
+  // additional contexts maybe strings or objects
+  additionalItems: {
+    anyOf: [{type: 'string'}, {type: 'object'}]
+  }
 };
 
 function idOrObjectWithId() {
@@ -90,7 +84,9 @@ const envelopedVerifiableCredential = {
   type: 'object',
   additionalProperties: true,
   properties: {
-    '@context': vcContext,
+    '@context': {
+      const: VC_CONTEXT_2
+    },
     id: {
       type: 'string'
     },
