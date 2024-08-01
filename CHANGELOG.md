@@ -1,6 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.8.1 - 2024-07-dd
+## 4.9.0 - 2024-07-dd
+
+### Added
+- Add support for ECDSA keys (with `ES256` and `ES384` algs) for
+  DID JWT proofs.
 
 ### Fixed
 - Fix JSON schema to allow VCs with only a single type.
