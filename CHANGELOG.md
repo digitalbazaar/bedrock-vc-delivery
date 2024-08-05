@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 5.0.0 - 2024-08-xx
+## 5.0.0 - 2024-08-05
 
 ### Added
 - Add support for ECDSA keys (with `ES256` and `ES384` algs) for
