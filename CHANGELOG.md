@@ -1,11 +1,23 @@
 # bedrock-vc-delivery ChangeLog
 
-## 4.9.0 - 2024-07-dd
+## 5.0.0 - 2024-08-xx
 
 ### Added
 - Add support for ECDSA keys (with `ES256` and `ES384` algs) for
   DID JWT proofs.
 - Add support for VC 2.0 contexts in JSON schemas.
+
+### Changed
+- **BREAKING**: Update peer dependencies.
+  - `@bedrock/core@6.1.3`
+  - `@bedrock/did-io@10.3.1`
+  - `@bedrock/express@8.3.1`
+  - `@bedrock/https-agent@4.1.0`
+  - `@bedrock/mongodb@10.2.0`
+  - `@bedrock/oauth2-verifier@2.1.0`
+  - `@bedrock/service-agent@9.0.2`
+  - `@bedrock/service-core@10.0.0`
+- Update minor, test, and dev dependencies.
 
 ### Fixed
 - Fix JSON schema to allow VCs with only a single type.
