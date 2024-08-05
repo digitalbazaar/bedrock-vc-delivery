@@ -260,7 +260,6 @@ describe('exchange w/OID4VCI delivery of VC-JWT', () => {
     should.exist(result);
     result.should.include.keys(['format', 'credential']);
     result.format.should.equal(credentialFormat);
-    result.format.should.equal(credentialFormat);
     result.credential.should.be.a('string');
     // FIXME: add additional assertions after parsing JWT
     // // ensure credential subject ID matches static DID

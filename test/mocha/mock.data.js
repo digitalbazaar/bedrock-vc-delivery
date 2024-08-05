@@ -229,6 +229,31 @@ mockData.prcCredentialDefinition = {
   ]
 };
 
+mockData.nameCredentialTemplate = `
+  {
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2"
+    ],
+    "id": credentialId,
+    "type": [
+      "VerifiableCredential"
+    ],
+    "credentialSubject": {
+      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "name": "Jane Doe"
+    }
+  }
+`;
+
+mockData.nameCredentialDefinition = {
+  '@context': [
+    'https://www.w3.org/ns/credentials/v2'
+  ],
+  type: [
+    'VerifiableCredential'
+  ]
+};
+
 /* eslint-disable */
 mockData.examplesContext = {
   // Note: minor edit to remove unused ODRL context
@@ -435,6 +460,89 @@ mockData.strictDegreePresentationSchema = {
         type: 'array',
         minItems: 1,
         items: mockData.strictDegreeCredentialSchema
+      }]
+    }
+  }
+};
+
+mockData.nameCredentialSchema = {
+  title: 'Name Credential',
+  type: 'object',
+  required: ['@context', 'type', 'issuer', 'credentialSubject'],
+  additionalProperties: false,
+  properties: {
+    '@context': {
+      type: 'array',
+      items: [{
+        const: 'https://www.w3.org/ns/credentials/v2'
+      }]
+    },
+    id: {
+      type: 'string'
+    },
+    // a real system would make `issuer` value a very specific requirement
+    issuer: {
+      type: 'string'
+    },
+    type: {
+      type: 'array',
+      items: [{
+        const: 'VerifiableCredential'
+      }]
+    },
+    credentialSubject: {
+      type: 'object',
+      required: ['name'],
+      additionalProperties: false,
+      properties: {
+        id: {
+          type: 'string'
+        },
+        degree: {
+          type: 'string',
+          name: {
+            const: 'Jane Doe'
+          }
+        }
+      }
+    },
+    proof: {
+      oneOf: [{
+        type: 'object',
+      }, {
+        type: 'array'
+      }]
+    }
+  }
+};
+
+mockData.namePresentationSchema = {
+  title: 'Presentation',
+  type: 'object',
+  required: ['@context', 'type', 'verifiableCredential'],
+  additionalProperties: false,
+  properties: {
+    '@context': {
+      type: 'array'
+    },
+    holder: {
+      type: 'string'
+    },
+    type: {
+      type: 'array'
+    },
+    proof: {
+      oneOf: [{
+        type: 'object',
+      }, {
+        type: 'array'
+      }]
+    },
+    verifiableCredential: {
+      oneOf: [mockData.nameCredentialSchema, {
+        type: 'array',
+        minItems: 1,
+        items: mockData.nameCredentialSchema
       }]
     }
   }
