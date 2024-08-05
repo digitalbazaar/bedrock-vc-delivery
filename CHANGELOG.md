@@ -5,6 +5,7 @@
 ### Added
 - Add support for ECDSA keys (with `ES256` and `ES384` algs) for
   DID JWT proofs.
+- Add support for VC 2.0 contexts in JSON schemas.
 
 ### Fixed
 - Fix JSON schema to allow VCs with only a single type.
