@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 5.0.1 - 2024-08-dd
+
+### Fixed
+- Fix processing of VC-JWT VPs/VCs in OID4* combined workflows.
+
 ## 5.0.0 - 2024-08-05
 
 ### Added
