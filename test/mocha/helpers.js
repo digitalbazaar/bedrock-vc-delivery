@@ -644,10 +644,13 @@ export async function provisionIssuer({
   let configOptions;
   if(issueOptions) {
     const keyDescription = await assertionMethodKey.getKeyDescription();
+    const keyController = keyDescription.id.startsWith('did:key:') ?
+      keyDescription.id.slice(0, keyDescription.id.indexOf('#')) :
+      keyDescription.controller;
     const {issuer, cryptosuites, envelope} = issueOptions;
     configOptions = {
       issueOptions: {
-        issuer: issuer ?? keyDescription.controller
+        issuer: issuer ?? keyController
       }
     };
     if(cryptosuites) {
