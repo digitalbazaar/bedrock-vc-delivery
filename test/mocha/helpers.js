@@ -1,6 +1,7 @@
 /*!
  * Copyright (c) 2019-2024 Digital Bazaar, Inc. All rights reserved.
  */
+import * as base64url from 'base64url-universal';
 import * as bedrock from '@bedrock/core';
 import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
 import {
@@ -29,6 +30,10 @@ import {v4 as uuid} from 'uuid';
 import {ZcapClient} from '@digitalbazaar/ezcap';
 
 import {mockData} from './mock.data.js';
+
+const VC_CONTEXT_2 = 'https://www.w3.org/ns/credentials/v2';
+const TEXT_ENCODER = new TextEncoder();
+const ENCODED_PERIOD = TEXT_ENCODER.encode('.');
 
 const didKeyDriver = driver();
 const edvBaseUrl = `${mockData.baseUrl}/edvs`;
@@ -476,6 +481,69 @@ export async function delegate({
   });
 }
 
+export async function envelopePresentation({
+  verifiablePresentation, challenge, domain, signer, options = {}
+} = {}) {
+  /* Example:
+  {
+    "alg": <signer.algorithm>,
+    "kid": <signer.id>
+  }.
+  {
+    "iss": <verifiablePresentation.holder>,
+    "aud": <verifiablePresentation.domain>,
+    "nonce": <verifiablePresentation.nonce>,
+    "jti": <verifiablePresentation.id>
+    "nbf": <verifiablePresentation.[validFrom]>
+    "exp": <verifiablePresentation.[validUntil]>
+    "vp": <verifiablePresentation>
+  }
+  */
+  const {id, holder, validFrom, validUntil} = verifiablePresentation;
+
+  const payload = {
+    iss: holder?.id ?? holder,
+    aud: domain,
+    nonce: challenge
+  };
+
+  if(id !== undefined) {
+    payload.jti = id;
+  }
+
+  let nbf = validFrom;
+  if(nbf !== undefined) {
+    nbf = Date.parse(nbf);
+    if(!isNaN(nbf)) {
+      payload.nbf = Math.floor(nbf / 1000);
+    }
+  }
+
+  let exp = validUntil;
+  if(exp !== undefined) {
+    exp = Date.parse(exp);
+    if(!isNaN(exp)) {
+      payload.exp = Math.floor(exp / 1000);
+    }
+  }
+
+  payload.vp = verifiablePresentation;
+
+  const {id: kid} = signer;
+  const alg = options.alg ?? _curveToAlg(signer.algorithm);
+  const protectedHeader = {alg, kid};
+
+  const jwt = await _signJWT({payload, protectedHeader, signer});
+  return {
+    envelopedPresentation: {
+      '@context': VC_CONTEXT_2,
+      id: `data:application/jwt,${jwt}`,
+      type: 'EnvelopedVerifiablePresentation'
+    },
+    jwt
+  };
+}
+
 export function generateRandom() {
   // 128-bit random number, base58 multibase + multihash encoded
   return generateId({
@@ -891,4 +959,45 @@ async function _generateMultikey({
   return new AsymmetricKey({
     id, kmsId: keyId, type, invocationSigner, kmsClient, keyDescription
   });
+}
+
+async function _signJWT({payload, protectedHeader, signer} = {}) {
+  // encode payload and protected header
+  const b64Payload = base64url.encode(JSON.stringify(payload));
+  const b64ProtectedHeader = base64url.encode(JSON.stringify(protectedHeader));
+  payload = TEXT_ENCODER.encode(b64Payload);
+  protectedHeader = TEXT_ENCODER.encode(b64ProtectedHeader);
+
+  // concatenate
+  const data = new Uint8Array(
+    protectedHeader.length + ENCODED_PERIOD.length + payload.length);
+  data.set(protectedHeader);
+  data.set(ENCODED_PERIOD, protectedHeader.length);
+  data.set(payload, protectedHeader.length + ENCODED_PERIOD.length);
+
+  // sign
+  const signature = await signer.sign({data});
+
+  // create JWS
+  const jws = {
+    signature: base64url.encode(signature),
+    payload: b64Payload,
+    protected: b64ProtectedHeader
+  };
+
+  // create compact JWT
+  return `${jws.protected}.${jws.payload}.${jws.signature}`;
+}
+
+function _curveToAlg(crv) {
+  if(crv === 'Ed25519' || crv === 'Ed448') {
+    return 'EdDSA';
+  }
+  if(crv?.startsWith('P-')) {
+    return `ES${crv.slice(2)}`;
+  }
+  if(crv === 'secp256k1') {
+    return 'ES256K';
+  }
+  return crv;
 }

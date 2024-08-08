@@ -232,7 +232,7 @@ mockData.prcCredentialDefinition = {
 mockData.nameCredentialTemplate = `
   {
     "@context": [
-      "https://www.w3.org/ns/credentials/v2"
+      "https://www.w3.org/2018/credentials/v1"
     ],
     "id": credentialId,
     "type": [
@@ -240,14 +240,14 @@ mockData.nameCredentialTemplate = `
     ],
     "credentialSubject": {
       "id": results.didAuthn.did,
-      "name": "Jane Doe"
+      "ex:name": "Jane Doe"
     }
   }
 `;
 
 mockData.nameCredentialDefinition = {
   '@context': [
-    'https://www.w3.org/ns/credentials/v2'
+    'https://www.w3.org/2018/credentials/v1'
   ],
   type: [
     'VerifiableCredential'
@@ -474,7 +474,7 @@ mockData.nameCredentialSchema = {
     '@context': {
       type: 'array',
       items: [{
-        const: 'https://www.w3.org/ns/credentials/v2'
+        const: 'https://www.w3.org/2018/credentials/v1'
       }]
     },
     id: {
@@ -492,13 +492,13 @@ mockData.nameCredentialSchema = {
     },
     credentialSubject: {
       type: 'object',
-      required: ['name'],
+      required: ['ex:name'],
       additionalProperties: false,
       properties: {
         id: {
           type: 'string'
         },
-        degree: {
+        'ex:name': {
           type: 'string',
           name: {
             const: 'Jane Doe'

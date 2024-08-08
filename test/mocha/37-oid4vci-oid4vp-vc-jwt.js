@@ -6,6 +6,7 @@ import {
   OID4Client, oid4vp, parseCredentialOfferUrl
 } from '@digitalbazaar/oid4-client';
 import {agent} from '@bedrock/https-agent';
+import {createPresentation} from '@digitalbazaar/vc';
 import {httpClient} from '@digitalbazaar/http-client';
 import {klona} from 'klona';
 import {mockData} from './mock.data.js';
@@ -19,6 +20,8 @@ const {
   namePresentationSchema
 } = mockData;
 const credentialFormat = 'jwt_vc_json-ld';
+
+const VC_CONTEXT_1 = 'https://www.w3.org/2018/credentials/v1';
 
 describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
   let capabilityAgent;
@@ -104,6 +107,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
 
     // generate VP
     ({did, signer} = await helpers.createDidProofSigner());
+    signer.algorithm = 'Ed25519';
     const {verifiablePresentation} = await helpers.createDidAuthnVP({
       domain: baseUrl,
       challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
@@ -201,7 +205,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
 
   // FIXME: add invalid issuer test that will fail against `presentationSchema`
 
-  it.skip('should pass w/ pre-authorized code flow', async () => {
+  it('should pass w/ pre-authorized code flow', async () => {
     // pre-authorized flow, issuer-initiated
     const credentialId = `urn:uuid:${uuid()}`;
     const vpr = {
@@ -214,10 +218,10 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         credentialQuery: [{
           reason: 'We require a name verifiable credential to pass this test',
           example: {
-            '@context': 'https://www.w3.org/ns/credentials/v2',
+            '@context': 'https://www.w3.org/2018/credentials/v1',
             type: 'VerifiableCredential',
             credentialSubject: {
-              name: ''
+              'ex:name': ''
             }
           }
         }]
@@ -293,7 +297,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
 
     // wallet / client responds to `authorization_request` by performing
     // OID4VP:
-    let verifiablePresentation;
+    let envelopedPresentation;
     {
       // generate VPR from authorization request
       const {
@@ -316,10 +320,10 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
           credentialQuery: [{
             reason: 'We require a name verifiable credential to pass this test',
             example: {
-              '@context': 'https://www.w3.org/ns/credentials/v2',
+              '@context': 'https://www.w3.org/2018/credentials/v1',
               type: 'VerifiableCredential',
               credentialSubject: {
-                name: ''
+                'ex:name': ''
               }
             }
           }]
@@ -331,22 +335,36 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       };
       verifiablePresentationRequest.should.deep.equal(expectedVpr);
 
-      // generate VP
+      // generate enveloped VP
       const {domain, challenge} = verifiablePresentationRequest;
-      ({verifiablePresentation} = await helpers.createDidAuthnVP({
-        domain, challenge,
-        did, signer, verifiableCredential
-      }));
-      /*console.log('unenveloped credential', await unenvelopeCredential({
-        envelopedCredential: verifiableCredential,
-        format: credentialFormat
-      }));*/
+      const presentation = createPresentation({holder: did});
+      // force VC-JWT 1.1 mode with `verifiableCredential` as a string
+      presentation['@context'] = [VC_CONTEXT_1];
+      const credentialJwt = verifiableCredential.id.slice(
+        'data:application/jwt,'.length);
+      presentation.verifiableCredential = [credentialJwt];
+      const envelopeResult = await helpers.envelopePresentation({
+        verifiablePresentation: presentation,
+        challenge,
+        domain,
+        signer
+      });
+      ({envelopedPresentation} = envelopeResult);
+      const {jwt} = envelopeResult;
 
       // send authorization response
+      // FIXME: auto-generate proper presentation submission
+      const presentationSubmission = {
+        id: 'ex:example',
+        definition_id: 'ex:definition',
+        descriptor_map: []
+      };
       const {
-        result, presentationSubmission
+        result/*, presentationSubmission*/
       } = await oid4vp.sendAuthorizationResponse({
-        verifiablePresentation, authorizationRequest, agent
+        verifiablePresentation: presentation, authorizationRequest,
+        vpToken: JSON.stringify(jwt), agent,
+        presentationSubmission
       });
       should.exist(result);
 
@@ -362,8 +380,10 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
           should.exist(
             exchange?.variables?.results?.didAuthn?.verifiablePresentation);
           exchange?.variables?.results?.didAuthn.did.should.equal(did);
-          exchange.variables.results.didAuthn.verifiablePresentation
-            .should.deep.equal(verifiablePresentation);
+          exchange.variables.results.didAuthn.envelopedPresentation
+            .should.deep.equal(envelopedPresentation);
+          exchange.variables.results.didAuthn.verifiablePresentation.holder
+            .should.equal(did);
           should.exist(exchange.variables.results.didAuthn.openId);
           exchange.variables.results.didAuthn.openId.authorizationRequest
             .should.deep.equal(authorizationRequest);
@@ -372,7 +392,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         } catch(error) {
           err = error;
         }
-        should.not.exist(err);
+        should.not.exist(err, err?.message);
       }
     }
 
@@ -418,12 +438,14 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         should.exist(
           exchange?.variables?.results?.didAuthn?.verifiablePresentation);
         exchange?.variables?.results?.didAuthn.did.should.equal(did);
-        exchange.variables.results.didAuthn.verifiablePresentation
-          .should.deep.equal(verifiablePresentation);
+        exchange.variables.results.didAuthn.verifiablePresentation.holder
+          .should.deep.equal(did);
+        exchange.variables.results.didAuthn.envelopedPresentation
+          .should.deep.equal(envelopedPresentation);
       } catch(error) {
         err = error;
       }
-      should.not.exist(err);
+      should.not.exist(err, err?.message);
     }
   });
 });
