@@ -303,7 +303,7 @@ const vcFormats = {
 const issuerInstance = {
   title: 'Issuer Instance',
   type: 'object',
-  required: ['zcapReferenceIds'],
+  required: ['supportedFormats', 'zcapReferenceIds'],
   additionalProperties: false,
   properties: {
     id: {
