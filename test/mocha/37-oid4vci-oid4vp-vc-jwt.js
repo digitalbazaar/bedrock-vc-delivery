@@ -183,9 +183,17 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
     };
     // set initial step
     const initialStep = 'didAuthn';
+    const configOptions = {
+      credentialTemplates, steps, initialStep,
+      issuerInstances: [{
+        supportedFormats: ['jwt_vc_json-ld'],
+        zcapReferenceIds: {
+          issue: 'issue'
+        }
+      }]
+    };
     const workflowConfig = await helpers.createWorkflowConfig({
-      capabilityAgent, zcaps, credentialTemplates, steps, initialStep,
-      oauth2: true
+      capabilityAgent, zcaps, configOptions, oauth2: true
     });
     workflowId = workflowConfig.id;
     workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
@@ -270,7 +278,8 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         credentialDefinition: nameCredentialDefinition,
         did,
         didProofSigner: signer,
-        agent
+        agent,
+        format: credentialFormat
       });
     } catch(e) {
       error = e;
@@ -323,16 +332,17 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       verifiablePresentationRequest.should.deep.equal(expectedVpr);
 
       // generate VP
-      console.log('generate VP with VC', verifiableCredential);
       const {domain, challenge} = verifiablePresentationRequest;
       ({verifiablePresentation} = await helpers.createDidAuthnVP({
         domain, challenge,
         did, signer, verifiableCredential
       }));
-      console.log('VP', verifiablePresentation);
+      /*console.log('unenveloped credential', await unenvelopeCredential({
+        envelopedCredential: verifiableCredential,
+        format: credentialFormat
+      }));*/
 
       // send authorization response
-      console.log('send authz response');
       const {
         result, presentationSubmission
       } = await oid4vp.sendAuthorizationResponse({
@@ -374,7 +384,8 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         credentialDefinition: nameCredentialDefinition,
         did,
         didProofSigner: signer,
-        agent
+        agent,
+        format: credentialFormat
       });
     } catch(e) {
       error = e;
@@ -384,10 +395,10 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
     result.should.include.keys(['format', 'credential']);
     result.format.should.equal(credentialFormat);
     result.credential.should.be.a('string');
-    const credential = await unenvelopeCredential({
-      envelopedCredential: result.credential
+    const {credential} = await unenvelopeCredential({
+      envelopedCredential: result.credential,
+      format: credentialFormat
     });
-    console.log('credential', credential);
     // ensure credential subject ID matches generated DID
     should.exist(credential?.credentialSubject?.id);
     credential.credentialSubject.id.should.equal(did);

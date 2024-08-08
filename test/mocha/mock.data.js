@@ -239,7 +239,7 @@ mockData.nameCredentialTemplate = `
       "VerifiableCredential"
     ],
     "credentialSubject": {
-      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21",
+      "id": results.didAuthn.did,
       "name": "Jane Doe"
     }
   }
