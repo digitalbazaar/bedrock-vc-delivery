@@ -167,10 +167,10 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       // DID Authn step
       didAuthn: {
         stepTemplate: {
-          //"presentationSchema": presentationSchema,
           type: 'jsonata',
           template: `
           {
+            "presentationSchema": presentationSchema,
             "createChallenge": true,
             "verifiablePresentationRequest": verifiablePresentationRequest,
             "openId": {

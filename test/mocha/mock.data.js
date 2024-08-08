@@ -490,6 +490,9 @@ mockData.nameCredentialSchema = {
         const: 'VerifiableCredential'
       }]
     },
+    issuanceDate: {
+      type: 'string'
+    },
     credentialSubject: {
       type: 'object',
       required: ['ex:name'],
