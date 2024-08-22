@@ -69,7 +69,8 @@ export async function createCredentialOffer({
   credentialFormat = 'ldp_vc',
   openId = true, openIdKeyPair,
   useCredentialIds = false,
-  useCredentialConfigurationIds = false
+  useCredentialConfigurationIds = false,
+  useCredentialOfferUri = false
 } = {}) {
   // first, create an exchange with variables based on the local user ID;
   // indicate that OID4VCI delivery is permitted
@@ -149,9 +150,14 @@ export async function createCredentialOffer({
   const result = {exchangeId};
 
   if(openId) {
-    offer.credential_issuer = exchangeId;
     const searchParams = new URLSearchParams();
-    searchParams.set('credential_offer', JSON.stringify(offer));
+    if(useCredentialOfferUri) {
+      const uri = exchangeId + '/openid/credential-offer';
+      searchParams.set('credential_offer_uri', uri);
+    } else {
+      offer.credential_issuer = exchangeId;
+      searchParams.set('credential_offer', JSON.stringify(offer));
+    }
     result.openIdUrl = `openid-credential-offer://?${searchParams}`;
   }
 

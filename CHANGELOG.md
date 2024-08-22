@@ -1,5 +1,12 @@
 # bedrock-vc-delivery ChangeLog
 
+## 5.2.0 - 2024-08-dd
+
+### Added
+- Add support for creating offers that use `credential_offer_uri`
+  for OID4VCI by serving an auto-generated credential offer from
+  `<exchangeId>/openid/credential-offer`.
+
 ## 5.1.0 - 2024-08-22
 
 ### Added
