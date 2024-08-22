@@ -67,7 +67,9 @@ export async function createCredentialOffer({
   preAuthorized, userPinRequired = false,
   capabilityAgent, workflowId, workflowRootZcap,
   credentialFormat = 'ldp_vc',
-  openId = true, openIdKeyPair
+  openId = true, openIdKeyPair,
+  useCredentialIds = false,
+  useCredentialConfigurationIds = false
 } = {}) {
   // first, create an exchange with variables based on the local user ID;
   // indicate that OID4VCI delivery is permitted
@@ -104,13 +106,24 @@ export async function createCredentialOffer({
     // start building OID4VCI credential offer
     offer = {
       credential_issuer: '',
-      // FIXME: use `credentials_supported` string IDs instead
-      credentials: credentialDefinition.map(
-        credential_definition => ({
-          format: credentialFormat, credential_definition
-        })),
       grants: {}
     };
+    if(useCredentialConfigurationIds) {
+      offer.credential_configuration_ids = credentialDefinition.map(
+        credential_definition => _getCredentialConfigurationId({
+          format: credentialFormat, credential_definition
+        }));
+    } else if(useCredentialIds) {
+      offer.credentials = credentialDefinition.map(
+        credential_definition => _getCredentialConfigurationId({
+          format: credentialFormat, credential_definition
+        }));
+    } else {
+      offer.credentials = credentialDefinition.map(
+        credential_definition => ({
+          format: credentialFormat, credential_definition
+        }));
+    }
 
     if(preAuthorized) {
       exchange.openId.preAuthorizedCode = await generateRandom();
@@ -1000,4 +1013,12 @@ function _curveToAlg(crv) {
     return 'ES256K';
   }
   return crv;
+}
+
+function _getCredentialConfigurationId({format, credential_definition}) {
+  let types = (credential_definition.type ?? credential_definition.types);
+  if(types.length > 1) {
+    types = types.filter(t => t !== 'VerifiableCredential');
+  }
+  return types.join('_') + '_' + format;
 }
