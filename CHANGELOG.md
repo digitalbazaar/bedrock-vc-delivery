@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 5.1.0 - 2024-08-dd
+## 5.1.0 - 2024-08-22
 
 ### Added
 - Add `credential_configurations_supported` to OID4VCI metadata.
