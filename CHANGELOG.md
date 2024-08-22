@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 5.2.0 - 2024-08-dd
+## 5.2.0 - 2024-08-22
 
 ### Added
 - Add support for creating offers that use `credential_offer_uri`
