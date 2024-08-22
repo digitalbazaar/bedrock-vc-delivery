@@ -5,6 +5,8 @@
 ### Added
 - Add `credential_configurations_supported` to OID4VCI metadata.
 - Add `credential_issuer` to OID4VCI metadata.
+- Add auto-generated client metadata for OID4VP when it is not
+  provided by the exchange creator, using default `vp_formats`.
 
 ### Fixed
 - Ensure default of 15 minutes is set for exchange TTL.
