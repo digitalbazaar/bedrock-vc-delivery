@@ -314,7 +314,11 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         query: [{
           type: 'DIDAuthentication',
           // no OID4VP support for accepted DID methods at this time
-          acceptedCryptosuites: [{cryptosuite: 'Ed25519Signature2020'}]
+          acceptedCryptosuites: [
+            {cryptosuite: 'ecdsa-rdfc-2019'},
+            {cryptosuite: 'eddsa-rdfc-2022'},
+            {cryptosuite: 'Ed25519Signature2020'}
+          ]
         }, {
           type: 'QueryByExample',
           credentialQuery: [{
