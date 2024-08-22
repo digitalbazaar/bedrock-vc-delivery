@@ -1,5 +1,14 @@
 # bedrock-vc-delivery ChangeLog
 
+## 5.1.0 - 2024-08-dd
+
+### Added
+- Add `credential_configurations_supported` to OID4VCI metadata.
+- Add `credential_issuer` to OID4VCI metadata.
+
+### Fixed
+- Ensure default of 15 minutes is set for exchange TTL.
+
 ## 5.0.1 - 2024-08-08
 
 ### Fixed
