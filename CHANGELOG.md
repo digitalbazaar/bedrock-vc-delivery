@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 5.3.0 - 2024-08-dd
+## 5.3.0 - 2024-08-24
 
 ### Added
 - Include `expires` in exchange information.
