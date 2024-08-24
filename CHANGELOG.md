@@ -4,6 +4,10 @@
 
 ### Added
 - Include `expires` in exchange information.
+- Include `lastError` in exchange information.
+
+### Changed
+- Improve error information on failed exchange requests.
 
 ## 5.2.0 - 2024-08-22
 

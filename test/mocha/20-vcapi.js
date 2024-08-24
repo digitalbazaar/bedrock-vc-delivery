@@ -217,6 +217,9 @@ describe('exchange w/ VC-API delivery', () => {
           {id: exchangeId, capabilityAgent});
         should.exist(exchange?.state);
         exchange.state.should.equal('complete');
+        // error should be set
+        should.exist(exchange.lastError);
+        exchange.lastError.name.should.equal('DuplicateError');
       } catch(error) {
         err = error;
       }

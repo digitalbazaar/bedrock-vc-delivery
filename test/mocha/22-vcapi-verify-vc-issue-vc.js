@@ -259,6 +259,21 @@ describe('exchange w/ VC-API delivery + DID authn + VC request', () => {
     const issuerError = err.data.details.errors[0];
     issuerError.name.should.equal('ValidationError');
     issuerError.details.path.should.equal('.verifiableCredential.issuer');
+
+    // exchange state should be active with last error set
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        // error should be set
+        should.exist(exchange.lastError);
+        exchange.lastError.name.should.equal('ValidationError');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
   });
 
   it('should pass when sending VP in second call', async () => {
