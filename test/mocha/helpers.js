@@ -70,13 +70,14 @@ export async function createCredentialOffer({
   openId = true, openIdKeyPair,
   useCredentialIds = false,
   useCredentialConfigurationIds = false,
-  useCredentialOfferUri = false
+  useCredentialOfferUri = false,
+  // 15 minute expiry in seconds
+  ttl = 60 * 15
 } = {}) {
   // first, create an exchange with variables based on the local user ID;
   // indicate that OID4VCI delivery is permitted
   const exchange = {
-    // 15 minute expiry in seconds
-    ttl: 60 * 15,
+    ttl,
     // template variables
     variables: variables ? {
       issuanceDate: (new Date()).toISOString(),

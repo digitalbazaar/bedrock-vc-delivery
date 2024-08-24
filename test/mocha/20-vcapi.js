@@ -237,6 +237,64 @@ describe('exchange w/ VC-API delivery', () => {
       err.data.name.should.equal('NotAllowedError');
     }
   });
+
+  it('should fail when an exchange expires', async function() {
+    this.timeout(10000);
+
+    let now = new Date();
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap,
+      // TTL of one second
+      ttl: 1
+    });
+
+    // exchange state should be pending and not yet expired
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('pending');
+        should.exist(exchange.expires);
+        exchange.expires.should.be.a('string');
+        const expires = new Date(exchange.expires);
+        const isValidDate = !isNaN(expires);
+        isValidDate.should.equal(true);
+        expires.should.be.greaterThan(now);
+
+        // wait for exchange to expire
+        now = new Date();
+        await new Promise(
+          r => setTimeout(r, expires.getTime() - now.getTime()));
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err, err?.message);
+    }
+
+    // getting exchange state should result in 404
+    {
+      let err;
+      try {
+        await helpers.getExchange({id: exchangeId, capabilityAgent});
+      } catch(error) {
+        err = error;
+      }
+      should.exist(err);
+      should.exist(err.data?.name);
+      err.data.name.should.equal('NotFoundError');
+    }
+  });
 });
 
 describe('exchange w/ VC-API delivery using credential request ' +
