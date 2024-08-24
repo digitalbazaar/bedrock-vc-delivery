@@ -47,7 +47,8 @@
     "cors": "^2.8.5",
     "jose": "^5.6.3",
     "jsonata": "^2.0.5",
-    "klona": "^2.0.6"
+    "klona": "^2.0.6",
+    "serialize-error": "^11.0.3"
   },
   "peerDependencies": {
     "@bedrock/app-identity": "4.0.0",
