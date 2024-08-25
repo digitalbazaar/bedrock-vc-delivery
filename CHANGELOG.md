@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 5.3.2 - 2024-08-dd
+## 5.3.2 - 2024-08-24
 
 ### Fixed
 - Allow list specific error keys to include in last error.
