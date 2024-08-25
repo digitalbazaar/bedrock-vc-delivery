@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 5.3.1 - 2024-08-dd
+
+### Fixed
+- Throw better error if DID proof JWT verification method cannot be retrieved
+  from `kid` URL.
+
 ## 5.3.0 - 2024-08-24
 
 ### Added
