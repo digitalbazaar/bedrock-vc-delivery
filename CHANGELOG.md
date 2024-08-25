@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 5.3.3 - 2024-08-dd
+## 5.3.3 - 2024-08-24
 
 ### Fixed
 - Improve verification method controller check error.
