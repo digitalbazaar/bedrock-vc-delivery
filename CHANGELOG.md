@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 5.3.4 - 2024-08-dd
+## 5.3.4 - 2024-08-26
 
 ### Fixed
 - Ensure contexts in credential definitions are compared using deep equality
