@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 5.3.4 - 2024-08-dd
+
+### Fixed
+- Ensure contexts in credential definitions are compared using deep equality
+  during OID4VCI.
+
 ## 5.3.3 - 2024-08-24
 
 ### Fixed
