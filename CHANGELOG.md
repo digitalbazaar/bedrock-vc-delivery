@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 5.3.5 - 2024-08-dd
+
+### Fixed
+- Ensure OID4VP authorization responses (which is sent as a urlencoded
+  payload), can be large enough to accommodate most VPs.
+
 ## 5.3.4 - 2024-08-26
 
 ### Fixed
