@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 5.3.5 - 2024-08-dd
+## 5.3.5 - 2024-08-27
 
 ### Fixed
 - Ensure OID4VP authorization responses (which is sent as a urlencoded
