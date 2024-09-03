@@ -1,5 +1,12 @@
 # bedrock-vc-delivery ChangeLog
 
+## 5.4.0 - 2024-09-dd
+
+### Added
+- Allow multiple credentials (if they are of the same type) to be returned
+  from a single OID4VCI exchange using the `credential` endpoint (not the
+  batch endpoint).
+
 ## 5.3.5 - 2024-08-27
 
 ### Fixed
