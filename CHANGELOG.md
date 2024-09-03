@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 5.4.0 - 2024-09-dd
+## 5.4.0 - 2024-09-03
 
 ### Added
 - Allow multiple credentials (if they are of the same type) to be returned
