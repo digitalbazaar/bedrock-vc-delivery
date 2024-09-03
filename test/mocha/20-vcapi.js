@@ -278,7 +278,7 @@ describe('exchange w/ VC-API delivery', () => {
         // wait for exchange to expire
         now = new Date();
         await new Promise(
-          r => setTimeout(r, expires.getTime() - now.getTime()));
+          r => setTimeout(r, expires.getTime() - now.getTime() + 1));
       } catch(error) {
         err = error;
       }
