@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 5.5.1 - 2024-09-dd
+
+### Fixed
+- Ensure OID4* errors are still logged.
+
 ## 5.5.0 - 2024-09-05
 
 ### Changed
