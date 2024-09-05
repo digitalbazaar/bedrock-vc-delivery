@@ -296,6 +296,6 @@ describe('exchanger backwards-compatibility: ' +
       err = error;
     }
     should.exist(err);
-    should.equal(err?.cause?.data?.name, 'DuplicateError');
+    should.equal(err?.cause?.data?.error, 'duplicate_error');
   });
 });
