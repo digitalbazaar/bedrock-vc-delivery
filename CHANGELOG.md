@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 5.5.0 - 2024-09-dd
+## 5.5.0 - 2024-09-05
 
 ### Changed
 - Improve OID4* errors and use OID4* error style with `error` and
