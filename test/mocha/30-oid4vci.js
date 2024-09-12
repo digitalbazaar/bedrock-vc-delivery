@@ -8,6 +8,7 @@ import {
   parseCredentialOfferUrl
 } from '@digitalbazaar/oid4-client';
 import {agent} from '@bedrock/https-agent';
+import {httpClient} from '@digitalbazaar/http-client';
 import {mockData} from './mock.data.js';
 import {v4 as uuid} from 'uuid';
 
@@ -253,7 +254,10 @@ describe('exchange w/OID4VCI delivery', () => {
 
     // pre-authorized flow, issuer-initiated
     const credentialId = `urn:uuid:${uuid()}`;
-    const {openIdUrl: offerUrl} = await helpers.createCredentialOffer({
+    const {
+      exchangeId,
+      openIdUrl: offerUrl
+    } = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -277,6 +281,39 @@ describe('exchange w/OID4VCI delivery', () => {
     const offer = await getCredentialOffer({
       url: parsedChapiRequest.OID4VC, agent
     });
+
+    // confirm offer URL matches the one in `protocols`
+    {
+      const protocolsUrl = `${exchangeId}/protocols`;
+      const response = await httpClient.get(protocolsUrl, {agent});
+      should.exist(response);
+      should.exist(response.data);
+      should.exist(response.data.protocols);
+      should.exist(response.data.protocols.vcapi);
+      response.data.protocols.vcapi.should.equal(exchangeId);
+      should.exist(response.data.protocols.OID4VCI);
+      response.data.protocols.OID4VCI.should.equal(offerUrl);
+    }
+
+    // confirm 406 when not requesting JSON
+    {
+      const protocolsUrl = `${exchangeId}/protocols`;
+      let response;
+      let error;
+      try {
+        response = await httpClient.get(protocolsUrl, {
+          agent,
+          headers: {
+            accept: 'text/html'
+          }
+        });
+      } catch(e) {
+        error = e;
+      }
+      should.not.exist(response);
+      should.exist(error);
+      error.status.should.equal(406);
+    }
 
     // wallet / client gets access token
     const client = await OID4Client.fromCredentialOffer({offer, agent});

@@ -306,13 +306,25 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
     });
     const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
 
-    // `openid4vp` URL would be:
-    /*const searchParams = new URLSearchParams({
-      client_id: `${exchangeId}/openid/client/authorization/response`,
-      request_uri: authzReqUrl
-    });
-    const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();
-    console.log('openid4vpUrl', openid4vpUrl);*/
+    // confirm oid4vp URL matches the one in `protocols`
+    {
+      // `openid4vp` URL would be:
+      const searchParams = new URLSearchParams({
+        client_id: `${exchangeId}/openid/client/authorization/response`,
+        request_uri: authzReqUrl
+      });
+      const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();
+
+      const protocolsUrl = `${exchangeId}/protocols`;
+      const response = await httpClient.get(protocolsUrl, {agent});
+      should.exist(response);
+      should.exist(response.data);
+      should.exist(response.data.protocols);
+      should.exist(response.data.protocols.vcapi);
+      response.data.protocols.vcapi.should.equal(exchangeId);
+      should.exist(response.data.protocols.OID4VP);
+      response.data.protocols.OID4VP.should.equal(openid4vpUrl);
+    }
 
     // get authorization request
     const {authorizationRequest} = await getAuthorizationRequest(
