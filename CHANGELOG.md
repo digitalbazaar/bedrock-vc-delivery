@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 5.6.0 - 2024-09-dd
+
+### Added
+- Add interaction "protocols" URL support.
+
 ## 5.5.1 - 2024-09-05
 
 ### Fixed
