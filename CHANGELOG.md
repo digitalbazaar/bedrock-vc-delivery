@@ -1,5 +1,12 @@
 # bedrock-vc-delivery ChangeLog
 
+## 6.0.0 - 2024-09-dd
+
+### Changed
+- **BREAKING**: Use `@digitalbazaar/oid4-client@4` to get fix to
+  auto-generated OID4VP authorization requests (use `allOf` JSON
+  schema instead of invalid `contains` with an array value).
+
 ## 5.6.0 - 2024-09-12
 
 ### Added
