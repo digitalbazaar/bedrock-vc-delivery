@@ -1,6 +1,6 @@
 {
   "name": "@bedrock/vc-delivery",
-  "version": "5.6.1-0",
+  "version": "6.0.0",
   "type": "module",
   "description": "Bedrock Verifiable Credential Delivery",
   "main": "./lib/index.js",
