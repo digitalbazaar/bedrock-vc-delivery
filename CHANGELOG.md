@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 6.0.0 - 2024-09-dd
+## 6.0.0 - 2024-09-20
 
 ### Changed
 - **BREAKING**: Use `@digitalbazaar/oid4-client@4` to get fix to
