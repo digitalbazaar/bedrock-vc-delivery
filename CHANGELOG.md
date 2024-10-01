@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 6.1.0 - 2024-10-dd
+
+### Changed
+- Use `@digitalbazaar/oid4-client@4.1` to get latest updates and fixes.
+
 ## 6.0.0 - 2024-09-20
 
 ### Changed

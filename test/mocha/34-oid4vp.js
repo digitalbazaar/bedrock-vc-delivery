@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2023 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
@@ -365,6 +365,158 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
             ],
             type: 'AlumniCredential'
           }
+        }]
+      }],
+      // OID4VP requires this to be the authz response URL
+      domain: authorizationRequest.response_uri,
+      // challenge should be set to authz nonce
+      challenge: authorizationRequest.nonce
+    };
+    verifiablePresentationRequest.should.deep.equal(expectedVpr);
+
+    // generate VP
+    const {domain, challenge} = verifiablePresentationRequest;
+    const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
+      {domain, challenge, verifiableCredential});
+
+    // send authorization response
+    const {
+      result, presentationSubmission
+    } = await oid4vp.sendAuthorizationResponse({
+      verifiablePresentation, authorizationRequest, agent
+    });
+    // should be only an optional `redirect_uri` in the response
+    should.exist(result);
+    //should.exist(result.redirect_uri);
+
+    // exchange should be complete and contain the VP and open ID results
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+        should.exist(exchange?.variables?.results?.myStep);
+        should.exist(
+          exchange?.variables?.results?.myStep?.verifiablePresentation);
+        exchange?.variables?.results?.myStep.did.should.equal(did);
+        exchange.variables.results.myStep.verifiablePresentation
+          .should.deep.equal(verifiablePresentation);
+        should.exist(exchange.variables.results.myStep.openId);
+        exchange.variables.results.myStep.openId.authorizationRequest
+          .should.deep.equal(authorizationRequest);
+        exchange.variables.results.myStep.openId.presentationSubmission
+          .should.deep.equal(presentationSubmission);
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+  });
+
+  it('should pass w/"acceptedEnvelopes"', async () => {
+    // create an exchange with appropriate variables for the step template
+    const exchange = {
+      // 15 minute expiry in seconds
+      ttl: 60 * 15,
+      // template variables
+      variables: {
+        verifiablePresentationRequest: {
+          query: [{
+            type: 'DIDAuthentication',
+            acceptedMethods: [{method: 'key'}],
+            acceptedCryptosuites: [{cryptosuite: 'Ed25519Signature2020'}]
+          }, {
+            type: 'QueryByExample',
+            credentialQuery: [{
+              reason: 'We require a verifiable credential to pass this test',
+              example: {
+                '@context': [
+                  'https://www.w3.org/2018/credentials/v1',
+                  'https://www.w3.org/2018/credentials/examples/v1'
+                ],
+                type: 'AlumniCredential'
+              },
+              acceptedCryptosuites: [{cryptosuite: 'Ed25519Signature2020'}],
+              acceptedEnvelopes: ['application/jwt']
+            }],
+          }],
+          domain: baseUrl
+        },
+        openId: {
+          createAuthorizationRequest: 'authorizationRequest'
+        }
+      }
+    };
+    const {id: exchangeId} = await helpers.createExchange({
+      url: `${workflowId}/exchanges`,
+      capabilityAgent, capability: workflowRootZcap, exchange
+    });
+    const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
+
+    // confirm oid4vp URL matches the one in `protocols`
+    {
+      // `openid4vp` URL would be:
+      const searchParams = new URLSearchParams({
+        client_id: `${exchangeId}/openid/client/authorization/response`,
+        request_uri: authzReqUrl
+      });
+      const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();
+
+      const protocolsUrl = `${exchangeId}/protocols`;
+      const response = await httpClient.get(protocolsUrl, {agent});
+      should.exist(response);
+      should.exist(response.data);
+      should.exist(response.data.protocols);
+      should.exist(response.data.protocols.vcapi);
+      response.data.protocols.vcapi.should.equal(exchangeId);
+      should.exist(response.data.protocols.OID4VP);
+      response.data.protocols.OID4VP.should.equal(openid4vpUrl);
+    }
+
+    // get authorization request
+    const {authorizationRequest} = await getAuthorizationRequest(
+      {url: authzReqUrl, agent});
+
+    should.exist(authorizationRequest);
+    should.exist(authorizationRequest.presentation_definition);
+    authorizationRequest.presentation_definition.id.should.be.a('string');
+    authorizationRequest.presentation_definition.input_descriptors.should.be
+      .an('array');
+    authorizationRequest.response_mode.should.equal('direct_post');
+    authorizationRequest.nonce.should.be.a('string');
+    // FIXME: add assertions for `authorizationRequest.presentation_definition`
+
+    // generate VPR from authorization request
+    const {verifiablePresentationRequest} = await oid4vp.toVpr(
+      {authorizationRequest});
+
+    // VPR should be the same as the one from the exchange, modulo changes
+    // comply with OID4VP spec
+    const expectedVpr = {
+      query: [{
+        type: 'DIDAuthentication',
+        // no OID4VP support for accepted DID methods at this time
+        acceptedCryptosuites: [
+          {cryptosuite: 'ecdsa-rdfc-2019'},
+          {cryptosuite: 'eddsa-rdfc-2022'},
+          {cryptosuite: 'Ed25519Signature2020'}
+        ]
+      }, {
+        type: 'QueryByExample',
+        credentialQuery: [{
+          reason: 'We require a verifiable credential to pass this test',
+          example: {
+            '@context': [
+              'https://www.w3.org/2018/credentials/v1',
+              'https://www.w3.org/2018/credentials/examples/v1'
+            ],
+            type: 'AlumniCredential'
+          },
+          // FIXME: format conversion not yet supported
+          //acceptedEnvelopes: ['application/jwt']
         }]
       }],
       // OID4VP requires this to be the authz response URL
