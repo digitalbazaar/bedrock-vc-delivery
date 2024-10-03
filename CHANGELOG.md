@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 6.2.0 - 2024-10-dd
+
+### Changed
+- Update multikey dependencies.
+
 ## 6.1.0 - 2024-10-01
 
 ### Changed
