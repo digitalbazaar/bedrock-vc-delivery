@@ -19,7 +19,8 @@ import {
 } from '@bedrock/jsonld-document-loader';
 import {decodeList} from '@digitalbazaar/vc-status-list';
 import {didIo} from '@bedrock/did-io';
-import {driver} from '@digitalbazaar/did-method-key';
+import {driver as DidJwkDriver} from '@digitalbazaar/did-method-jwk';
+import {driver as DidKeyDriver} from '@digitalbazaar/did-method-key';
 import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {EdvClient} from '@digitalbazaar/edv-client';
 import {generateId} from 'bnid';
@@ -35,7 +36,8 @@ const VC_CONTEXT_2 = 'https://www.w3.org/ns/credentials/v2';
 const TEXT_ENCODER = new TextEncoder();
 const ENCODED_PERIOD = TEXT_ENCODER.encode('.');
 
-const didKeyDriver = driver();
+const didKeyDriver = DidKeyDriver();
+const didJwkDriver = DidJwkDriver();
 const edvBaseUrl = `${mockData.baseUrl}/edvs`;
 const kmsBaseUrl = `${mockData.baseUrl}/kms`;
 
@@ -342,11 +344,19 @@ export async function createDidAuthnVP({
   return {verifiablePresentation, did};
 }
 
-export async function createDidProofSigner() {
-  const {didDocument, methodFor} = await didKeyDriver.generate();
-  const authenticationKeyPair = methodFor({purpose: 'authentication'});
+export async function createDidProofSigner({didMethod = 'key'} = {}) {
+  const result = await didKeyDriver.generate();
+  let {didDocument} = result;
+  const authenticationKeyPair = result.methodFor({purpose: 'authentication'});
   const keyPair = await Ed25519Multikey.from(authenticationKeyPair);
-  return {did: didDocument.id, signer: keyPair.signer()};
+  const signer = keyPair.signer();
+  signer.algorithm = 'Ed25519';
+  if(didMethod === 'jwk') {
+    const jwk = await Ed25519Multikey.toJwk({keyPair});
+    ({didDocument} = await didJwkDriver.fromJwk({jwk}));
+    signer.id = didDocument.verificationMethod[0].id;
+  }
+  return {did: didDocument.id, signer};
 }
 
 export async function createExchange({
