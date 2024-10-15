@@ -330,6 +330,29 @@ export const issuerInstances = {
   items: issuerInstance
 };
 
+const issueRequestParameters = {
+  title: 'Issue Request Parameters',
+  type: 'object',
+  oneOf: [{
+    required: ['credentialTemplateId']
+  }, {
+    required: ['credentialTemplateIndex']
+  }],
+  additionalProperties: false,
+  properties: {
+    credentialTemplateId: {
+      type: 'string'
+    },
+    credentialTemplateIndex: {
+      type: 'number'
+    },
+    // optionally specify different variables
+    variables: {
+      oneOf: [{type: 'string'}, {type: 'object'}]
+    }
+  }
+};
+
 const step = {
   title: 'Exchange Step',
   type: 'object',
@@ -366,25 +389,9 @@ const step = {
       type: 'boolean'
     },
     issueRequests: {
-      type: 'object',
-      oneOf: [{
-        required: ['credentialTemplateId']
-      }, {
-        required: ['credentialTemplateIndex']
-      }],
-      additionalProperties: false,
-      properties: {
-        credentialTemplateId: {
-          type: 'string'
-        },
-        credentialTemplateIndex: {
-          type: 'number'
-        },
-        // optionally specify different variables
-        variables: {
-          oneOf: [{type: 'string'}, {type: 'object'}]
-        }
-      }
+      type: 'array',
+      minItems: 0,
+      items: issueRequestParameters
     },
     jwtDidProofRequest: {
       type: 'object',
