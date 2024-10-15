@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 6.3.0 - 2024-10-dd
+## 6.3.0 - 2024-10-14
 
 ### Added
 - Add `issueRequests` feature for expressing parameters for issuing VCs
