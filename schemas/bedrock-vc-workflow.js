@@ -344,10 +344,12 @@ const step = {
       required: [
         'allowUnprotectedPresentation',
         'createChallenge',
-        'verifiablePresentationRequest',
+        'issueRequests',
         'jwtDidProofRequest',
         'nextStep',
-        'openId'
+        'openId',
+        'presentationSchema',
+        'verifiablePresentationRequest'
       ]
     }
   }, {
@@ -363,19 +365,24 @@ const step = {
     createChallenge: {
       type: 'boolean'
     },
-    verifiablePresentationRequest: {
-      type: 'object'
-    },
-    presentationSchema: {
+    issueRequests: {
       type: 'object',
-      required: ['type', 'jsonSchema'],
+      oneOf: [{
+        required: ['credentialTemplateId']
+      }, {
+        required: ['credentialTemplateIndex']
+      }],
       additionalProperties: false,
       properties: {
-        type: {
+        credentialTemplateId: {
           type: 'string'
         },
-        jsonSchema: {
-          type: 'object'
+        credentialTemplateIndex: {
+          type: 'number'
+        },
+        // optionally specify different variables
+        variables: {
+          oneOf: [{type: 'string'}, {type: 'object'}]
         }
       }
     },
@@ -411,7 +418,6 @@ const step = {
     nextStep: {
       type: 'string'
     },
-    stepTemplate: typedTemplate,
     // required to support OID4VP (but can be provided by step template instead)
     openId: {
       type: 'object',
@@ -441,6 +447,23 @@ const step = {
           type: 'object'
         }
       }
+    },
+    presentationSchema: {
+      type: 'object',
+      required: ['type', 'jsonSchema'],
+      additionalProperties: false,
+      properties: {
+        type: {
+          type: 'string'
+        },
+        jsonSchema: {
+          type: 'object'
+        }
+      }
+    },
+    stepTemplate: typedTemplate,
+    verifiablePresentationRequest: {
+      type: 'object'
     }
   }
 };

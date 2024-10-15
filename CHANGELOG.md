@@ -1,5 +1,18 @@
 # bedrock-vc-delivery ChangeLog
 
+## 6.3.0 - 2024-10-dd
+
+### Added
+- Add `issueRequests` feature for expressing parameters for issuing VCs
+  in a particular step. The `issueRequest` value must be an array, with
+  each element containing parameters for issuing a VC. The parameters
+  must minimally include a credential template ID or index that
+  references a credential template from the associated workflow. The
+  parameters may optionally specify alternative variables to use when
+  evaluating the template, either via an object or a string, where
+  the string includes the name of a variable from the workflow's
+  main `variables`.
+
 ## 6.2.0 - 2024-10-02
 
 ### Changed
