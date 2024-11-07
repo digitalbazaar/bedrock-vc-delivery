@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 6.3.1 - 2024-11-dd
+
+### Fixed
+- Remove unnecessary `authorize` "authority" in openid4vp URL.
+
 ## 6.3.0 - 2024-10-14
 
 ### Added
