@@ -90,7 +90,7 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
       client_id: `${exchangeId}/openid/client/authorization/response`,
       request_uri: authzReqUrl
     });
-    const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();*/
+    const openid4vpUrl = 'openid4vp://?' + searchParams.toString();*/
 
     // exchange state should be pending
     {
@@ -313,7 +313,7 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
         client_id: `${exchangeId}/openid/client/authorization/response`,
         request_uri: authzReqUrl
       });
-      const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();
+      const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
 
       const protocolsUrl = `${exchangeId}/protocols`;
       const response = await httpClient.get(protocolsUrl, {agent});
@@ -463,7 +463,7 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
         client_id: `${exchangeId}/openid/client/authorization/response`,
         request_uri: authzReqUrl
       });
-      const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();
+      const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
 
       const protocolsUrl = `${exchangeId}/protocols`;
       const response = await httpClient.get(protocolsUrl, {agent});
