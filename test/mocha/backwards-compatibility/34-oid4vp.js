@@ -91,7 +91,7 @@ describe('exchanger backwards-compatibility: ' +
       client_id: `${exchangeId}/openid/client/authorization/response`,
       request_uri: authzReqUrl
     });
-    const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();*/
+    const openid4vpUrl = 'openid4vp://?' + searchParams.toString();*/
 
     // exchange state should be pending
     {
@@ -313,7 +313,7 @@ describe('exchanger backwards-compatibility: ' +
       client_id: `${exchangeId}/openid/client/authorization/response`,
       request_uri: authzReqUrl
     });
-    const openid4vpUrl = 'openid4vp://authorize?' + searchParams.toString();
+    const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
     console.log('openid4vpUrl', openid4vpUrl);*/
 
     // get authorization request
