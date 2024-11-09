@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 6.4.0 - 2024-11-dd
+
+### Added
+- Add `nonce` endpoint to OID4VCI exchanges.
+
 ## 6.3.1 - 2024-11-07
 
 ### Fixed
