@@ -123,4 +123,56 @@ describe('exchange w/OID4VCI delivery + DID authn', () => {
     should.exist(result.credential.id);
     result.credential.id.should.equal(credentialId);
   });
+
+  it('should pass w/ fetched nonce', async () => {
+    // pre-authorized flow, issuer-initiated
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap
+    });
+    const chapiRequest = {OID4VC: issuanceUrl};
+    // CHAPI could potentially be used to deliver the URL to a native app
+    // that registered a "claimed URL" of `https://myapp.examples/ch`
+    // like so:
+    const claimedUrlFromChapi = 'https://myapp.example/ch?request=' +
+      encodeURIComponent(JSON.stringify(chapiRequest));
+    const parsedClaimedUrl = new URL(claimedUrlFromChapi);
+    const parsedChapiRequest = JSON.parse(
+      parsedClaimedUrl.searchParams.get('request'));
+    const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VC});
+
+    // wallet / client gets access token
+    const client = await OID4Client.fromCredentialOffer({offer, agent});
+
+    const {did, signer: didProofSigner} = await helpers.createDidProofSigner();
+
+    // get nonce from server
+    const {nonce} = await client.getNonce({agent});
+
+    // wallet / client receives credential
+    const result = await client.requestCredential({
+      credentialDefinition: mockData.credentialDefinition,
+      nonce,
+      did,
+      didProofSigner,
+      agent
+    });
+    should.exist(result);
+    result.should.include.keys(['format', 'credential']);
+    result.format.should.equal('ldp_vc');
+    // ensure credential subject ID matches generated DID
+    should.exist(result.credential?.credentialSubject?.id);
+    result.credential.credentialSubject.id.should.equal(did);
+    // ensure VC ID matches
+    should.exist(result.credential.id);
+    result.credential.id.should.equal(credentialId);
+  });
 });
