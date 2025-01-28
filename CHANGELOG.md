@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 6.4.1 - 2025-01-dd
+## 6.4.1 - 2025-01-27
 
 ### Fixed
 - Ensure a workflow step that includes `issuanceRequests` and no other
