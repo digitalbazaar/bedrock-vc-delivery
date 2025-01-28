@@ -548,6 +548,11 @@ describe('exchange w/ VC-API delivery using generic credential request ' +
       workflowId,
       workflowRootZcap,
       variables: {
+        unusedVariable: {
+          'var.with.illegal.mongodb.key1': true,
+          var$with$illegal$mongodb$key2: 'stuff',
+          'var%with%illegal%mongodb%key3': {}
+        },
         credentialId,
         credentialRequest: `{
           'options': {
