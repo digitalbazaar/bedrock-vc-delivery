@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 6.5.0 - 2025-01-dd
+## 6.5.0 - 2025-01-28
 
 ### Added
 - Allow exchange variables to contain JSON key values that are not
