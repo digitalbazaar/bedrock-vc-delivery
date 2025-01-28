@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 6.5.0 - 2025-01-dd
+
+### Added
+- Allow exchange variables to contain JSON key values that are not
+  supported in mongoDB.
+
 ## 6.4.1 - 2025-01-27
 
 ### Fixed
