@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 6.4.1 - 2025-01-dd
+
+### Fixed
+- Ensure a workflow step that includes `issuanceRequests` and no other
+  properties can be executed.
+
 ## 6.4.0 - 2024-11-10
 
 ### Added
