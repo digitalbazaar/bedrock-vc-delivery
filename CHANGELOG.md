@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 6.6.0 - 2025-mm-dd
+## 6.6.0 - 2025-02-06
 
 ### Added
 - Support `jwt_vc_json` and `jwt_vp_json` aliases for `jwt_vc_json-ld`
