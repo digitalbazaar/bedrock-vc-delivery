@@ -6,6 +6,9 @@
 - Support `jwt_vc_json` and `jwt_vp_json` aliases for `jwt_vc_json-ld`
   and `jwt_vp` for OID4*.
 - Support `di_vc` and `di_vp` aliases for `ldp_vc` and `ldp_vp` for OID4*.
+- Support non-JSON-encoded `vp_token` values, provided that such a value
+  is a JWT, to accommodate OID4* implementations that send bare JWTs
+  as `vp_tokens` instead of JSON-encoded JWTs (i.e., JSON strings).
 
 ## 6.5.0 - 2025-01-28
 
