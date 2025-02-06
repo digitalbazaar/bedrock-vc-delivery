@@ -181,7 +181,7 @@ const expectedCredentialRequest = {
     credential_definition: credentialDefinition,
     format: {
       type: 'string',
-      enum: ['ldp_vc', 'jwt_vc_json-ld']
+      enum: ['di_vc', 'ldp_vc', 'jwt_vc_json-ld', 'jwt_vc_json']
     }
   }
 };
@@ -509,7 +509,7 @@ const openIdCredentialRequest = {
     credential_definition: credentialDefinition,
     format: {
       type: 'string',
-      enum: ['ldp_vc', 'jwt_vc_json-ld']
+      enum: ['di_vc', 'ldp_vc', 'jwt_vc_json-ld', 'jwt_vc_json']
     },
     did: {
       type: 'string'
