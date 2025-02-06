@@ -631,7 +631,21 @@ export function openIdAuthorizationResponseBody() {
       presentation_submission: {
         type: 'string'
       },
-      // is a JSON string in the x-www-form-urlencoded body
+      // is a JSON-encoded string or object in the x-www-form-urlencoded body
+      /* Note: This can also be a simple base64url string for
+      backwards/forwards compatibility. While submitting VPs directly as
+      JSON objects has never changed in the OID4* specs, submitting VPs that
+      are wrapped in some envelope that is expressed as a string (e.g., a JWT)
+      has changed back and forth throughout the draft history. Sometimes these
+      vp_tokens are required to be JSON-encoded strings other times non-JSON
+      strings, i.e., no "extra/JSON quotes" around the string value inside the
+      x-www-form-urlencoded field value delimiting quotes. For example,
+      both of these:
+
+      `...&vp_token="non-string JSON"`
+      `...&vp_token="\"JSON string\""`
+
+      are accepted for these reasons. */
       vp_token: {
         type: 'string'
       },
