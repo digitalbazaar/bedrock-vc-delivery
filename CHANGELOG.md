@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 6.6.1 - 2025-02-dd
+## 6.6.1 - 2025-02-28
 
 ### Fixed
 - Handle case that verifier instance does not return a `presentationResult`.
