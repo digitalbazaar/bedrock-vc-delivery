@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2024 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2024-2025 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
@@ -398,6 +398,114 @@ describe('exchange w/ VC-API delivery + ' +
         should.not.exist(exchange?.variables?.results?.initial.did);
         exchange.variables.results.initial.verifiablePresentation
           .should.deep.equal(verifiablePresentation);
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+  });
+
+  it('should fail when VM not found', async () => {
+    // create an exchange with appropriate variables for the step template
+    const exchange = {
+      // 15 minute expiry in seconds
+      ttl: 60 * 15,
+      // template variables
+      variables: {
+        allowUnprotectedPresentation: true,
+        verifiablePresentationRequest: {
+          query: {
+            type: 'QueryByExample',
+            credentialQuery: [{
+              reason: 'We require a verifiable credential to pass this test',
+              example: {
+                '@context': [
+                  'https://www.w3.org/2018/credentials/v1',
+                  'https://www.w3.org/2018/credentials/examples/v1'
+                ],
+                type: 'UniversityDegreeCredential'
+              }
+            }]
+          },
+          domain: baseUrl
+        }
+      }
+    };
+    const {id: exchangeId} = await helpers.createExchange({
+      url: `${workflowId}/exchanges`,
+      capabilityAgent, capability: workflowRootZcap, exchange
+    });
+
+    // post to exchange URL to get expected VPR
+    {
+      const response = await httpClient.post(
+        exchangeId, {agent, json: {}});
+      should.exist(response?.data?.verifiablePresentationRequest);
+      const {data: {verifiablePresentationRequest: vpr}} = response;
+      const expectedVpr = {
+        query: {
+          type: 'QueryByExample',
+          credentialQuery: [{
+            reason: 'We require a verifiable credential to pass this test',
+            example: {
+              '@context': [
+                'https://www.w3.org/2018/credentials/v1',
+                'https://www.w3.org/2018/credentials/examples/v1'
+              ],
+              type: 'UniversityDegreeCredential'
+            }
+          }]
+        },
+        domain: baseUrl
+      };
+      expectedVpr.query.should.deep.equal(vpr.query);
+      expectedVpr.domain.should.deep.equal(vpr.domain);
+      should.exist(vpr.challenge);
+    }
+
+    const invalidVerifiableCredential = structuredClone(verifiableCredential);
+    invalidVerifiableCredential.proof.verificationMethod =
+      'did:web:localhost:not-found';
+
+    // generate VP
+    const {verifiablePresentation} = await helpers.createDidAuthnVP({
+      domain: baseUrl,
+      challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
+      did, signer, verifiableCredential: invalidVerifiableCredential
+    });
+    // remove `proof` from VP
+    delete verifiablePresentation.proof;
+
+    // verification should fail because VC's VM is not found
+    let err;
+    let response;
+    try {
+      response = await httpClient.post(
+        exchangeId, {agent, json: {verifiablePresentation}});
+    } catch(e) {
+      err = e;
+    }
+    should.not.exist(response);
+    should.exist(err);
+    err.status.should.equal(400);
+    err.data.name.should.equal('DataError');
+    const verifierError = err.data.details.error;
+    verifierError.name.should.equal('VerificationError');
+    const credentialResults = err.data.details.credentialResults;
+    should.exist(credentialResults);
+    // ideally a 404 NotFoundError is here, but it could also be
+    // a simple "fetch failed" message
+    should.exist(credentialResults[0].error?.errors?.[0]);
+
+    // exchange state should be active with last error set
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        // error should be set
+        should.exist(exchange.lastError);
+        exchange.lastError.name.should.equal('DataError');
       } catch(error) {
         err = error;
       }
