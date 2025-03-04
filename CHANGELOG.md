@@ -4,6 +4,7 @@
 
 ### Fixed
 - Use `result.modifiedCount` to enable newer mongodb driver.
+- Remove unused `background` option from mongodb index creation.
 
 ## 6.6.1 - 2025-02-28
 
