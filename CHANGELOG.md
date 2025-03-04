@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 6.6.2 - 2025-mm-dd
+## 6.6.2 - 2025-03-04
 
 ### Fixed
 - Use `result.modifiedCount` to enable newer mongodb driver.
