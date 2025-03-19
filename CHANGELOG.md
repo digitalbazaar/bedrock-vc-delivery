@@ -1,5 +1,31 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.0.0 - 2025-03-xx
+
+### Changed
+- Update dependencies.
+  - `@digitalbazaar/ed25519-multikey@1.3.1`.
+  - `@digitalbazaar/oid4-client@4.3.0`.
+  - `@digitalbazaar/vc@7.1.2`.
+  - `body-parser@1.20.3`.
+  - `jose@5.10.0`.
+  - `jsonata@2.0.6`.
+  - `serialize-error@12.0.0`.
+- Update peer dependencies.
+  - `@bedrock/core@6.3.0`.
+  - `@bedrock/did-io@10.4.0`.
+  - **BREAKING**: `@bedrock/mongodb@11`.
+    - Use MongoDB driver 6.x and update error names and details.
+    - See changelog for details.
+  - `@bedrock/oath2-verifier@2.3.1`.
+  - **BREAKING**: `@bedrock/service-agent@10`.
+    - Updated for `@bedrock/mongodb@11`.
+  - **BREAKING**: `@bedrock/service-core@11`.
+    - Updated for `@bedrock/mongodb@11`.
+  - `@bedrock/validation@7.1.1`.
+- Update dev dependencies.
+- Update test dependencies.
+
 ## 6.6.2 - 2025-03-04
 
 ### Fixed
