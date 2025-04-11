@@ -101,9 +101,7 @@ const envelopedVerifiableCredential = {
   type: 'object',
   additionalProperties: true,
   properties: {
-    '@context': {
-      const: vcContext2StringOrArray
-    },
+    '@context': vcContext2StringOrArray,
     id: {
       type: 'string'
     },
