@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.0.2 - 2025-04-dd
+
+### Fixed
+- Fix typo in JSON `EnvelopedVerifiableCredential` schema.
+
 ## 7.0.1 - 2025-04-11
 
 ### Fixed
