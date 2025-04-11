@@ -24,6 +24,23 @@ const vcContext = {
   }
 };
 
+const vcContext2StringOrArray = {
+  oneOf: [{
+    const: VC_CONTEXT_2
+  }, {
+    type: 'array',
+    minItems: 1,
+    // the first context must be the VC 2.0 context
+    items: [{
+      const: VC_CONTEXT_2
+    }],
+    // additional contexts maybe strings or objects
+    additionalItems: {
+      anyOf: [{type: 'string'}, {type: 'object'}]
+    }
+  }]
+};
+
 function idOrObjectWithId() {
   return {
     title: 'identifier or an object with an id',
@@ -85,7 +102,7 @@ const envelopedVerifiableCredential = {
   additionalProperties: true,
   properties: {
     '@context': {
-      const: VC_CONTEXT_2
+      const: vcContext2StringOrArray
     },
     id: {
       type: 'string'
