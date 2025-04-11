@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.0.1 - 2025-04-dd
+## 7.0.1 - 2025-04-11
 
 ### Fixed
 - Allow `EnvelopedVerifiableCredential` to use a string or an array for its
