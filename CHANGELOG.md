@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.0.1 - 2025-04-dd
+
+### Fixed
+- Allow `EnvelopedVerifiableCredential` to use a string or an array for its
+  `@context` value.
+
 ## 7.0.0 - 2025-03-18
 
 ### Changed
