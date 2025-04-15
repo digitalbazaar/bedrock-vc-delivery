@@ -3,8 +3,9 @@
 ## 7.1.0 - 2025-04-dd
 
 ### Added
-- Store `unenvelopedCredentials` in exchange state variable `results` under the
-  current step.
+- Replace enveloped VCs with the credentials they envelope in the
+  `verifiablePresentation` value in the exchange state variable `results`
+  under the current step.
 
 ## 7.0.2 - 2025-04-11
 

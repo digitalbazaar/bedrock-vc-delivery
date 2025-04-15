@@ -511,8 +511,10 @@ describe('exchange w/ VC-API delivery + ' +
           exchange?.variables?.results?.initial?.verifiablePresentation);
         should.not.exist(exchange?.variables?.results?.initial.did);
         exchange.variables.results.initial.verifiablePresentation
-          .should.deep.equal(verifiablePresentation);
-        should.exist(exchange.variables.results.initial.unenvelopedCredentials);
+          .should.deep.equal({
+            ...verifiablePresentation,
+            verifiableCredential: [verifiableCredential]
+          });
       } catch(error) {
         err = error;
       }

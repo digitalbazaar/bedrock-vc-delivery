@@ -699,8 +699,8 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
           envelopedCredential: verifiableCredential,
           format: 'application/jwt'
         });
-        exchange.variables.results.didAuthn.unenvelopedCredentials[0]
-          .should.deep.equal(expectedCredential);
+        exchange.variables.results.didAuthn.verifiablePresentation
+          .verifiableCredential[0].should.deep.equal(expectedCredential);
       } catch(error) {
         err = error;
       }
