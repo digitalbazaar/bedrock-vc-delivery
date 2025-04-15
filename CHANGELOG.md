@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.1.0 - 2025-04-dd
+## 7.1.0 - 2025-04-14
 
 ### Added
 - Replace enveloped VCs with the credentials they envelope in the
