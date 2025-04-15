@@ -48,7 +48,7 @@ const contexts = new Map();
 contexts.set(
   'https://www.w3.org/2018/credentials/examples/v1', mockData.examplesContext);
 
-const documentLoader = async url => {
+export const documentLoader = async url => {
   const document = contexts.get(url);
   if(document !== undefined) {
     return {

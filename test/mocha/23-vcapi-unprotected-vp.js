@@ -5,6 +5,7 @@ import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
 import {mockData} from './mock.data.js';
+import {util} from '@digitalbazaar/vpqr';
 import {v4 as uuid} from 'uuid';
 
 const {
@@ -398,6 +399,120 @@ describe('exchange w/ VC-API delivery + ' +
         should.not.exist(exchange?.variables?.results?.initial.did);
         exchange.variables.results.initial.verifiablePresentation
           .should.deep.equal(verifiablePresentation);
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+  });
+
+  it('should pass w/enveloped VC in unprotected VP', async () => {
+    // create an exchange with appropriate variables for the step template
+    const exchange = {
+      // 15 minute expiry in seconds
+      ttl: 60 * 15,
+      // template variables
+      variables: {
+        allowUnprotectedPresentation: true,
+        verifiablePresentationRequest: {
+          query: {
+            type: 'QueryByExample',
+            credentialQuery: [{
+              reason: 'We require an enveloped verifiable credential to pass',
+              example: {
+                '@context': [
+                  'https://www.w3.org/2018/credentials/v2'
+                ],
+                type: 'EnvelopedVerifiableCredential'
+              }
+            }]
+          },
+          domain: baseUrl
+        }
+      }
+    };
+    const {id: exchangeId} = await helpers.createExchange({
+      url: `${workflowId}/exchanges`,
+      capabilityAgent, capability: workflowRootZcap, exchange
+    });
+
+    // post to exchange URL to get expected VPR
+    let response = await httpClient.post(
+      exchangeId, {agent, json: {}});
+    should.exist(response?.data?.verifiablePresentationRequest);
+    const {data: {verifiablePresentationRequest: vpr}} = response;
+    const expectedVpr = {
+      query: {
+        type: 'QueryByExample',
+        credentialQuery: [{
+          reason: 'We require an enveloped verifiable credential to pass',
+          example: {
+            '@context': [
+              'https://www.w3.org/2018/credentials/v2'
+            ],
+            type: 'EnvelopedVerifiableCredential'
+          }
+        }]
+      },
+      domain: baseUrl
+    };
+    expectedVpr.query.should.deep.equal(vpr.query);
+    expectedVpr.domain.should.deep.equal(vpr.domain);
+    should.exist(vpr.challenge);
+
+    const {payload} = await util.toQrCode({
+      header: 'VC1-',
+      jsonldDocument: verifiableCredential,
+      documentLoader: helpers.documentLoader,
+      qrMultibaseEncoding: 'R',
+      diagnose: null,
+      registryEntryId: 1
+    });
+    const envelopedVerifiableCredential = {
+      '@context': ['https://www.w3.org/ns/credentials/v2'],
+      id: 'data:application/vcb;barcode-format=qr_code;base64,' +
+        Buffer.from(payload, 'utf8').toString('base64'),
+      type: 'EnvelopedVerifiableCredential'
+    };
+    // generate VP
+    const {verifiablePresentation} = await helpers.createDidAuthnVP({
+      domain: baseUrl,
+      challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
+      did, signer, verifiableCredential: envelopedVerifiableCredential
+    });
+    // remove `proof` from VP
+    delete verifiablePresentation.proof;
+
+    let err;
+    try {
+      response = await httpClient.post(
+        exchangeId, {agent, json: {verifiablePresentation}});
+    } catch(e) {
+      err = e;
+    }
+    should.not.exist(err);
+
+    // should be no VP nor VPR in the response, indicating the end of the
+    // exchange (and nothing was issued, just presented)
+    should.not.exist(response?.data?.verifiablePresentation);
+    should.not.exist(response?.data?.verifiablePresentationRequest);
+
+    // exchange should be complete and contain the submitted VPR
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+        should.exist(exchange?.variables?.results?.initial);
+        should.exist(
+          exchange?.variables?.results?.initial?.verifiablePresentation);
+        should.not.exist(exchange?.variables?.results?.initial.did);
+        exchange.variables.results.initial.verifiablePresentation
+          .should.deep.equal(verifiablePresentation);
+        should.exist(exchange.variables.results.initial.unenvelopedCredentials);
       } catch(error) {
         err = error;
       }
