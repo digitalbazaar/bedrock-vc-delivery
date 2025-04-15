@@ -695,6 +695,12 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
           .should.deep.equal(did);
         exchange.variables.results.didAuthn.envelopedPresentation
           .should.deep.equal(envelopedPresentation);
+        const {credential: expectedCredential} = await unenvelopeCredential({
+          envelopedCredential: verifiableCredential,
+          format: 'application/jwt'
+        });
+        exchange.variables.results.didAuthn.unenvelopedCredentials[0]
+          .should.deep.equal(expectedCredential);
       } catch(error) {
         err = error;
       }
