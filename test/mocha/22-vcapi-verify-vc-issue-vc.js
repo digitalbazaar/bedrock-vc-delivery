@@ -1,12 +1,11 @@
 /*!
- * Copyright (c) 2022-2024 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
-import {klona} from 'klona';
 import {mockData} from './mock.data.js';
-import {v4 as uuid} from 'uuid';
+import {randomUUID as uuid} from 'node:crypto';
 
 const {
   baseUrl, didAuthnCredentialTemplate, strictDegreePresentationSchema
@@ -116,7 +115,7 @@ describe('exchange w/ VC-API delivery + DID authn + VC request', () => {
       type: 'jsonata',
       template: didAuthnCredentialTemplate
     }];
-    const jsonSchema = klona(strictDegreePresentationSchema);
+    const jsonSchema = structuredClone(strictDegreePresentationSchema);
     // FIXME: create a function to inject required `issuer` value
     jsonSchema.properties.verifiableCredential.oneOf[0]
       .properties.issuer = {const: verifiableCredential.issuer};
@@ -232,7 +231,7 @@ describe('exchange w/ VC-API delivery + DID authn + VC request', () => {
       workflowRootZcap
     });
 
-    const invalidVerifiableCredential = klona(verifiableCredential);
+    const invalidVerifiableCredential = structuredClone(verifiableCredential);
     invalidVerifiableCredential.issuer = 'invalid:issuer';
 
     // generate VP

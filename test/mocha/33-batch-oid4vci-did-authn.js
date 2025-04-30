@@ -1,11 +1,11 @@
 /*!
- * Copyright (c) 2022-2023 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {OID4Client, parseCredentialOfferUrl} from '@digitalbazaar/oid4-client';
 import {agent} from '@bedrock/https-agent';
 import {mockData} from './mock.data.js';
-import {v4 as uuid} from 'uuid';
+import {randomUUID as uuid} from 'node:crypto';
 
 const {baseUrl, didAuthnCredentialTemplate} = mockData;
 
