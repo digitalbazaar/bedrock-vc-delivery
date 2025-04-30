@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.1.1 - 2025-04-dd
+## 7.1.1 - 2025-04-30
 
 ### Changed
 - Update dependencies.
