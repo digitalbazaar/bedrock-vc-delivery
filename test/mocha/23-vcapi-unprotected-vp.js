@@ -6,7 +6,7 @@ import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
 import {mockData} from './mock.data.js';
 import {util} from '@digitalbazaar/vpqr';
-import {v4 as uuid} from 'uuid';
+import {randomUUID as uuid} from 'node:crypto';
 
 const {
   baseUrl, didAuthnCredentialTemplate

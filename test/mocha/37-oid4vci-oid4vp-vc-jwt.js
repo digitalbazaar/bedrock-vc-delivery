@@ -8,12 +8,11 @@ import {
 import {agent} from '@bedrock/https-agent';
 import {createPresentation} from '@digitalbazaar/vc';
 import {httpClient} from '@digitalbazaar/http-client';
-import {klona} from 'klona';
 import {mockData} from './mock.data.js';
 import {
   unenvelopeCredential
 } from '@bedrock/vc-delivery/lib/helpers.js';
-import {v4 as uuid} from 'uuid';
+import {randomUUID as uuid} from 'node:crypto';
 
 const {
   baseUrl, nameCredentialTemplate, nameCredentialDefinition,
@@ -228,7 +227,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       }],
       domain: baseUrl
     };
-    const jsonSchema = klona(namePresentationSchema);
+    const jsonSchema = structuredClone(namePresentationSchema);
     // FIXME: create a function to inject required `issuer` value
     jsonSchema.properties.verifiableCredential.oneOf[0]
       .properties.issuer = {const: verifiableCredential.issuer};
@@ -476,7 +475,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       }],
       domain: baseUrl
     };
-    const jsonSchema = klona(namePresentationSchema);
+    const jsonSchema = structuredClone(namePresentationSchema);
     // FIXME: create a function to inject required `issuer` value
     jsonSchema.properties.verifiableCredential.oneOf[0]
       .properties.issuer = {const: verifiableCredential.issuer};
@@ -732,7 +731,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       }],
       domain: baseUrl
     };
-    const jsonSchema = klona(namePresentationSchema);
+    const jsonSchema = structuredClone(namePresentationSchema);
     // FIXME: create a function to inject required `issuer` value
     jsonSchema.properties.verifiableCredential.oneOf[0]
       .properties.issuer = {const: verifiableCredential.issuer};
@@ -984,7 +983,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       }],
       domain: baseUrl
     };
-    const jsonSchema = klona(namePresentationSchema);
+    const jsonSchema = structuredClone(namePresentationSchema);
     // FIXME: create a function to inject required `issuer` value
     jsonSchema.properties.verifiableCredential.oneOf[0]
       .properties.issuer = {const: verifiableCredential.issuer};

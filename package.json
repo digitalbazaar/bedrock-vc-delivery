@@ -47,7 +47,6 @@
     "cors": "^2.8.5",
     "jose": "^5.10.0",
     "jsonata": "^2.0.6",
-    "klona": "^2.0.6",
     "serialize-error": "^12.0.0"
   },
   "peerDependencies": {
@@ -72,6 +71,6 @@
     "eslint-plugin-unicorn": "^56.0.1"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }
