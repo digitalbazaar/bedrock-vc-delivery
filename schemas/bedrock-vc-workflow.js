@@ -486,6 +486,15 @@ const step = {
     stepTemplate: typedTemplate,
     verifiablePresentationRequest: {
       type: 'object'
+    },
+    verifyPresentationOptions: {
+      type: 'object',
+      properties: {
+        checks: {
+          type: 'object'
+        }
+      },
+      additionalProperties: true
     }
   }
 };
