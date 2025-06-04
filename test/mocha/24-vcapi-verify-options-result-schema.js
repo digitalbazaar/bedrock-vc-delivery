@@ -5,19 +5,18 @@ import * as helpers from './helpers.js';
 import * as vc from '@digitalbazaar/vc';
 import {agent} from '@bedrock/https-agent';
 import {documentLoader as brDocLoader} from '@bedrock/jsonld-document-loader';
-import {httpClient} from '@digitalbazaar/http-client';
-import {mockData} from './mock.data.js';
-import {randomUUID as uuid} from 'node:crypto';
-import https from 'node:https';
-import path from 'node:path';
-import fs from 'node:fs';
-import express from 'express';
-import {fileURLToPath} from 'node:url';
+import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {
   Ed25519VerificationKey2020
 } from '@digitalbazaar/ed25519-verification-key-2020';
-
-import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
+import express from 'express';
+import {fileURLToPath} from 'node:url';
+import fs from 'node:fs';
+import {httpClient} from '@digitalbazaar/http-client';
+import https from 'node:https';
+import {mockData} from './mock.data.js';
+import path from 'node:path';
+import {randomUUID as uuid} from 'node:crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -142,7 +141,8 @@ after(async () => {
   server.close();
 });
 
-describe('exchange with `verifyPresentationOptions` and `verifyPresentationResultSchema` enforcing status checks', () => {
+describe('exchange with `verifyPresentationOptions` and ' +
+  '`verifyPresentationResultSchema` enforcing status checks', () => {
   let capabilityAgent;
 
   // provision a VC to use in the workflow below
