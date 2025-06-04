@@ -24,7 +24,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const VC_V2_CONTEXT_URL = 'https://www.w3.org/ns/credentials/v2';
 
 const {
-  baseUrl, didAuthnCredentialTemplate, strictDegreePresentationSchema
+  baseUrl, didAuthnCredentialTemplate, statusBitZeroVerificationResultSchema
 } = mockData;
 
 const encodedList100KWith50KthRevoked =
@@ -57,7 +57,6 @@ function _startServer({app}) {
       const {port} = server.address();
       const BASE_URL = `https://localhost:${port}`;
       testServerBaseUrl = BASE_URL;
-      console.log(`Test server listening at ${BASE_URL}`);
 
       // SLC with statusPurpose `revocation`
       slcRevocation = {
@@ -227,7 +226,7 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
       workflowId,
       workflowRootZcap
     });
-
+    
     // generate VP
     ({did, signer} = await helpers.createDidProofSigner());
     const {verifiablePresentation} = await helpers.createDidAuthnVP({
@@ -241,6 +240,8 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
       exchangeId, {agent, json: {verifiablePresentation}});
     const {verifiablePresentation: vp} = response.data;
     verifiableCredential = vp.verifiableCredential[0];
+
+    
   });
 
   // provision workflow that will require the provisioned VC above
@@ -298,7 +299,7 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
         },
         verifyPresentationResultSchema: {
           type: 'JsonSchema',
-          jsonSchema
+          jsonSchema: statusBitZeroVerificationResultSchema
         }
       }
     };
@@ -328,7 +329,7 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
     });
   });
 
-  it.only('should pass when sending VP in single call', async () => {
+  it('should pass when sending VP in single call', async () => {
     const credentialId = `urn:uuid:${uuid()}`;
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
@@ -402,7 +403,6 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
       challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
       did, signer, verifiableCredential: vcRevoked
     });
-    console.log(JSON.stringify(verifiablePresentation, null, 2));
 
     // post VP to get VP in response
     const response = await httpClient.post(
