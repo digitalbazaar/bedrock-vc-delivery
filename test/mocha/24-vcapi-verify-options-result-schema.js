@@ -146,7 +146,6 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
   let capabilityAgent;
 
   // provision a VC to use in the workflow below
-  let verifiableCredential;
   let vcUnrevoked;
   let vcRevoked;
   let did;
@@ -154,6 +153,10 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
   let keyData;
   let keyPair;
   let suite;
+
+  // provision workflow that will require the provisioned VC above
+  let workflowId;
+  let workflowRootZcap;
   beforeEach(async () => {
 
     keyData = {
@@ -168,86 +171,8 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
     keyPair = await Ed25519VerificationKey2020.from(keyData);
     suite = new Ed25519Signature2020({key: keyPair});
 
-
-
-    const deps = await helpers.provisionDependencies();
-    const {
-      workflowIssueZcap,
-      workflowCredentialStatusZcap,
-      workflowCreateChallengeZcap,
-      workflowVerifyPresentationZcap
-    } = deps;
-    ({capabilityAgent} = deps);
-
-    // create workflow instance w/ oauth2-based authz
-    const zcaps = {
-      issue: workflowIssueZcap,
-      credentialStatus: workflowCredentialStatusZcap,
-      createChallenge: workflowCreateChallengeZcap,
-      verifyPresentation: workflowVerifyPresentationZcap
-    };
-    const credentialTemplates = [{
-      type: 'jsonata',
-      template: didAuthnCredentialTemplate
-    }];
-    // require semantically-named workflow steps
-    const steps = {
-      // DID Authn step
-      didAuthn: {
-        createChallenge: true,
-        verifiablePresentationRequest: {
-          query: {
-            type: 'DIDAuthentication',
-            acceptedMethods: [{method: 'key'}]
-          },
-          domain: baseUrl
-        }
-      }
-    };
-    // set initial step
-    const initialStep = 'didAuthn';
-    const workflowConfig = await helpers.createWorkflowConfig({
-      capabilityAgent, zcaps, credentialTemplates, steps, initialStep,
-      oauth2: true
-    });
-    const workflowId = workflowConfig.id;
-    const workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
-
-    // use workflow to provision verifiable credential
-    const credentialId = `urn:uuid:${uuid()}`;
-    const {exchangeId} = await helpers.createCredentialOffer({
-      // local target user
-      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
-      credentialDefinition: mockData.credentialDefinition,
-      credentialId,
-      preAuthorized: true,
-      userPinRequired: false,
-      capabilityAgent,
-      workflowId,
-      workflowRootZcap
-    });
-    
-    // generate VP
     ({did, signer} = await helpers.createDidProofSigner());
-    const {verifiablePresentation} = await helpers.createDidAuthnVP({
-      domain: baseUrl,
-      challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
-      did, signer
-    });
 
-    // post VP to get VP w/VC in response
-    const response = await httpClient.post(
-      exchangeId, {agent, json: {verifiablePresentation}});
-    const {verifiablePresentation: vp} = response.data;
-    verifiableCredential = vp.verifiableCredential[0];
-
-    
-  });
-
-  // provision workflow that will require the provisioned VC above
-  let workflowId;
-  let workflowRootZcap;
-  beforeEach(async () => {
     const deps = await helpers.provisionDependencies();
     const {
       workflowIssueZcap,
