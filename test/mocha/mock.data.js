@@ -607,4 +607,18 @@ mockData.statusBitZeroVerificationResultSchema = {
     }
   }
 }
+
+mockData.checksIncludeStatusVerificationResultSchema = {
+  type: 'object',
+  required: ['checks'],
+  additionalProperties: true,
+  properties: {
+    checks: {
+      type: 'array',
+      contains: {
+        const: 'credentialStatus'
+      }
+    }
+  }
+}
 /* eslint-enable */

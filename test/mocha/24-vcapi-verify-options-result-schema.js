@@ -23,7 +23,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const VC_V2_CONTEXT_URL = 'https://www.w3.org/ns/credentials/v2';
 
 const {
-  baseUrl, didAuthnCredentialTemplate, statusBitZeroVerificationResultSchema
+  baseUrl,
+  didAuthnCredentialTemplate,
+  statusBitZeroVerificationResultSchema,
+  checksIncludeStatusVerificationResultSchema
 } = mockData;
 
 const encodedList100KWith50KthRevoked =
@@ -327,6 +330,271 @@ describe('exchange with `verifyPresentationOptions` and ' +
       domain: baseUrl,
       challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
       did, signer, verifiableCredential: vcRevoked
+    });
+
+    // send VP containing revoked credential
+    // this will fail the verifyPresentationResultSchema check
+    let err;
+    try {
+      const response = await httpClient.post(
+        exchangeId, {agent, json: {verifiablePresentation}});
+      should.exist(response?.data?.verifiablePresentation);
+    } catch(error) {
+      err = error;
+    }
+    should.exist(err);
+    err.data?.name?.should.equal('ValidationError');
+  });
+});
+
+describe('exchange with `verifyPresentationResultSchema` checking correct' +
+' usage of `verifyPresentationOptions`', () => {
+  let capabilityAgent;
+
+  // provision a VC to use in the workflow below
+  let vcUnrevoked;
+  let did;
+  let signer;
+  let keyData;
+  let keyPair;
+  let suite;
+
+  // provision workflow that will require the provisioned VC above
+  let workflowId;
+  let workflowRootZcap;
+  beforeEach(async () => {
+
+    keyData = {
+      id: 'did:key:z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv#' +
+        'z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv',
+      controller: 'did:key:z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv',
+      type: 'Ed25519VerificationKey2020',
+      publicKeyMultibase: 'z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv',
+      privateKeyMultibase: 'zrv2rP9yjtz3YwCas9m6hnoPxmoqZV72xbCEuomXi4wwSS' +
+        '4ShekesADYiAMHoxoqfyBDKQowGMvYx9rp6QGJ7Qbk7Y4'
+    };
+    keyPair = await Ed25519VerificationKey2020.from(keyData);
+    suite = new Ed25519Signature2020({key: keyPair});
+
+    ({did, signer} = await helpers.createDidProofSigner());
+
+    slcRevocation = await vc.issue({
+      credential: slcRevocation,
+      documentLoader: _documentLoader,
+      suite
+    });
+    vcUnrevoked = await vc.issue({
+      credential: unsignedCredentialWithUnrevokedIndex,
+      documentLoader: _documentLoader,
+      suite
+    });
+  });
+
+  it('should pass when `verifyPresentationOptions` matches ' +
+  '`verifyPresentationResultSchema`', async () => {
+
+    const deps = await helpers.provisionDependencies();
+    const {
+      workflowIssueZcap,
+      workflowCredentialStatusZcap,
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
+    } = deps;
+    ({capabilityAgent} = deps);
+
+    // create workflow instance w/ oauth2-based authz
+    const zcaps = {
+      issue: workflowIssueZcap,
+      credentialStatus: workflowCredentialStatusZcap,
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
+    };
+    const credentialTemplates = [{
+      type: 'jsonata',
+      template: didAuthnCredentialTemplate
+    }];
+
+    // require semantically-named workflow steps
+    const steps = {
+    // DID Authn step, additionally require VC that was issued from
+    // workflow 1
+      didAuthn: {
+        createChallenge: true,
+        verifiablePresentationRequest: {
+          query: [{
+            type: 'DIDAuthentication',
+            acceptedMethods: [{method: 'key'}]
+          }, {
+            type: 'QueryByExample',
+            credentialQuery: [{
+              reason: 'We require a verifiable credential to pass this test',
+              example: {
+                '@context': [
+                  'https://www.w3.org/ns/credentials/v2'
+                ],
+              }
+            }]
+          }],
+          domain: baseUrl
+        },
+        verifyPresentationOptions: {
+          checks: {
+            credentialStatus: true
+          }
+        },
+        verifyPresentationResultSchema: {
+          type: 'JsonSchema',
+          jsonSchema: checksIncludeStatusVerificationResultSchema
+        }
+      }
+    };
+    // set initial step
+    const initialStep = 'didAuthn';
+    const workflowConfig = await helpers.createWorkflowConfig({
+      capabilityAgent, zcaps, credentialTemplates, steps, initialStep,
+      oauth2: true
+    });
+    workflowId = workflowConfig.id;
+    workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
+
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap
+    });
+
+    // generate VP
+    const {verifiablePresentation} = await helpers.createDidAuthnVP({
+      domain: baseUrl,
+      challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
+      did, signer, verifiableCredential: vcUnrevoked
+    });
+
+    // post VP to get VP in response
+    const response = await httpClient.post(
+      exchangeId, {agent, json: {verifiablePresentation}});
+    should.exist(response?.data?.verifiablePresentation);
+    // ensure DID in VC matches `did`
+    const {verifiablePresentation: vp} = response.data;
+    should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
+    const {verifiableCredential: [vc]} = vp;
+    vc.credentialSubject.id.should.equal(did);
+    // ensure VC ID matches
+    should.exist(vc.id);
+    vc.id.should.equal(credentialId);
+
+    // exchange should be complete and contain the VP and original VC
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+        should.exist(exchange?.variables?.results?.didAuthn);
+        should.exist(
+          exchange?.variables?.results?.didAuthn?.verifiablePresentation);
+        exchange?.variables?.results?.didAuthn.did.should.equal(did);
+        exchange.variables.results.didAuthn.verifiablePresentation
+          .should.deep.equal(verifiablePresentation);
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+  });
+  it('should fail when `verifyPresentationOptions` does not match' +
+  ' `verifyPresentationResultSchema`', async () => {
+
+    const deps = await helpers.provisionDependencies();
+    const {
+      workflowIssueZcap,
+      workflowCredentialStatusZcap,
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
+    } = deps;
+    ({capabilityAgent} = deps);
+
+    // create workflow instance w/ oauth2-based authz
+    const zcaps = {
+      issue: workflowIssueZcap,
+      credentialStatus: workflowCredentialStatusZcap,
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
+    };
+    const credentialTemplates = [{
+      type: 'jsonata',
+      template: didAuthnCredentialTemplate
+    }];
+
+    // require semantically-named workflow steps
+    const steps = {
+    // DID Authn step, additionally require VC that was issued from
+    // workflow 1
+      didAuthn: {
+        createChallenge: true,
+        verifiablePresentationRequest: {
+          query: [{
+            type: 'DIDAuthentication',
+            acceptedMethods: [{method: 'key'}]
+          }, {
+            type: 'QueryByExample',
+            credentialQuery: [{
+              reason: 'We require a verifiable credential to pass this test',
+              example: {
+                '@context': [
+                  'https://www.w3.org/ns/credentials/v2'
+                ],
+              }
+            }]
+          }],
+          domain: baseUrl
+        },
+        verifyPresentationOptions: {
+          checks: {
+            credentialStatus: false
+          }
+        },
+        verifyPresentationResultSchema: {
+          type: 'JsonSchema',
+          jsonSchema: checksIncludeStatusVerificationResultSchema
+        }
+      }
+    };
+    // set initial step
+    const initialStep = 'didAuthn';
+    const workflowConfig = await helpers.createWorkflowConfig({
+      capabilityAgent, zcaps, credentialTemplates, steps, initialStep,
+      oauth2: true
+    });
+    workflowId = workflowConfig.id;
+    workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
+
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap
+    });
+
+    // generate VP
+    const {verifiablePresentation} = await helpers.createDidAuthnVP({
+      domain: baseUrl,
+      challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
+      did, signer, verifiableCredential: vcUnrevoked
     });
 
     // send VP containing revoked credential
