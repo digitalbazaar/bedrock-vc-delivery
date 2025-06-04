@@ -1,5 +1,13 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.2.0 - 2025-MM-DD
+
+### Added
+- Added support for `verifyPresentationOptions` to appear on exchange steps,
+  allowing for more extensible and general step option expression.
+- Added support for `verifyPresentationResponseSchema` to appear on exchange
+  steps, allowing for enforcing validation constraints at the workflow layer.
+
 ## 7.1.1 - 2025-04-30
 
 ### Changed
