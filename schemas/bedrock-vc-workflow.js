@@ -495,6 +495,19 @@ const step = {
         }
       },
       additionalProperties: true
+    },
+    verifyPresentationResultSchema: {
+      type: 'object',
+      required: ['type', 'jsonSchema'],
+      additionalProperties: false,
+      properties: {
+        type: {
+          type: 'string'
+        },
+        jsonSchema: {
+          type: 'object'
+        }
+      }
     }
   }
 };
