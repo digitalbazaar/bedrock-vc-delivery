@@ -142,7 +142,7 @@ after(async () => {
   server.close();
 });
 
-describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => {
+describe('exchange with `verifyPresentationOptions` and `verifyPresentationResultSchema` enforcing status checks', () => {
   let capabilityAgent;
 
   // provision a VC to use in the workflow below
@@ -254,7 +254,7 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
     });
   });
 
-  it('should pass when sending VP in single call', async () => {
+  it('should pass with an unrevoked credential', async () => {
     const credentialId = `urn:uuid:${uuid()}`;
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
@@ -308,7 +308,7 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
       should.not.exist(err);
     }
   });
-  it('should fail', async () => {
+  it('should fail with a revoked credential', async () => {
     const credentialId = `urn:uuid:${uuid()}`;
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
@@ -329,38 +329,17 @@ describe('exchange w/ VC-API delivery + DID authn + VC request -STATUS-', () => 
       did, signer, verifiableCredential: vcRevoked
     });
 
-    // post VP to get VP in response
-    const response = await httpClient.post(
-      exchangeId, {agent, json: {verifiablePresentation}});
-    should.exist(response?.data?.verifiablePresentation);
-    // ensure DID in VC matches `did`
-    const {verifiablePresentation: vp} = response.data;
-    should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
-    const {verifiableCredential: [vc]} = vp;
-    vc.credentialSubject.id.should.equal(did);
-    // ensure VC ID matches
-    should.exist(vc.id);
-    vc.id.should.equal(credentialId);
-
-    // exchange should be complete and contain the VP and original VC
-    {
-      let err;
-      try {
-        const {exchange} = await helpers.getExchange(
-          {id: exchangeId, capabilityAgent});
-        should.exist(exchange?.state);
-        exchange.state.should.equal('complete');
-        should.exist(exchange?.variables?.results?.didAuthn);
-        should.exist(
-          exchange?.variables?.results?.didAuthn?.verifiablePresentation);
-        exchange?.variables?.results?.didAuthn.did.should.equal(did);
-        exchange.variables.results.didAuthn.verifiablePresentation
-          .should.deep.equal(verifiablePresentation);
-      } catch(error) {
-        err = error;
-      }
-      should.not.exist(err);
+    // send VP containing revoked credential
+    // this will fail the verifyPresentationResultSchema check
+    let err;
+    try {
+      const response = await httpClient.post(
+        exchangeId, {agent, json: {verifiablePresentation}});
+      should.exist(response?.data?.verifiablePresentation);
+    } catch(error) {
+      err = error;
     }
+    should.exist(err);
+    err.data?.name?.should.equal('ValidationError');
   });
-
 });
