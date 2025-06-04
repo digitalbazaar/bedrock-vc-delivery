@@ -207,6 +207,28 @@ mockData.didAuthnCredentialTemplate = `
   }
 `;
 
+mockData.credentialTemplateStatus = `
+  {
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2"
+    ],
+    "id": credentialId,
+    "type": [
+      "VerifiableCredential"
+    ],
+    "credentialStatus: {
+      "id": "https://example.com/credentials/status/3#94567",
+      "type": "BitstringStatusListEntry",
+      "statusPurpose": "revocation",
+      "statusListIndex": "94567",
+      "statusListCredential": "https://example.com/credentials/status/3"
+    },
+    "credentialSubject": {
+      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21"
+    }
+  }
+`;
+
 mockData.credentialDefinition = {
   '@context': [
     'https://www.w3.org/2018/credentials/v1',
@@ -550,4 +572,39 @@ mockData.namePresentationSchema = {
     }
   }
 };
+
+mockData.statusBitZeroVerificationResultSchema = {
+  type: 'object',
+  required: ['credentialResults'],
+  additionalProperties: true,
+  properties: {
+    credentialResults: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: true,
+        properties: {
+          statusResult: {
+            type: 'object',
+            additionalProperties: true,
+            properties: {
+              results: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  additionalProperties: true,
+                  properties: {
+                    status: {
+                      const: false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 /* eslint-enable */
