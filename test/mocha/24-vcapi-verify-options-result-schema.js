@@ -416,8 +416,8 @@ describe('exchange with `verifyPresentationResultSchema` checking correct' +
 
     // require semantically-named workflow steps
     const steps = {
-    // DID Authn step, additionally require VC that was issued from
-    // workflow 1
+      // DID Authn step, additionally require VC that was issued from
+      // workflow 1
       didAuthn: {
         createChallenge: true,
         verifiablePresentationRequest: {
