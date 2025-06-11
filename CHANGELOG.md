@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.2.0 - 2025-MM-DD
+## 7.2.0 - 2025-06-11
 
 ### Added
 - Added support for `verifyPresentationOptions` to appear on exchange steps,
