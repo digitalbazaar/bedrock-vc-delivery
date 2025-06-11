@@ -208,25 +208,25 @@ mockData.didAuthnCredentialTemplate = `
 `;
 
 mockData.credentialTemplateStatus = `
-  {
-    "@context": [
-      "https://www.w3.org/ns/credentials/v2"
-    ],
-    "id": credentialId,
-    "type": [
-      "VerifiableCredential"
-    ],
-    "credentialStatus: {
-      "id": "https://example.com/credentials/status/3#94567",
-      "type": "BitstringStatusListEntry",
-      "statusPurpose": "revocation",
-      "statusListIndex": "94567",
-      "statusListCredential": "https://example.com/credentials/status/3"
-    },
-    "credentialSubject": {
-      "id": "did:example:ebfeb1f712ebc6f1c276e12ec21"
-    }
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2"
+  ],
+  "id": credentialId,
+  "type": [
+    "VerifiableCredential"
+  ],
+  "credentialStatus: {
+    "id": "https://example.com/credentials/status/3#94567",
+    "type": "BitstringStatusListEntry",
+    "statusPurpose": "revocation",
+    "statusListIndex": "94567",
+    "statusListCredential": "https://example.com/credentials/status/3"
+  },
+  "credentialSubject": {
+    "id": "did:example:ebfeb1f712ebc6f1c276e12ec21"
   }
+}
 `;
 
 mockData.credentialDefinition = {
