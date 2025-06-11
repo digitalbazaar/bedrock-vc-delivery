@@ -161,7 +161,6 @@ describe('exchange with `verifyPresentationOptions` and ' +
   let workflowId;
   let workflowRootZcap;
   beforeEach(async () => {
-
     keyData = {
       id: 'did:key:z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv#' +
         'z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv',
@@ -347,8 +346,8 @@ describe('exchange with `verifyPresentationOptions` and ' +
   });
 });
 
-describe('exchange with `verifyPresentationResultSchema` checking correct' +
-' usage of `verifyPresentationOptions`', () => {
+describe('exchange with `verifyPresentationResultSchema` checking correct ' +
+ 'usage of `verifyPresentationOptions`', () => {
   let capabilityAgent;
 
   // provision a VC to use in the workflow below
@@ -363,7 +362,6 @@ describe('exchange with `verifyPresentationResultSchema` checking correct' +
   let workflowId;
   let workflowRootZcap;
   beforeEach(async () => {
-
     keyData = {
       id: 'did:key:z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv#' +
         'z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv',
@@ -390,9 +388,8 @@ describe('exchange with `verifyPresentationResultSchema` checking correct' +
     });
   });
 
-  it('should pass when `verifyPresentationOptions` matches ' +
-  '`verifyPresentationResultSchema`', async () => {
-
+  it('should pass when `verifyPresentationOptions` enables status check ' +
+    'and `verifyPresentationResultSchema` requires is', async () => {
     const deps = await helpers.provisionDependencies();
     const {
       workflowIssueZcap,
@@ -510,8 +507,8 @@ describe('exchange with `verifyPresentationResultSchema` checking correct' +
       should.not.exist(err);
     }
   });
-  it('should fail when `verifyPresentationOptions` does not match' +
-  ' `verifyPresentationResultSchema`', async () => {
+  it('should fail when status checks are disabled but required by ' +
+    '`verifyPresentationResultSchema`', async () => {
 
     const deps = await helpers.provisionDependencies();
     const {
@@ -536,8 +533,8 @@ describe('exchange with `verifyPresentationResultSchema` checking correct' +
 
     // require semantically-named workflow steps
     const steps = {
-    // DID Authn step, additionally require VC that was issued from
-    // workflow 1
+      // DID Authn step, additionally require VC that was issued from
+      // workflow 1
       didAuthn: {
         createChallenge: true,
         verifiablePresentationRequest: {
