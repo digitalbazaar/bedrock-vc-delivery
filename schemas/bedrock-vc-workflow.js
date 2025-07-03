@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2024 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
  */
 import {MAX_ISSUER_INSTANCES} from '../lib/constants.js';
 import {schemas} from '@bedrock/validation';
@@ -381,6 +381,7 @@ const step = {
     not: {
       required: [
         'allowUnprotectedPresentation',
+        'callback',
         'createChallenge',
         'issueRequests',
         'jwtDidProofRequest',
@@ -399,6 +400,16 @@ const step = {
   properties: {
     allowUnprotectedPresentation: {
       type: 'boolean'
+    },
+    callback: {
+      type: 'object',
+      required: ['url'],
+      additionalProperties: false,
+      properties: {
+        url: {
+          type: 'string'
+        }
+      }
     },
     createChallenge: {
       type: 'boolean'

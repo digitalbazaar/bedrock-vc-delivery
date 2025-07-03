@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2020-2024 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2020-2025 Digital Bazaar, Inc. All rights reserved.
  */
 import {config} from '@bedrock/core';
 import {fileURLToPath} from 'node:url';
@@ -8,6 +8,7 @@ import '@bedrock/app-identity';
 import '@bedrock/did-io';
 import '@bedrock/https-agent';
 import '@bedrock/mongodb';
+import '@bedrock/notify';
 import '@bedrock/service-agent';
 import '@bedrock/vc-delivery';
 import '@bedrock/vc-issuer';
@@ -53,3 +54,9 @@ config['service-agent'].kms.baseUrl = 'https://localhost:18443/kms';
 
 // disable veres one fetching
 config['did-io'].methodOverrides.v1.disableFetch = true;
+
+// test hmac key for push notification feature
+config.notify.push.hmacKey = {
+  id: 'urn:test:hmacKey',
+  secretKeyMultibase: 'uogHy02QDNPX4GID7dGUSGuYQ_Gv0WOIcpmTuKgt1ZNz7_4'
+};

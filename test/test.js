@@ -2,9 +2,11 @@
  * Copyright (c) 2016-2025 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
+import {asyncHandler} from '@bedrock/express';
 import {getServiceIdentities} from '@bedrock/app-identity';
 import {handlers} from '@bedrock/meter-http';
 import {jsonLdDocumentLoader} from '@bedrock/jsonld-document-loader';
+import {push} from '@bedrock/notify';
 import '@bedrock/ssm-mongodb';
 import '@bedrock/kms';
 import '@bedrock/https-agent';
@@ -13,10 +15,12 @@ import '@bedrock/meter-usage-reporter';
 import '@bedrock/server';
 import '@bedrock/kms-http';
 import '@bedrock/edv-storage';
+import '@bedrock/notify';
 import '@bedrock/vc-issuer';
 import '@bedrock/vc-verifier';
 
 import {mockData} from './mocha/mock.data.js';
+import {PUSH_NOTIFICATION_CALLBACK_DATA} from './mocha/helpers.js';
 
 // used for VCB tests
 const contexts = new Map([
@@ -67,15 +71,28 @@ bedrock.events.on('bedrock.init', async () => {
   handlers.setUseHandler({handler: ({meter} = {}) => ({meter})});
 });
 
-// mock oauth2 authz server routes; these are for creating workflows, not
-// for performing OID4VCI delivery
 bedrock.events.on('bedrock-express.configure.routes', async app => {
+  // mock oauth2 authz server routes; these are for creating workflows, not
+  // for performing OID4VCI delivery
   app.get(mockData.oauth2IssuerConfigRoute, (req, res) => {
     res.json(mockData.oauth2Config);
   });
   app.get('/oauth2/jwks', (req, res) => {
     res.json(mockData.jwks);
   });
+
+  // mock VC API callback URL
+  app.post(
+    '/callbacks/:pushToken',
+    push.createVerifyPushTokenMiddleware({event: 'exchangeUpdated'}),
+    asyncHandler(async (req, res) => {
+      const {event: {data: {exchangeId}}} = req.body;
+      // ordinarily a poll is performed here, the test will handle it instead
+      // based on this set value
+      PUSH_NOTIFICATION_CALLBACK_DATA.resolve(
+        PUSH_NOTIFICATION_CALLBACK_DATA.expectedExchangeId === exchangeId);
+      res.sendStatus(204);
+    }));
 });
 
 import '@bedrock/test';

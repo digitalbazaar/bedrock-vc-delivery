@@ -2,6 +2,7 @@
  * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
+import {poll, pollers, push} from '@bedrock/notify';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
 import {mockData} from './mock.data.js';
@@ -629,6 +630,157 @@ describe('exchange w/ VC-API presentation + templated VPR', () => {
         err = error;
       }
       should.not.exist(err);
+    }
+  });
+});
+
+describe('exchange w/ VC-API presentation + templated VPR + callback', () => {
+  let capabilityAgent;
+  let workflowId;
+  let workflowRootZcap;
+  beforeEach(async () => {
+    const deps = await helpers.provisionDependencies();
+    const {
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
+    } = deps;
+    ({capabilityAgent} = deps);
+
+    // create workflow instance w/ oauth2-based authz
+    const zcaps = {
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
+    };
+    // require semantically-named workflow steps
+    const steps = {
+      // DID Authn step
+      didAuthn: {
+        stepTemplate: {
+          type: 'jsonata',
+          template: `
+          {
+            "createChallenge": true,
+            "verifiablePresentationRequest": verifiablePresentationRequest,
+            "callback": {
+              "url": callbackUrl
+            }
+          }`
+        }
+      }
+    };
+    // set initial step
+    const initialStep = 'didAuthn';
+    const workflowConfig = await helpers.createWorkflowConfig({
+      capabilityAgent, zcaps, steps, initialStep
+    });
+    workflowId = workflowConfig.id;
+    workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
+  });
+
+  it('should pass', async () => {
+    // create poller
+    const zcapClient = helpers.createZcapClient({capabilityAgent});
+    const pollExchange = pollers.createExchangePoller({
+      zcapClient,
+      capability: workflowRootZcap,
+      filterExchange({exchange, previousPollResult}) {
+        if(previousPollResult?.value?.state === exchange.state) {
+          // nothing new to update
+          return;
+        }
+        // return only the information that should be accessible to the client
+        return {
+          exchange: {
+            state: exchange.state,
+            did: exchange?.variables?.results?.didAuthn.did
+          }
+        };
+      }
+    });
+
+    // create a push token
+    const {token} = await push.createPushToken({event: 'exchangeUpdated'});
+
+    // create an exchange with appropriate variables for the step template
+    const exchange = {
+      // 15 minute expiry in seconds
+      ttl: 60 * 15,
+      // template variables
+      variables: {
+        callbackUrl: `${baseUrl}/callbacks/${token}`,
+        verifiablePresentationRequest: {
+          query: {
+            type: 'DIDAuthentication',
+            acceptedMethods: [{method: 'key'}]
+          },
+          domain: baseUrl
+        }
+      }
+    };
+    const {id: exchangeId} = await helpers.createExchange({
+      url: `${workflowId}/exchanges`,
+      capabilityAgent, capability: workflowRootZcap, exchange
+    });
+
+    // poll the exchange to see `pending` state
+    {
+      const result = await poll({id: exchangeId, poller: pollExchange});
+      result.value.should.deep.equal({state: 'pending', did: undefined});
+    }
+
+    // post to exchange URL to get expected VPR
+    let response = await httpClient.post(
+      exchangeId, {agent, json: {}});
+    should.exist(response?.data?.verifiablePresentationRequest);
+    const {data: {verifiablePresentationRequest: vpr}} = response;
+    const expectedVpr = {
+      query: {
+        type: 'DIDAuthentication',
+        acceptedMethods: [{method: 'key'}]
+      },
+      domain: baseUrl
+    };
+    expectedVpr.query.should.deep.equal(vpr.query);
+    expectedVpr.domain.should.deep.equal(vpr.domain);
+    should.exist(vpr.challenge);
+
+    // poll the exchange to still see `pending` state
+    {
+      const result = await poll({id: exchangeId, poller: pollExchange});
+      result.value.should.deep.equal({state: 'pending', did: undefined});
+    }
+
+    // prepare callback URL
+    // note: `Promise.withResolvers()` not available on node 20 so can't use
+    let callbackResolve;
+    const callbackPromise = new Promise(r => callbackResolve = r);
+    helpers.PUSH_NOTIFICATION_CALLBACK_DATA.expectedExchangeId = exchangeId;
+    helpers.PUSH_NOTIFICATION_CALLBACK_DATA.resolve = callbackResolve;
+
+    // generate VP
+    const {domain, challenge} = vpr;
+    const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
+      {domain, challenge});
+
+    response = await httpClient.post(
+      exchangeId, {agent, json: {verifiablePresentation}});
+    // should be no VP nor VPR in the response, indicating the end of the
+    // exchange (and nothing was issued, just presented)
+    should.not.exist(response?.data?.verifiablePresentation);
+    should.not.exist(response?.data?.verifiablePresentationRequest);
+
+    // wait for callback to be called
+    const callbackMatch = await callbackPromise;
+
+    // confirm callback URL was used
+    callbackMatch.should.equal(true);
+
+    // poll the exchange to see updated `complete` state
+    {
+      const result = await poll({
+        id: exchangeId, poller: pollExchange, useCache: false
+      });
+      result.value.should.deep.equal({state: 'complete', did});
     }
   });
 });
