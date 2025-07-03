@@ -26,6 +26,7 @@ import {generateId} from 'bnid';
 import {getAppIdentity} from '@bedrock/app-identity';
 import {httpClient} from '@digitalbazaar/http-client';
 import {httpsAgent} from '@bedrock/https-agent';
+import {push} from '@bedrock/notify';
 import {v4 as uuid} from 'uuid';
 import {ZcapClient} from '@digitalbazaar/ezcap';
 
@@ -78,10 +79,11 @@ export async function createCredentialOffer({
   useCredentialIds = false,
   useCredentialConfigurationIds = false,
   useCredentialOfferUri = false,
+  useCallbackUrl = false,
   // 15 minute expiry in seconds
   ttl = 60 * 15
 } = {}) {
-  // first, create an exchange with variables based on the local user ID;
+  // create an exchange with variables based on the local user ID;
   // indicate that OID4VCI delivery is permitted
   const exchange = {
     ttl,
@@ -94,6 +96,13 @@ export async function createCredentialOffer({
       issuanceDate: (new Date()).toISOString()
     }
   };
+
+  if(useCallbackUrl) {
+    // create a push token
+    const {token} = await push.createPushToken({event: 'exchangeUpdated'});
+    exchange.variables.callbackUrl = `${mockData.baseUrl}/callbacks/${token}`;
+  }
+
   let offer;
   if(openId) {
     // build OID4VCI oauth2 config

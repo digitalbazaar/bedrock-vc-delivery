@@ -89,7 +89,7 @@ bedrock.events.on('bedrock-express.configure.routes', async app => {
       const {event: {data: {exchangeId}}} = req.body;
       // ordinarily a poll is performed here, the test will handle it instead
       // based on this set value
-      PUSH_NOTIFICATION_CALLBACK_DATA.resolve(
+      PUSH_NOTIFICATION_CALLBACK_DATA?.resolve(
         PUSH_NOTIFICATION_CALLBACK_DATA.expectedExchangeId === exchangeId);
       res.sendStatus(204);
     }));
