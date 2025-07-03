@@ -5,6 +5,7 @@ import * as helpers from './helpers.js';
 import {
   getCredentialOffer, OID4Client, oid4vp, parseCredentialOfferUrl
 } from '@digitalbazaar/oid4-client';
+import {poll, pollers} from '@bedrock/notify';
 import {agent} from '@bedrock/https-agent';
 import {createPresentation} from '@digitalbazaar/vc';
 import {httpClient} from '@digitalbazaar/http-client';
@@ -170,6 +171,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
           template: `
           {
             "presentationSchema": presentationSchema,
+            "callback": callbackUrl ? {"url": callbackUrl},
             "createChallenge": true,
             "verifiablePresentationRequest": verifiablePresentationRequest,
             "openId": {
@@ -699,6 +701,328 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
           format: 'application/jwt'
         });
         exchange.variables.results.didAuthn.verifiablePresentation
+          .verifiableCredential[0].should.deep.equal(expectedCredential);
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err, err?.message);
+    }
+  });
+
+  it('should pass w/ "credential_offer_uri" + callback URL', async () => {
+    // pre-authorized flow, issuer-initiated
+    const credentialId = `urn:uuid:${uuid()}`;
+    const vpr = {
+      query: [{
+        type: 'DIDAuthentication',
+        acceptedMethods: [{method: 'key'}],
+        acceptedCryptosuites: [{cryptosuite: 'Ed25519Signature2020'}]
+      }, {
+        type: 'QueryByExample',
+        credentialQuery: [{
+          reason: 'We require a name verifiable credential to pass this test',
+          example: {
+            '@context': 'https://www.w3.org/2018/credentials/v1',
+            type: 'VerifiableCredential',
+            credentialSubject: {
+              'ex:name': ''
+            }
+          }
+        }]
+      }],
+      domain: baseUrl
+    };
+    const jsonSchema = structuredClone(namePresentationSchema);
+    // FIXME: create a function to inject required `issuer` value
+    jsonSchema.properties.verifiableCredential.oneOf[0]
+      .properties.issuer = {const: verifiableCredential.issuer};
+    jsonSchema.properties.verifiableCredential.oneOf[1].items
+      .properties.issuer = {const: verifiableCredential.issuer};
+    const {
+      exchangeId,
+      openIdUrl: issuanceUrl
+    } = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: nameCredentialDefinition,
+      credentialFormat,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap,
+      variables: {
+        credentialId,
+        verifiablePresentationRequest: vpr,
+        presentationSchema: {
+          type: 'JsonSchema',
+          jsonSchema
+        },
+        openId: {
+          createAuthorizationRequest: 'authorizationRequest'
+        }
+      },
+      useCredentialOfferUri: true,
+      useCallbackUrl: true
+    });
+
+    // create poller
+    const pollExchange = pollers.createExchangePoller({
+      zcapClient: helpers.createZcapClient({capabilityAgent}),
+      capability: workflowRootZcap,
+      filterExchange({exchange}) {
+        // return only the information that should be accessible to the client
+        return {
+          exchange: {
+            state: exchange.state,
+            result: exchange?.variables?.results?.didAuthn
+          }
+        };
+      }
+    });
+
+    // poll the exchange to see `pending` state
+    {
+      // poll 1 (expect pending)
+      const result = await poll({
+        id: exchangeId, poller: pollExchange, useCache: false
+      });
+      result.value.state.should.equal('pending');
+    }
+
+    const chapiRequest = {OID4VC: issuanceUrl};
+    // CHAPI could potentially be used to deliver the URL to a native app
+    // that registered a "claimed URL" of `https://myapp.examples/ch`
+    // like so:
+    const claimedUrlFromChapi = 'https://myapp.example/ch?request=' +
+      encodeURIComponent(JSON.stringify(chapiRequest));
+    const parsedClaimedUrl = new URL(claimedUrlFromChapi);
+    const parsedChapiRequest = JSON.parse(
+      parsedClaimedUrl.searchParams.get('request'));
+    const offer = await getCredentialOffer({
+      url: parsedChapiRequest.OID4VC, agent
+    });
+
+    // wallet / client gets access token
+    const client = await OID4Client.fromCredentialOffer({offer, agent});
+
+    // prepare callback URL
+    // note: `Promise.withResolvers()` not available on node 20 so can't use
+    let callbackResolve;
+    let callbackPromise = new Promise(r => callbackResolve = r);
+    helpers.PUSH_NOTIFICATION_CALLBACK_DATA.expectedExchangeId = exchangeId;
+    helpers.PUSH_NOTIFICATION_CALLBACK_DATA.resolve = callbackResolve;
+
+    // wallet / client attempts to receive credential, should receive a
+    // `presentation_required` error with an authorization request
+    let error;
+    try {
+      await client.requestCredential({
+        did,
+        didProofSigner: signer,
+        agent,
+        format: credentialFormat
+      });
+    } catch(e) {
+      error = e;
+    }
+    should.exist(error);
+    should.exist(error.cause);
+    error.cause.name.should.equal('NotAllowedError');
+    should.exist(error.cause.cause);
+    error.cause.cause.data.error.should.equal('presentation_required');
+    should.exist(error.cause.cause.data.authorization_request);
+
+    // poll the exchange to still see `active` state
+    {
+      // wait for callback to execute
+      const callbackMatch = await callbackPromise;
+      callbackMatch.should.equal(true);
+
+      // poll 2 (expect active, no presentation results yet)
+      const result = await poll({
+        id: exchangeId, poller: pollExchange, useCache: false
+      });
+      result.value.state.should.equal('active');
+    }
+
+    // wallet / client responds to `authorization_request` by performing
+    // OID4VP:
+    let envelopedPresentation;
+    {
+      // generate VPR from authorization request
+      const {
+        cause: {
+          cause: {data: {authorization_request: authorizationRequest}}
+        }
+      } = error;
+      const {verifiablePresentationRequest} = await oid4vp.toVpr(
+        {authorizationRequest});
+
+      // VPR should be the same as the one from the exchange, modulo changes
+      // comply with OID4VP spec
+      const expectedVpr = {
+        query: [{
+          type: 'DIDAuthentication',
+          // no OID4VP support for accepted DID methods at this time
+          acceptedCryptosuites: [
+            {cryptosuite: 'ecdsa-rdfc-2019'},
+            {cryptosuite: 'eddsa-rdfc-2022'},
+            {cryptosuite: 'Ed25519Signature2020'}
+          ]
+        }, {
+          type: 'QueryByExample',
+          credentialQuery: [{
+            reason: 'We require a name verifiable credential to pass this test',
+            example: {
+              '@context': 'https://www.w3.org/2018/credentials/v1',
+              type: 'VerifiableCredential',
+              credentialSubject: {
+                'ex:name': ''
+              }
+            }
+          }]
+        }],
+        // OID4VP requires this to be the authz response URL
+        domain: authorizationRequest.response_uri,
+        // challenge should be set to authz nonce
+        challenge: authorizationRequest.nonce
+      };
+      verifiablePresentationRequest.should.deep.equal(expectedVpr);
+
+      // generate enveloped VP
+      const {domain, challenge} = verifiablePresentationRequest;
+      const presentation = createPresentation({holder: did});
+      // force VC-JWT 1.1 mode with `verifiableCredential` as a string
+      presentation['@context'] = [VC_CONTEXT_1];
+      const credentialJwt = verifiableCredential.id.slice(
+        'data:application/jwt,'.length);
+      presentation.verifiableCredential = [credentialJwt];
+      const envelopeResult = await helpers.envelopePresentation({
+        verifiablePresentation: presentation,
+        challenge,
+        domain,
+        signer
+      });
+      ({envelopedPresentation} = envelopeResult);
+      const {jwt} = envelopeResult;
+
+      // prepare callback URL
+      // note: `Promise.withResolvers()` not available on node 20 so can't use
+      callbackPromise = new Promise(r => callbackResolve = r);
+      helpers.PUSH_NOTIFICATION_CALLBACK_DATA.expectedExchangeId = exchangeId;
+      helpers.PUSH_NOTIFICATION_CALLBACK_DATA.resolve = callbackResolve;
+
+      // send authorization response
+      // FIXME: auto-generate proper presentation submission
+      const presentationSubmission = {
+        id: 'ex:example',
+        definition_id: 'ex:definition',
+        descriptor_map: []
+      };
+      const {
+        result/*, presentationSubmission*/
+      } = await oid4vp.sendAuthorizationResponse({
+        verifiablePresentation: presentation, authorizationRequest,
+        vpToken: JSON.stringify(jwt), agent,
+        presentationSubmission
+      });
+      should.exist(result);
+
+      // exchange should be `active` and contain the VP and open ID results
+      {
+        // wait for callback to execute
+        const callbackMatch = await callbackPromise;
+        callbackMatch.should.equal(true);
+        await new Promise(r => setTimeout(r, 1000));
+
+        let err;
+        try {
+          // poll 3 (expect active, expect active with presentation results)
+          const result = await poll({
+            id: exchangeId, poller: pollExchange, useCache: false
+          });
+          result.value.state.should.equal('active');
+          should.exist(result.value.result);
+          should.exist(result.value.result.verifiablePresentation);
+          result.value.result.did.should.equal(did);
+          result.value.result.envelopedPresentation
+            .should.deep.equal(envelopedPresentation);
+          result.value.result.verifiablePresentation.holder
+            .should.equal(did);
+          should.exist(result.value.result.openId);
+          result.value.result.openId.authorizationRequest
+            .should.deep.equal(authorizationRequest);
+          result.value.result.openId.presentationSubmission
+            .should.deep.equal(presentationSubmission);
+        } catch(error) {
+          err = error;
+        }
+        should.not.exist(err, err?.message);
+      }
+    }
+
+    // prepare callback URL
+    // note: `Promise.withResolvers()` not available on node 20 so can't use
+    callbackPromise = new Promise(r => callbackResolve = r);
+    helpers.PUSH_NOTIFICATION_CALLBACK_DATA.expectedExchangeId = exchangeId;
+    helpers.PUSH_NOTIFICATION_CALLBACK_DATA.resolve = callbackResolve;
+
+    // wallet / client attempts to receive credential now that OID4VP is done
+    let result;
+    error = undefined;
+    try {
+      result = await client.requestCredential({
+        did,
+        didProofSigner: signer,
+        agent,
+        format: credentialFormat
+      });
+    } catch(e) {
+      error = e;
+    }
+    should.not.exist(error);
+    should.exist(result);
+    result.should.include.keys(['format', 'credential']);
+    result.format.should.equal(credentialFormat);
+    result.credential.should.be.a('string');
+    const {credential} = await unenvelopeCredential({
+      envelopedCredential: result.credential,
+      format: credentialFormat
+    });
+    // ensure credential subject ID matches generated DID
+    should.exist(credential?.credentialSubject?.id);
+    credential.credentialSubject.id.should.equal(did);
+    // ensure VC ID matches
+    should.exist(credential.id);
+    credential.id.should.equal(credentialId);
+
+    // exchange should be complete and contain the VP and original VC
+    {
+      let err;
+      try {
+        // wait for callback to execute
+        const callbackMatch = await callbackPromise;
+        callbackMatch.should.equal(true);
+
+        // polling 4 (expect complete)
+        const result = await poll({
+          id: exchangeId, poller: pollExchange, useCache: false
+        });
+        result.value.state.should.equal('complete');
+        should.exist(result.value.result);
+        should.exist(result.value.result.verifiablePresentation);
+        result.value.result.did.should.equal(did);
+        result.value.result.verifiablePresentation.holder
+          .should.deep.equal(did);
+        result.value.result.envelopedPresentation
+          .should.deep.equal(envelopedPresentation);
+        const {credential: expectedCredential} = await unenvelopeCredential({
+          envelopedCredential: verifiableCredential,
+          format: 'application/jwt'
+        });
+        result.value.result.verifiablePresentation
           .verifiableCredential[0].should.deep.equal(expectedCredential);
       } catch(error) {
         err = error;

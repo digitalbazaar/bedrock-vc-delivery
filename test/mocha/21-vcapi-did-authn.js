@@ -679,15 +679,10 @@ describe('exchange w/ VC-API presentation + templated VPR + callback', () => {
 
   it('should pass', async () => {
     // create poller
-    const zcapClient = helpers.createZcapClient({capabilityAgent});
     const pollExchange = pollers.createExchangePoller({
-      zcapClient,
+      zcapClient: helpers.createZcapClient({capabilityAgent}),
       capability: workflowRootZcap,
-      filterExchange({exchange, previousPollResult}) {
-        if(previousPollResult?.value?.state === exchange.state) {
-          // nothing new to update
-          return;
-        }
+      filterExchange({exchange}) {
         // return only the information that should be accessible to the client
         return {
           exchange: {
