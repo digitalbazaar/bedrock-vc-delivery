@@ -1,5 +1,13 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.3.0 - 2025-mm-dd
+
+### Added
+- Add support for push notification callback URLs in exchanges. Now if the
+  `callback` property of a step is set to an object with a `url` property
+  that has a value of an HTTPS URL, this URL will be POSTed to when the
+  exchange state changes with a body of: `{event: {data: {exchangeId}}}`.
+
 ## 7.2.0 - 2025-06-11
 
 ### Added
