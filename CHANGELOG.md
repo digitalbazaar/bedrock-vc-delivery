@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.3.0 - 2025-mm-dd
+## 7.3.0 - 2025-07-03
 
 ### Added
 - Add support for push notification callback URLs in exchanges. Now if the
