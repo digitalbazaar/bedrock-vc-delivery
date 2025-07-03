@@ -42,6 +42,12 @@ const kmsBaseUrl = `${mockData.baseUrl}/kms`;
 
 const FIVE_MINUTES = 1000 * 60 * 5;
 
+// for testing push notification callback usage
+export const PUSH_NOTIFICATION_CALLBACK_DATA = {
+  expectedExchangeId: null,
+  resolve: null
+};
+
 // create document loader with contexts for VCs from `mock.data.js`
 const contexts = new Map();
 contexts.set(
