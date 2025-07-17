@@ -116,6 +116,26 @@ const envelopedVerifiableCredential = {
   ]
 };
 
+const envelopedVerifiablePresentation = {
+  title: 'Enveloped Verifiable Presentation',
+  type: 'object',
+  additionalProperties: true,
+  properties: {
+    '@context': vcContext2StringOrArray,
+    id: {
+      type: 'string'
+    },
+    type: {
+      const: 'EnvelopedVerifiablePresentation'
+    }
+  },
+  required: [
+    '@context',
+    'id',
+    'type'
+  ]
+};
+
 export function verifiablePresentation() {
   return {
     title: 'Verifiable Presentation',
@@ -543,7 +563,12 @@ export function useExchangeBody() {
     type: 'object',
     additionalProperties: false,
     properties: {
-      verifiablePresentation: verifiablePresentation()
+      verifiablePresentation: {
+        anyOf: [
+          envelopedVerifiablePresentation,
+          verifiablePresentation()
+        ]
+      }
     }
   };
 }
