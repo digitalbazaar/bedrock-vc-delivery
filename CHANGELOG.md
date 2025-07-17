@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.4.0 - 2025-07-dd
+
+### Changed
+- Include enveloped VP schema to useExchangeBody.
+- Validate enveloped VP after verification.
+
 ## 7.3.0 - 2025-07-03
 
 ### Added
