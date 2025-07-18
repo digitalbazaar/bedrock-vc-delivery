@@ -788,7 +788,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       const result = await poll({
         id: exchangeId, poller: pollExchange, useCache: false
       });
-      result.value.state.should.equal('pending');
+      result.value.exchange.state.should.equal('pending');
     }
 
     const chapiRequest = {OID4VC: issuanceUrl};
@@ -844,7 +844,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       const result = await poll({
         id: exchangeId, poller: pollExchange, useCache: false
       });
-      result.value.state.should.equal('active');
+      result.value.exchange.state.should.equal('active');
     }
 
     // wallet / client responds to `authorization_request` by performing
@@ -943,18 +943,18 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
           const result = await poll({
             id: exchangeId, poller: pollExchange, useCache: false
           });
-          result.value.state.should.equal('active');
-          should.exist(result.value.result);
-          should.exist(result.value.result.verifiablePresentation);
-          result.value.result.did.should.equal(did);
-          result.value.result.envelopedPresentation
+          result.value.exchange.state.should.equal('active');
+          should.exist(result.value.exchange.result);
+          should.exist(result.value.exchange.result.verifiablePresentation);
+          result.value.exchange.result.did.should.equal(did);
+          result.value.exchange.result.envelopedPresentation
             .should.deep.equal(envelopedPresentation);
-          result.value.result.verifiablePresentation.holder
+          result.value.exchange.result.verifiablePresentation.holder
             .should.equal(did);
-          should.exist(result.value.result.openId);
-          result.value.result.openId.authorizationRequest
+          should.exist(result.value.exchange.result.openId);
+          result.value.exchange.result.openId.authorizationRequest
             .should.deep.equal(authorizationRequest);
-          result.value.result.openId.presentationSubmission
+          result.value.exchange.result.openId.presentationSubmission
             .should.deep.equal(presentationSubmission);
         } catch(error) {
           err = error;
@@ -1010,19 +1010,19 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         const result = await poll({
           id: exchangeId, poller: pollExchange, useCache: false
         });
-        result.value.state.should.equal('complete');
-        should.exist(result.value.result);
-        should.exist(result.value.result.verifiablePresentation);
-        result.value.result.did.should.equal(did);
-        result.value.result.verifiablePresentation.holder
+        result.value.exchange.state.should.equal('complete');
+        should.exist(result.value.exchange.result);
+        should.exist(result.value.exchange.result.verifiablePresentation);
+        result.value.exchange.result.did.should.equal(did);
+        result.value.exchange.result.verifiablePresentation.holder
           .should.deep.equal(did);
-        result.value.result.envelopedPresentation
+        result.value.exchange.result.envelopedPresentation
           .should.deep.equal(envelopedPresentation);
         const {credential: expectedCredential} = await unenvelopeCredential({
           envelopedCredential: verifiableCredential,
           format: 'application/jwt'
         });
-        result.value.result.verifiablePresentation
+        result.value.exchange.result.verifiablePresentation
           .verifiableCredential[0].should.deep.equal(expectedCredential);
       } catch(error) {
         err = error;
