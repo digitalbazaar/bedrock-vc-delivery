@@ -720,7 +720,9 @@ describe('exchange w/ VC-API presentation + templated VPR + callback', () => {
     // poll the exchange to see `pending` state
     {
       const result = await poll({id: exchangeId, poller: pollExchange});
-      result.value.should.deep.equal({state: 'pending', did: undefined});
+      result.value.should.deep.equal({
+        exchange: {state: 'pending', did: undefined}
+      });
     }
 
     // post to exchange URL to get expected VPR
@@ -742,7 +744,9 @@ describe('exchange w/ VC-API presentation + templated VPR + callback', () => {
     // poll the exchange to still see `pending` state
     {
       const result = await poll({id: exchangeId, poller: pollExchange});
-      result.value.should.deep.equal({state: 'pending', did: undefined});
+      result.value.should.deep.equal({
+        exchange: {state: 'pending', did: undefined}
+      });
     }
 
     // prepare callback URL
@@ -775,7 +779,9 @@ describe('exchange w/ VC-API presentation + templated VPR + callback', () => {
       const result = await poll({
         id: exchangeId, poller: pollExchange, useCache: false
       });
-      result.value.should.deep.equal({state: 'complete', did});
+      result.value.should.deep.equal({
+        exchange: {state: 'complete', did}
+      });
     }
   });
 });
