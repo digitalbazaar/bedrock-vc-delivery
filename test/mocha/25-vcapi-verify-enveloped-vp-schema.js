@@ -52,7 +52,7 @@ describe('exchange with enveloped VP and presentationSchema', () => {
       verifyPresentation: workflowVerifyPresentationZcap
     };
   });
-  it.only('should pass enveloped VP without presentationSchema', async () => {
+  it('should pass enveloped VP without presentationSchema', async () => {
     // require semantically-named workflow steps
     const steps = {
       request: {
@@ -112,7 +112,7 @@ describe('exchange with enveloped VP and presentationSchema', () => {
     }
   });
 
-  it.only('should pass enveloped VP and presentationSchema', async () => {
+  it('should pass enveloped VP and presentationSchema', async () => {
     // require semantically-named workflow steps
     const steps = {
       request: {
@@ -173,7 +173,7 @@ describe('exchange with enveloped VP and presentationSchema', () => {
     }
   });
 
-  it.only('should throw a ValidationError', async () => {
+  it('should throw a ValidationError', async () => {
     const mismatchedPresentationSchema = {
       type: 'JsonSchema',
       jsonSchema: {
