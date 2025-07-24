@@ -332,6 +332,78 @@ mockData.examplesContext = {
 /* eslint-enable */
 
 /* eslint-disable */
+mockData.ageContext = {
+  "@context": {
+    "@protected": true,
+    "id": "@id",
+    "type": "@type",
+    "description": "https://schema.org/description",
+    "image": {
+      "@id": "https://schema.org/image",
+      "@type": "@id"
+    },
+    "name": "https://schema.org/name",
+    "overAge": {
+      "@id": "https://w3id.org/age#overAge",
+      "@type": "http://www.w3.org/2001/XMLSchema#positiveInteger"
+    },
+    "concealedIdToken": {
+      "@id": "https://w3id.org/cit#concealedIdToken",
+      "@type": "https://w3id.org/security#multibase"
+    },
+    "anchoredResource": {
+      "@type": "@id",
+      "@id": "https://w3id.org/security#anchoredResource"
+    },
+    "digestMultibase": {
+      "@id": "https://w3id.org/security#digestMultibase",
+      "@type": "https://w3id.org/security#multibase"
+    },
+    "PersonalPhotoCredential": "https://convenience.org/vocab#PersonalPhotoCredential",
+    "OverAgeTokenCredential": "https://w3id.org/age#OverAgeTokenCredential",
+    "VerifiableCredentialRefreshService2021": {
+      "@id": "https://w3id.org/vc-refresh-service#VerifiableCredentialRefreshService2021",
+      "@context": {
+        "@protected": true,
+        "url": {
+          "@id": "https://schema.org/url",
+          "@type": "@id"
+        },
+        "refreshToken": {
+          "@id": "https://w3id.org/vc-refresh-service#refreshToken",
+          "@type": "https://w3id.org/security#multibase"
+        }
+      }
+    },
+    "AgeVerificationCredential": "https://w3id.org/age#AgeVerificationCredential",
+    "AgeVerificationContainerCredential": "https://w3id.org/age#AgeVerificationContainerCredential"
+  }
+}
+/* eslint-enable */
+
+/* eslint-disable */
+mockData.citContext = {
+  "@context": {
+    "@protected": true,
+    "type": "@type",
+    "ConcealedIdTokenCredential": "https://w3id.org/cit#ConcealedIdTokenCredential",
+    "concealedIdToken": {
+      "@id": "https://w3id.org/cit#concealedIdToken",
+      "@type": "https://w3id.org/security#multibase"
+    },
+    "ConcealedIdToken": {
+      "@id": "https://w3id.org/cit#ConcealedIdToken",
+      "@context": {
+        "@protected": true,
+        "meta": {"@id": "https://w3id.org/cit#meta", "@type": "https://w3id.org/security#multibase"},
+        "payload": {"@id": "https://w3id.org/cit#payload", "@type": "https://w3id.org/security#multibase"}
+      }
+    }
+  }
+}
+/* eslint-enable */
+
+/* eslint-disable */
 mockData.prcCredentialContext = {
   "@context": {
     "@version": 1.1,
