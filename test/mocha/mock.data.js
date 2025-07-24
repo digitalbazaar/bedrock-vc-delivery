@@ -694,3 +694,158 @@ mockData.checksIncludeStatusVerificationResultSchema = {
   }
 }
 /* eslint-enable */
+
+/* eslint-disable */
+mockData.envelopedVpRequest = {
+  query: [
+    {
+      type: 'QueryByExample',
+      credentialQuery: {
+        reason: 'Enveloped Verifiable Credential required.',
+        example: {
+          '@context': [
+            'https://www.w3.org/ns/credentials/v2'
+          ],
+          type: [
+            'EnvelopedVerifiableCredential'
+          ]
+        },
+        acceptedCryptosuites: [
+          'Ed25519Signature2020',
+          'eddsa-rdfc-2022',
+          'ecdsa-rdfc-2019',
+          'bbs-2023',
+          'ecdsa-sd-2023',
+          'ecdsa-xi-2023'
+        ]
+      }
+    }
+  ]
+}
+/* eslint-enable */
+
+/* eslint-disable */
+mockData.overAgeTokenCredentialDefinition = {
+  '@context': [
+    'https://www.w3.org/2018/credentials/v1',
+    'https://w3id.org/age/v1',
+    'https://w3id.org/security/suites/ed25519-2020/v1'
+  ],
+  type: [
+    'VerifiableCredential',
+    'OverAgeTokenCredential'
+  ]
+}
+/* eslint-enable */
+
+/* eslint-disable */
+mockData.envelopedVp = {
+  '@context': ['https://www.w3.org/ns/credentials/v2'],
+  id: 'data:application/vcb;barcode-format=qr_code;base64,VlAxLUIzRUNRRElZQUNFTUhJR0RPREI2S1FBTURDRUxCSUdEUVFJQlZBVDU3TURNSjRQU0VKS1Y3T01EUE5OMkhIMkFZT0tTUlE1QVlTWU1MTUdUSUtNRkgyR0Y2RERDQlJRQ1lJRjVQUkw0WDdCSVBCUVRHWlVPQTVDQVdMWUJERjdWVE9VRlZGRE5HSzRWVjNMRVIyRUpMQURQM05BUDRVTzJVS1hGN0FaWE9MVFFFWFdEVlVMTkJJTkZRM1hGVkpHTjZBRDVDSzVSTkJFTU1GQVlaQVFBVlFJWE5BSFJCTFpXWlZIWEJZTzZBS1FBUkJFNkZUQ0NRQlpFWklRNjdGWVREUjRPSkZCQ0hFTUJONldCQzVVQTZFRlBHM0dVNjRIQjNZQktBQ0VFVFlXTUlLQUhFVEZDRDM0WENNT0hSWkVVRUk0UlFGWFlZT1dCQlEzQVlRSU1KNUlRWVJKTUZPNldaQVVBMklBQVZEQlZCUVpBWU5SRkhWV0lGQUdSQUFGUVlQUUtSUTNTWUhONUFBQVA0QkVNTEJBMzNONkRKNU1SSVNRTUhNR01PUEk0TE5XVkROUDdUSVczT0pWVFY1TEEyTjdNWk9IVUdBTkpWVEFSWFdVUjZBNUZSTk9IN0hWQ0xFRUlOSkQ2NERDS0JLR0ZDREpVWTY0VDNEQ1NCVTJDVEJKNlJSS0VDREVDQUNXQkM1VUE2RUZQRzNHVTY0SEIzWUJLQUNFRVRZV01JS0FIRVRGQ0QzNFhDTU9IUlpFVUVJNFJRRlhZ',
+  type: 'EnvelopedVerifiablePresentation'
+}
+/* eslint-enable */
+
+/* eslint-disable */
+mockData.envelopedVpPresentationSchema = {
+  "type": "JsonSchema",
+  "jsonSchema": {
+    "title": "Test presentation schema",
+    "type": "object",
+    "properties": {
+      "@context": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      },
+      "verifiableCredential": {
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "credentialSubject": {
+            "type": "object",
+            "properties": {
+              "concealedIdToken": {
+                "type": "string"
+              },
+              "overAge": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "concealedIdToken",
+              "overAge"
+            ]
+          },
+          "expirationDate": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "issuanceDate": {
+            "type": "string"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "proof": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string"
+              },
+              "proofPurpose": {
+                "type": "string"
+              },
+              "proofValue": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "verificationMethod": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "created",
+              "proofPurpose",
+              "proofValue",
+              "type",
+              "verificationMethod"
+            ]
+          },
+          "type": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "@context",
+          "credentialSubject",
+          "expirationDate",
+          "id",
+          "issuanceDate",
+          "issuer",
+          "proof",
+          "type"
+        ]
+      }
+    },
+    "required": [
+      "@context",
+      "type",
+      "verifiableCredential"
+    ]
+  }
+}
+/* eslint-enable */
