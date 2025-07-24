@@ -44,6 +44,8 @@ const contexts = new Map([
     }
     /* eslint-enable */
   }],
+  ['https://w3id.org/age/v1', mockData.ageContext],
+  ['https://w3id.org/cit/v1', mockData.citContext],
   ['https://www.w3.org/2018/credentials/examples/v1',
     mockData.examplesContext
   ]
