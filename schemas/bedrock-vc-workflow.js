@@ -388,6 +388,53 @@ const issueRequestParameters = {
   }
 };
 
+const oid4vpClientProfile = {
+  title: 'OID4VP Client Profile',
+  type: 'object',
+  additionalProperties: false,
+  // an authorization request or a directive to create one can be used,
+  // but not both
+  oneOf: [{
+    required: ['createAuthorizationRequest'],
+    // cannot also use `authorizationRequest
+    not: {
+      required: ['authorizationRequest']
+    }
+  }, {
+    required: ['authorizationRequest'],
+    // cannot also use `createAuthorizationRequest`
+    not: {
+      required: ['createAuthorizationRequest']
+    }
+  }],
+  properties: {
+    // value is name of variable to store the created authz request in
+    createAuthorizationRequest: {
+      type: 'string'
+    },
+    // ... or full authz request to use
+    authorizationRequest: {
+      type: 'object'
+    },
+    // optional properties that will be used as overrides in aby authz request
+    client_id: {type: 'string'},
+    client_id_scheme: {type: 'string'},
+    client_metadata: {type: 'object'},
+    client_metadata_uri: {type: 'string'},
+    nonce: {type: 'string'},
+    response_uri: {type: 'string'}
+  }
+};
+
+export const oid4vpClientProfiles = {
+  title: 'OID4VP Client Profiles',
+  type: 'object',
+  additionalProperties: false,
+  patternProperties: {
+    '^.*$': oid4vpClientProfile
+  }
+};
+
 const step = {
   title: 'Exchange Step',
   type: 'object',
@@ -473,33 +520,18 @@ const step = {
     },
     // required to support OID4VP (but can be provided by step template instead)
     openId: {
-      type: 'object',
-      additionalProperties: false,
-      // an authorization request or a directive to create one can be used,
-      // but not both
+      // either a single top-level client profile is specified here or
+      // `clientProfiles` is specified with nested client profiles
       oneOf: [{
-        required: ['createAuthorizationRequest'],
-        // cannot also use `authorizationRequest
-        not: {
-          required: ['authorizationRequest']
-        }
+        oid4vpClientProfile
       }, {
-        required: ['authorizationRequest'],
-        // cannot also use `createAuthorizationRequest`
-        not: {
-          required: ['createAuthorizationRequest']
+        type: 'object',
+        required: ['clientProfiles'],
+        additionalProperties: false,
+        properties: {
+          clientProfiles: oid4vpClientProfiles
         }
-      }],
-      properties: {
-        // value is name of variable to store the created authz request in
-        createAuthorizationRequest: {
-          type: 'string'
-        },
-        // ... or full authz request to use
-        authorizationRequest: {
-          type: 'object'
-        }
-      }
+      }]
     },
     presentationSchema: {
       type: 'object',

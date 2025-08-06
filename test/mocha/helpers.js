@@ -22,6 +22,7 @@ import {driver as DidJwkDriver} from '@digitalbazaar/did-method-jwk';
 import {driver as DidKeyDriver} from '@digitalbazaar/did-method-key';
 import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {EdvClient} from '@digitalbazaar/edv-client';
+import {generateCertificateChain} from './certUtils.js';
 import {generateId} from 'bnid';
 import {getAppIdentity} from '@bedrock/app-identity';
 import {httpClient} from '@digitalbazaar/http-client';
@@ -274,12 +275,12 @@ export async function createMeter({capabilityAgent, serviceType} = {}) {
 }
 
 export async function createVerifierConfig({
-  capabilityAgent, ipAllowList, meterId, zcaps, oauth2 = false
+  capabilityAgent, ipAllowList, meterId, zcaps, configOptions, oauth2 = false
 } = {}) {
   const url = `${mockData.baseUrl}/verifiers`;
   return createConfig({
     serviceType: 'vc-verifier',
-    url, capabilityAgent, ipAllowList, meterId, zcaps, oauth2
+    url, capabilityAgent, ipAllowList, meterId, zcaps, configOptions, oauth2
   });
 }
 
@@ -626,7 +627,9 @@ export async function getCredentialStatus({verifiableCredential}) {
   return {status, statusListCredential: slcUrl};
 }
 
-export async function provisionDependencies({issuerOptions} = {}) {
+export async function provisionDependencies({
+  issuerOptions, verifierOptions
+} = {}) {
   const secret = '53ad64ce-8e1d-11ec-bb12-10bf48838a41';
   const handle = 'test';
   const capabilityAgent = await CapabilityAgent.fromSecret({secret, handle});
@@ -634,10 +637,9 @@ export async function provisionDependencies({issuerOptions} = {}) {
   // create keystore for capability agent
   const keystoreAgent = await createKeystoreAgent({capabilityAgent});
 
-  // FIXME: a verifier instance isn't necessary for single-step exchanges or
-  // exchanges that do not do any DID Authn, but this method provisions a
-  // verifier anyway; this could be parameterized later to better test when
-  // this is needed and when it isn't
+  // FIXME: a verifier instance isn't necessary for every exchange, but this
+  // method provisions a verifier anyway; this could be parameterized later to
+  // better test when this is needed and when it isn't
   const [
     {
       issuerConfig,
@@ -647,17 +649,19 @@ export async function provisionDependencies({issuerOptions} = {}) {
     {
       verifierConfig,
       workflowCreateChallengeZcap,
-      workflowVerifyPresentationZcap
+      workflowVerifyPresentationZcap,
+      mdlCaStoreId,
+      mdlCertChain
     }
   ] = await Promise.all([
     provisionIssuer({capabilityAgent, keystoreAgent, issuerOptions}),
-    provisionVerifier({capabilityAgent, keystoreAgent})
+    provisionVerifier({capabilityAgent, keystoreAgent, verifierOptions})
   ]);
 
   return {
     issuerConfig, workflowIssueZcap, workflowCredentialStatusZcap,
     verifierConfig, workflowCreateChallengeZcap,
-    workflowVerifyPresentationZcap,
+    workflowVerifyPresentationZcap, mdlCaStoreId, mdlCertChain,
     capabilityAgent
   };
 }
@@ -833,7 +837,9 @@ export async function provisionIssuer({
   return {issuerConfig, workflowIssueZcap, workflowCredentialStatusZcap};
 }
 
-export async function provisionVerifier({capabilityAgent, keystoreAgent}) {
+export async function provisionVerifier({
+  capabilityAgent, keystoreAgent, verifierOptions
+}) {
   // create EDV for storage (creating hmac and kak in the process)
   const {
     edvConfig,
@@ -869,11 +875,30 @@ export async function provisionVerifier({capabilityAgent, keystoreAgent}) {
     delegator: capabilityAgent
   });
 
+  const mdlCaStoreId = verifierOptions?.verifyOptions?.mdl?.caStores?.[0];
+
   // create verifer instance w/ oauth2-based authz
   const verifierConfig = await createVerifierConfig(
-    {capabilityAgent, zcaps, oauth2: true});
+    {capabilityAgent, zcaps, configOptions: verifierOptions, oauth2: true});
   const {id: verifierId} = verifierConfig;
   const verifierRootZcap = `urn:zcap:root:${encodeURIComponent(verifierId)}`;
+
+  let mdlCertChain;
+  if(mdlCaStoreId) {
+    // create a certificate chain that ends in the MDL issuer (leaf)
+    mdlCertChain = await generateCertificateChain();
+
+    // add mDL CA store with intermediate certificate
+    {
+      const client = createZcapClient({capabilityAgent});
+      const url = `${verifierConfig.id}/mdl/ca-stores`;
+      const trustedCertificates = [mdlCertChain.intermediate.pemCertificate];
+      await client.write({
+        url, json: {id: mdlCaStoreId, trustedCertificates},
+        capability: verifierRootZcap
+      });
+    }
+  }
 
   // delegate verifier root zcap to workflow service
   const workflowServiceAgentUrl =
@@ -900,7 +925,9 @@ export async function provisionVerifier({capabilityAgent, keystoreAgent}) {
   return {
     verifierConfig,
     workflowCreateChallengeZcap,
-    workflowVerifyPresentationZcap
+    workflowVerifyPresentationZcap,
+    mdlCaStoreId,
+    mdlCertChain
   };
 }
 
