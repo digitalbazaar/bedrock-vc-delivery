@@ -75,7 +75,7 @@ describe('exchange w/batch OID4VCI delivery', () => {
       workflowId,
       workflowRootZcap
     });
-    const chapiRequest = {OID4VC: issuanceUrl};
+    const chapiRequest = {OID4VCI: issuanceUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
     // like so:
@@ -84,7 +84,7 @@ describe('exchange w/batch OID4VCI delivery', () => {
     const parsedClaimedUrl = new URL(claimedUrlFromChapi);
     const parsedChapiRequest = JSON.parse(
       parsedClaimedUrl.searchParams.get('request'));
-    const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VC});
+    const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VCI});
 
     // wallet / client gets access token
     const client = await OID4Client.fromCredentialOffer({offer, agent});

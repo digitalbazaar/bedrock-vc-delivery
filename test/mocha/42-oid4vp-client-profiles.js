@@ -142,13 +142,14 @@ describe('exchange w/ OID4VP "default" client profile', () => {
       url: `${workflowId}/exchanges`,
       capabilityAgent, capability: workflowRootZcap, exchange
     });
-    const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
+    const clientBaseUrl = `${exchangeId}/openid/clients/default`;
+    const authzReqUrl = `${clientBaseUrl}/authorization/request`;
 
     // confirm oid4vp URL matches the one in `protocols`
     {
       // `openid4vp` URL would be:
       const searchParams = new URLSearchParams({
-        client_id: `${exchangeId}/openid/client/authorization/response`,
+        client_id: `${clientBaseUrl}/authorization/response`,
         request_uri: authzReqUrl
       });
       const openid4vpUrl = 'openid4vp://?' + searchParams.toString();

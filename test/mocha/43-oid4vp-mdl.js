@@ -141,7 +141,7 @@ describe.skip('exchange w/ OID4VP mDL presentation', () => {
 
     // VPR should be the same as the one from the exchange, modulo changes
     // comply with OID4VP spec
-    const expectedVpr = {
+    /*const expectedVpr = {
       query: [{
         type: 'QueryByExample',
         credentialQuery: [{
@@ -165,7 +165,7 @@ describe.skip('exchange w/ OID4VP mDL presentation', () => {
       domain: authorizationRequest.response_uri,
       // challenge should be set to authz nonce
       challenge: authorizationRequest.nonce
-    };
+    };*/
     // FIXME: enable
     //verifiablePresentationRequest.should.deep.equal(expectedVpr);
 
