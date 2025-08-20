@@ -11,7 +11,7 @@ import {randomUUID as uuid} from 'node:crypto';
 const {baseUrl, alumniCredentialTemplate} = mockData;
 const {getAuthorizationRequest} = oid4vp;
 
-describe.skip('exchange w/ OID4VP "direct.jwt" response mode', () => {
+describe('exchange w/ OID4VP "direct.jwt" response mode', () => {
   // issue VC for use with OID4VP
   let verifiableCredential;
   before(async () => {
@@ -132,7 +132,8 @@ describe.skip('exchange w/ OID4VP "direct.jwt" response mode', () => {
           clientProfiles: {
             // just use `default` client profile, no others
             default: {
-              createAuthorizationRequest: 'authorizationRequest'
+              createAuthorizationRequest: 'authorizationRequest',
+              //response_mode: 'direct_post.jwt'
             }
           }
         }
@@ -142,13 +143,16 @@ describe.skip('exchange w/ OID4VP "direct.jwt" response mode', () => {
       url: `${workflowId}/exchanges`,
       capabilityAgent, capability: workflowRootZcap, exchange
     });
-    const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
+    const authzReqUrl =
+      `${exchangeId}/openid/clients/default/authorization/request`;
 
     // confirm oid4vp URL matches the one in `protocols`
+    let authzRequestFromOid4vpUrl;
     {
       // `openid4vp` URL would be:
       const searchParams = new URLSearchParams({
-        client_id: `${exchangeId}/openid/client/authorization/response`,
+        client_id:
+          `${exchangeId}/openid/clients/default/authorization/response`,
         request_uri: authzReqUrl
       });
       const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
@@ -162,6 +166,10 @@ describe.skip('exchange w/ OID4VP "direct.jwt" response mode', () => {
       response.data.protocols.vcapi.should.equal(exchangeId);
       should.exist(response.data.protocols.OID4VP);
       response.data.protocols.OID4VP.should.equal(openid4vpUrl);
+
+      ({
+        authorizationRequest: authzRequestFromOid4vpUrl
+      } = await getAuthorizationRequest({url: openid4vpUrl, agent}));
     }
 
     // get authorization request
@@ -176,6 +184,9 @@ describe.skip('exchange w/ OID4VP "direct.jwt" response mode', () => {
     authorizationRequest.response_mode.should.equal('direct_post');
     authorizationRequest.nonce.should.be.a('string');
     // FIXME: add assertions for `authorizationRequest.presentation_definition`
+
+    // ensure authz request matches the one from OID4VP URL
+    authzRequestFromOid4vpUrl.should.deep.equal(authorizationRequest);
 
     // generate VPR from authorization request
     const {verifiablePresentationRequest} = await oid4vp.toVpr(
