@@ -136,6 +136,20 @@ const envelopedVerifiablePresentation = {
   ]
 };
 
+const jwkKeyPair = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['privateKeyJwk', 'publicKeyJwk'],
+  properties: {
+    privateKeyJwk: {
+      type: 'object'
+    },
+    publicKeyJwk: {
+      type: 'object'
+    }
+  }
+};
+
 export function verifiablePresentation() {
   return {
     title: 'Verifiable Presentation',
@@ -256,19 +270,7 @@ const openIdExchangeOptions = {
             }
           }
         },
-        keyPair: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['privateKeyJwk', 'publicKeyJwk'],
-          properties: {
-            privateKeyJwk: {
-              type: 'object'
-            },
-            publicKeyJwk: {
-              type: 'object'
-            }
-          }
-        },
+        keyPair: jwkKeyPair,
         maxClockSkew: {
           type: 'number'
         }
@@ -416,12 +418,13 @@ const oid4vpClientProfile = {
     authorizationRequest: {
       type: 'object'
     },
-    // optional properties that will be used as overrides in aby authz request
+    // optional properties that will be used as overrides in any authz request
     client_id: {type: 'string'},
     client_id_scheme: {type: 'string'},
     client_metadata: {type: 'object'},
-    client_metadata_uri: {type: 'string'},
     nonce: {type: 'string'},
+    presentation_definition: {type: 'object'},
+    response_mode: {type: 'string'},
     response_uri: {type: 'string'}
   }
 };
