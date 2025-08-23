@@ -11,7 +11,7 @@ import {randomUUID as uuid} from 'node:crypto';
 const {baseUrl, alumniCredentialTemplate} = mockData;
 const {getAuthorizationRequest} = oid4vp;
 
-describe('exchange w/ OID4VP "direct.jwt" response mode', () => {
+describe.only('exchange w/ OID4VP "direct.jwt" response mode', () => {
   // issue VC for use with OID4VP
   let verifiableCredential;
   before(async () => {
@@ -133,7 +133,7 @@ describe('exchange w/ OID4VP "direct.jwt" response mode', () => {
             // just use `default` client profile, no others
             default: {
               createAuthorizationRequest: 'authorizationRequest',
-              //response_mode: 'direct_post.jwt'
+              response_mode: 'direct_post.jwt'
             }
           }
         }
@@ -181,7 +181,7 @@ describe('exchange w/ OID4VP "direct.jwt" response mode', () => {
     authorizationRequest.presentation_definition.id.should.be.a('string');
     authorizationRequest.presentation_definition.input_descriptors.should.be
       .an('array');
-    authorizationRequest.response_mode.should.equal('direct_post');
+    authorizationRequest.response_mode.should.equal('direct_post.jwt');
     authorizationRequest.nonce.should.be.a('string');
     // FIXME: add assertions for `authorizationRequest.presentation_definition`
 
