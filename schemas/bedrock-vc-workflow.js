@@ -398,7 +398,7 @@ const oid4vpClientProfile = {
   // but not both
   oneOf: [{
     required: ['createAuthorizationRequest'],
-    // cannot also use `authorizationRequest
+    // cannot also use `authorizationRequest`
     not: {
       required: ['authorizationRequest']
     }
@@ -733,7 +733,21 @@ export function openIdAuthorizationResponseBody() {
     title: 'OID4VP Authorization Response',
     type: 'object',
     additionalProperties: false,
-    required: ['presentation_submission', 'vp_token'],
+    oneOf: [{
+      // for response_mode == 'direct_post'
+      required: ['presentation_submission', 'vp_token'],
+      // cannot also use `response`
+      not: {
+        required: ['response']
+      }
+    }, {
+      // for response_mode == 'direct_post.jwt'
+      required: ['response'],
+      // cannot also use any other params
+      not: {
+        required: ['presentation_submission', 'vp_token', 'state']
+      }
+    }],
     properties: {
       // is a JSON string in the x-www-form-urlencoded body
       presentation_submission: {
@@ -755,6 +769,10 @@ export function openIdAuthorizationResponseBody() {
 
       are accepted for these reasons. */
       vp_token: {
+        type: 'string'
+      },
+      response: {
+        // must be an encrypted JWT
         type: 'string'
       },
       state: {
