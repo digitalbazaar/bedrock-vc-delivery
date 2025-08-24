@@ -424,6 +424,7 @@ const oid4vpClientProfile = {
     client_metadata: {type: 'object'},
     nonce: {type: 'string'},
     presentation_definition: {type: 'object'},
+    require_signed_request_object: {type: 'boolean'},
     response_mode: {type: 'string'},
     response_uri: {type: 'string'},
     zcapReferenceIds: {
