@@ -11,7 +11,7 @@ import {randomUUID as uuid} from 'node:crypto';
 const {baseUrl, alumniCredentialTemplate} = mockData;
 const {getAuthorizationRequest} = oid4vp;
 
-describe.skip('exchange w/ OID4VP "direct.jwt" response mode', () => {
+describe.only('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
   // issue VC for use with OID4VP
   let verifiableCredential;
   before(async () => {
@@ -64,6 +64,7 @@ describe.skip('exchange w/ OID4VP "direct.jwt" response mode', () => {
   let capabilityAgent;
   let workflowId;
   let workflowRootZcap;
+  let signAuthorizationRequestRefId;
   beforeEach(async () => {
     const deps = await helpers.provisionDependencies();
     const {
@@ -72,10 +73,20 @@ describe.skip('exchange w/ OID4VP "direct.jwt" response mode', () => {
     } = deps;
     ({capabilityAgent} = deps);
 
+    // create OID4VP authz request signing params
+    const {
+      signAuthorizationRequestZcap
+      // FIXME: get `x5c` as well
+    } = await helpers.createWorkflowOid4vpAuthzRequestSigningParams({
+      capabilityAgent
+    });
+
     // create workflow instance w/ oauth2-based authz
+    signAuthorizationRequestRefId = `urn:uuid:${uuid()}`;
     const zcaps = {
       createChallenge: workflowCreateChallengeZcap,
-      verifyPresentation: workflowVerifyPresentationZcap
+      verifyPresentation: workflowVerifyPresentationZcap,
+      [signAuthorizationRequestRefId]: signAuthorizationRequestZcap
     };
     // require semantically-named workflow steps
     const steps = {
@@ -133,7 +144,12 @@ describe.skip('exchange w/ OID4VP "direct.jwt" response mode', () => {
             // just use `default` client profile, no others
             default: {
               createAuthorizationRequest: 'authorizationRequest',
-              response_mode: 'direct_post.jwt'
+              response_mode: 'direct_post.jwt',
+              // enable signed authz request
+              require_signed_request_object: true,
+              zcapReferenceIds: {
+                signAuthorizationRequest: signAuthorizationRequestRefId
+              }
             }
           }
         }

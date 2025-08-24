@@ -230,6 +230,40 @@ export async function createWorkflowConfig({
   });
 }
 
+export async function createWorkflowOid4vpAuthzRequestSigningParams({
+  capabilityAgent
+} = {}) {
+  // auto-generate DID using `did:key`
+  const publicAliasTemplate =
+    'did:key:{publicKeyMultibase}#{publicKeyMultibase}';
+
+  // generate a key for signing authz requests
+  const keystoreAgent = await createKeystoreAgent({capabilityAgent});
+  const signingKey = await generateAsymmetricKey({
+    keystoreAgent, algorithm: 'P-256', publicAliasTemplate
+  });
+
+  // delegate issuer root zcap to workflow service
+  const workflowServiceAgentUrl =
+    `${mockData.baseUrl}/service-agents/${encodeURIComponent('vc-workflow')}`;
+  const {data: workflowServiceAgent} = await httpClient.get(
+    workflowServiceAgentUrl, {agent});
+
+  // zcap to sign using the above key to enable signing authz requests
+  const signAuthorizationRequestZcap = await delegate({
+    capability: createRootZcap({
+      url: parseKeystoreId(signingKey.kmsId)
+    }),
+    controller: workflowServiceAgent.id,
+    invocationTarget: signingKey.kmsId,
+    delegator: capabilityAgent
+  });
+
+  // FIXME: auto-generate `x5c` that includes public key for signing key
+
+  return {signAuthorizationRequestZcap};
+}
+
 export async function createIssuerConfig({
   capabilityAgent, ipAllowList, meterId, zcaps, configOptions,
   statusListOptions, oauth2 = false
