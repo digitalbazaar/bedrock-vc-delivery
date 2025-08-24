@@ -425,7 +425,16 @@ const oid4vpClientProfile = {
     nonce: {type: 'string'},
     presentation_definition: {type: 'object'},
     response_mode: {type: 'string'},
-    response_uri: {type: 'string'}
+    response_uri: {type: 'string'},
+    zcapReferenceIds: {
+      ...zcapReferenceIds,
+      required: ['signAuthorizationRequest'],
+      properties: {
+        sign: {
+          type: 'string'
+        }
+      }
+    }
   }
 };
 
