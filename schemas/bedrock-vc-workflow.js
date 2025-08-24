@@ -431,7 +431,7 @@ const oid4vpClientProfile = {
       ...zcapReferenceIds,
       required: ['signAuthorizationRequest'],
       properties: {
-        sign: {
+        signAuthorizationRequest: {
           type: 'string'
         }
       }
