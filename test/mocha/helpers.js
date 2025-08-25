@@ -2,6 +2,7 @@
  * Copyright (c) 2019-2025 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
+import * as EcdsaMultikey from '@digitalbazaar/ecdsa-multikey';
 import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
 import {
   generateKeyPair as _generateKeyPair,
@@ -259,9 +260,17 @@ export async function createWorkflowOid4vpAuthzRequestSigningParams({
     delegator: capabilityAgent
   });
 
+  // get public key
+  const keyPair = await signingKey.getKeyDescription();
+  const authorizationRequestPublicKeyJwk = await EcdsaMultikey.toJwk({
+    keyPair
+  });
+  authorizationRequestPublicKeyJwk.kid = signingKey.id;
+  authorizationRequestPublicKeyJwk.alg = 'ES256';
+
   // FIXME: auto-generate `x5c` that includes public key for signing key
 
-  return {signAuthorizationRequestZcap};
+  return {authorizationRequestPublicKeyJwk, signAuthorizationRequestZcap};
 }
 
 export async function createIssuerConfig({

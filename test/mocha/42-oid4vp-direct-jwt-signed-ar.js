@@ -4,6 +4,7 @@
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
+import {importJWK} from 'jose';
 import {mockData} from './mock.data.js';
 import {oid4vp} from '@digitalbazaar/oid4-client';
 import {randomUUID as uuid} from 'node:crypto';
@@ -65,6 +66,7 @@ describe.only('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
   let workflowId;
   let workflowRootZcap;
   let signAuthorizationRequestRefId;
+  let authorizationRequestPublicKeyJwk;
   beforeEach(async () => {
     const deps = await helpers.provisionDependencies();
     const {
@@ -74,12 +76,13 @@ describe.only('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
     ({capabilityAgent} = deps);
 
     // create OID4VP authz request signing params
-    const {
-      signAuthorizationRequestZcap
-      // FIXME: get `x5c` as well
-    } = await helpers.createWorkflowOid4vpAuthzRequestSigningParams({
-      capabilityAgent
-    });
+    const authzRequestSigningParams = await helpers
+      .createWorkflowOid4vpAuthzRequestSigningParams({
+        capabilityAgent
+      });
+    // FIXME: get `x5c` as well
+    ({authorizationRequestPublicKeyJwk} = authzRequestSigningParams);
+    const {signAuthorizationRequestZcap} = authzRequestSigningParams;
 
     // create workflow instance w/ oauth2-based authz
     signAuthorizationRequestRefId = `urn:uuid:${uuid()}`;
@@ -146,7 +149,9 @@ describe.only('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
               createAuthorizationRequest: 'authorizationRequest',
               response_mode: 'direct_post.jwt',
               // enable signed authz request
-              require_signed_request_object: true,
+              client_metadata: {
+                require_signed_request_object: true
+              },
               zcapReferenceIds: {
                 signAuthorizationRequest: signAuthorizationRequestRefId
               }
@@ -161,6 +166,13 @@ describe.only('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
     });
     const authzReqUrl =
       `${exchangeId}/openid/clients/default/authorization/request`;
+
+    const getVerificationKey = async ({protectedHeader}) => {
+      if(protectedHeader.kid !== authorizationRequestPublicKeyJwk.kid) {
+        throw new Error(`Key "${protectedHeader.kid}" not found.`);
+      }
+      return importJWK(authorizationRequestPublicKeyJwk);
+    };
 
     // confirm oid4vp URL matches the one in `protocols`
     let authzRequestFromOid4vpUrl;
@@ -185,12 +197,14 @@ describe.only('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
 
       ({
         authorizationRequest: authzRequestFromOid4vpUrl
-      } = await getAuthorizationRequest({url: openid4vpUrl, agent}));
+      } = await getAuthorizationRequest({
+        url: openid4vpUrl, getVerificationKey, agent
+      }));
     }
 
     // get authorization request
     const {authorizationRequest} = await getAuthorizationRequest(
-      {url: authzReqUrl, agent});
+      {url: authzReqUrl, getVerificationKey, agent});
 
     should.exist(authorizationRequest);
     should.exist(authorizationRequest.presentation_definition);
