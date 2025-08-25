@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019-2024 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2025 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
 import * as helpers from './helpers.js';
@@ -35,7 +35,7 @@ describe('provision', () => {
       err.data.details.errors.should.have.length(1);
       const [error] = err.data.details.errors;
       error.name.should.equal('ValidationError');
-      error.message.should.contain('should NOT have additional properties');
+      error.message.should.contain('should be object');
     });
     it('creates a config with no zcaps', async () => {
       let err;
