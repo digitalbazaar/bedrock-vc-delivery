@@ -434,6 +434,7 @@ const oid4vpClientProfile = {
     // optional parameters for signing authorization requests
     authorizationRequestSigningParameters: {
       type: 'object',
+      required: ['x5c'],
       additionalProperties: false,
       properties: {
         x5c: {
@@ -445,7 +446,21 @@ const oid4vpClientProfile = {
         }
       }
     },
-    // references to any zcaps for any purpose
+    // optional protocol URL parameters
+    protocolUrlParameters: {
+      type: 'object',
+      required: ['name', 'scheme'],
+      additionalProperties: false,
+      properties: {
+        name: {
+          type: 'string'
+        },
+        scheme: {
+          type: 'string'
+        }
+      }
+    },
+    // optional references to any zcaps for any purpose
     zcapReferenceIds: {
       ...zcapReferenceIds,
       required: ['signAuthorizationRequest'],
