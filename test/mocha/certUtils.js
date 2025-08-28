@@ -10,18 +10,21 @@ const crypto = _createCrypto();
 export async function generateCertificateChain() {
   const root = await _createEntity({
     commonName: 'Root',
+    cA: true,
     serialNumber: 1
   });
 
   const intermediate = await _createEntity({
     issuer: root.subject,
     commonName: 'Intermediate',
+    cA: true,
     serialNumber: 2
   });
 
   const leaf = await _createEntity({
     issuer: intermediate.subject,
     commonName: 'Leaf',
+    dnsName: 'example.test',
     serialNumber: 3
   });
 
@@ -42,13 +45,16 @@ export async function generateKeyPair() {
   return {keyPair, jwk};
 }
 
-async function _createEntity({issuer, commonName, serialNumber} = {}) {
+async function _createEntity({
+  issuer, commonName, dnsName, cA = false, serialNumber
+} = {}) {
   // generate subject key pair
   const {keyPair, jwk} = await generateKeyPair();
 
   // subject ID
   const subject = {
     commonName: commonName ?? 'Root',
+    dnsName,
     keyPair,
     jwk
   };
@@ -96,17 +102,20 @@ async function _createEntity({issuer, commonName, serialNumber} = {}) {
   // extensions are optional
   certificate.extensions = [];
 
-  // `BasicConstraints` extension
-  const basicConstr = new pkijs.BasicConstraints({
-    cA: true,
-    pathLenConstraint: 3
-  });
-  certificate.extensions.push(new pkijs.Extension({
-    extnID: '2.5.29.19',
-    critical: false,
-    extnValue: basicConstr.toSchema().toBER(false),
-    parsedValue: basicConstr // Parsed value for well-known extensions
-  }));
+  if(cA !== undefined) {
+    // `BasicConstraints` extension
+    const basicConstr = new pkijs.BasicConstraints({
+      cA,
+      pathLenConstraint: cA === true ? 3 : undefined
+    });
+    certificate.extensions.push(new pkijs.Extension({
+      extnID: '2.5.29.19',
+      critical: true,
+      extnValue: basicConstr.toSchema().toBER(false),
+      // Parsed value for well-known extensions
+      parsedValue: basicConstr
+    }));
+  }
 
   // `KeyUsage` extension
   const bitArray = new ArrayBuffer(1);
@@ -120,8 +129,36 @@ async function _createEntity({issuer, commonName, serialNumber} = {}) {
     extnID: '2.5.29.15',
     critical: false,
     extnValue: keyUsage.toBER(false),
-    parsedValue: keyUsage // Parsed value for well-known extensions
+    // Parsed value for well-known extensions
+    parsedValue: keyUsage
   }));
+
+  if(subject.dnsName) {
+    // Subject Alternative Name
+    const altNames = new pkijs.GeneralNames({
+      names: [
+        /*
+        new pkijs.GeneralName({
+          // email
+          type: 1,
+          value: "email@address.com"
+        }),*/
+        new pkijs.GeneralName({
+          // domain
+          type: 2,
+          value: subject.dnsName
+        })
+      ]
+    });
+
+    certificate.extensions.push(new pkijs.Extension({
+      // subject alt names
+      // id-ce-subjectAltName
+      extnID: '2.5.29.17',
+      critical: false,
+      extnValue: altNames.toSchema().toBER(false)
+    }));
+  }
 
   // export public key into `subjectPublicKeyInfo` value of certificate
   await certificate.subjectPublicKeyInfo.importKey(

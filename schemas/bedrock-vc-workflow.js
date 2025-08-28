@@ -426,6 +426,21 @@ const oid4vpClientProfile = {
     presentation_definition: {type: 'object'},
     response_mode: {type: 'string'},
     response_uri: {type: 'string'},
+    // optional parameters for signing authorization requests
+    authorizationRequestSigningParameters: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        x5c: {
+          type: 'array',
+          minItems: 1,
+          items: {
+            type: 'string'
+          }
+        }
+      }
+    },
+    // references to any zcaps for any purpose
     zcapReferenceIds: {
       ...zcapReferenceIds,
       required: ['signAuthorizationRequest'],
