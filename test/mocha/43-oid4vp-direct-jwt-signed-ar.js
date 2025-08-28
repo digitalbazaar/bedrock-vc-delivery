@@ -12,7 +12,7 @@ import {randomUUID as uuid} from 'node:crypto';
 const {baseUrl, alumniCredentialTemplate} = mockData;
 const {getAuthorizationRequest} = oid4vp;
 
-describe.only('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
+describe('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
   // issue VC for use with OID4VP
   let verifiableCredential;
   before(async () => {
