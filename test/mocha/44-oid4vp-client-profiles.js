@@ -12,7 +12,7 @@ import {randomUUID as uuid} from 'node:crypto';
 const {baseUrl, alumniCredentialTemplate} = mockData;
 const {getAuthorizationRequest} = oid4vp;
 
-describe.skip('exchange w/ OID4VP multiple client profiles', () => {
+describe('exchange w/ OID4VP multiple client profiles', () => {
   // issue VC for use with OID4VP
   let verifiableCredential;
   before(async () => {
@@ -151,6 +151,10 @@ describe.skip('exchange w/ OID4VP multiple client profiles', () => {
               // enable signed authz request
               client_metadata: {
                 require_signed_request_object: true
+              },
+              protocolUrlParameters: {
+                name: 'bar',
+                scheme: 'oid4vp-bar'
               },
               zcapReferenceIds: {
                 signAuthorizationRequest: signAuthorizationRequestRefId
@@ -316,6 +320,10 @@ describe.skip('exchange w/ OID4VP multiple client profiles', () => {
               client_metadata: {
                 require_signed_request_object: true
               },
+              protocolUrlParameters: {
+                name: 'bar',
+                scheme: 'oid4vp-bar'
+              },
               zcapReferenceIds: {
                 signAuthorizationRequest: signAuthorizationRequestRefId
               }
@@ -331,14 +339,14 @@ describe.skip('exchange w/ OID4VP multiple client profiles', () => {
     const clientBaseUrl = `${exchangeId}/openid/clients/bar`;
     const authzReqUrl = `${clientBaseUrl}/authorization/request`;
 
-    // confirm oid4vp URL matches the one in `protocols`
+    // confirm 'bar' URL matches the one in `protocols`
     {
-      // `openid4vp` URL would be:
+      // `bar` URL would be:
       const searchParams = new URLSearchParams({
         client_id: `${clientBaseUrl}/authorization/response`,
         request_uri: authzReqUrl
       });
-      const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
+      const barUrl = 'oid4vp-bar://?' + searchParams.toString();
 
       const protocolsUrl = `${exchangeId}/protocols`;
       const response = await httpClient.get(protocolsUrl, {agent});
@@ -347,8 +355,8 @@ describe.skip('exchange w/ OID4VP multiple client profiles', () => {
       should.exist(response.data.protocols);
       should.exist(response.data.protocols.vcapi);
       response.data.protocols.vcapi.should.equal(exchangeId);
-      should.exist(response.data.protocols.OID4VP);
-      response.data.protocols.OID4VP.should.equal(openid4vpUrl);
+      should.exist(response.data.protocols.bar);
+      response.data.protocols.bar.should.equal(barUrl);
     }
 
     const getVerificationKey = async ({protectedHeader}) => {
@@ -488,6 +496,10 @@ describe.skip('exchange w/ OID4VP multiple client profiles', () => {
                 client_metadata: {
                   require_signed_request_object: true
                 },
+                protocolUrlParameters: {
+                  name: 'bar',
+                  scheme: 'oid4vp-bar'
+                },
                 zcapReferenceIds: {
                   signAuthorizationRequest: signAuthorizationRequestRefId
                 }
@@ -503,14 +515,14 @@ describe.skip('exchange w/ OID4VP multiple client profiles', () => {
       const clientBaseUrl = `${exchangeId}/openid/clients/bar`;
       const authzReqUrl = `${clientBaseUrl}/authorization/request`;
 
-      // confirm oid4vp URL matches the one in `protocols`
+      // confirm 'bar' URL matches the one in `protocols`
       {
-        // `openid4vp` URL would be:
+        // `bar` URL would be:
         const searchParams = new URLSearchParams({
           client_id: `${clientBaseUrl}/authorization/response`,
           request_uri: authzReqUrl
         });
-        const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
+        const barUrl = 'oid4vp-bar://?' + searchParams.toString();
 
         const protocolsUrl = `${exchangeId}/protocols`;
         const response = await httpClient.get(protocolsUrl, {agent});
@@ -519,8 +531,8 @@ describe.skip('exchange w/ OID4VP multiple client profiles', () => {
         should.exist(response.data.protocols);
         should.exist(response.data.protocols.vcapi);
         response.data.protocols.vcapi.should.equal(exchangeId);
-        should.exist(response.data.protocols.OID4VP);
-        response.data.protocols.OID4VP.should.equal(openid4vpUrl);
+        should.exist(response.data.protocols.bar);
+        response.data.protocols.bar.should.equal(barUrl);
       }
 
       const getVerificationKey = async ({protectedHeader}) => {
@@ -541,25 +553,6 @@ describe.skip('exchange w/ OID4VP multiple client profiles', () => {
         .an('array');
       authorizationRequest.response_mode.should.equal('direct_post.jwt');
       authorizationRequest.nonce.should.be.a('string');
-
-      // try to get authorization request from other profile (should fail)
-      {
-        const otherAuthzReqUrl = `${exchangeId}/openid/clients/foo` +
-          '/authorization/request';
-        let err;
-        let response;
-        try {
-          response = await getAuthorizationRequest(
-            {url: otherAuthzReqUrl, agent});
-        } catch(error) {
-          err = error;
-        }
-        should.not.exist(response);
-        should.exist(err);
-        console.log('err', err);
-      }
-
-      // now complete exchange using original request...
 
       // generate VPR from authorization request
       const {verifiablePresentationRequest} = await oid4vp.toVpr(
@@ -610,6 +603,25 @@ describe.skip('exchange w/ OID4VP multiple client profiles', () => {
       // should be only an optional `redirect_uri` in the response
       should.exist(result);
       //should.exist(result.redirect_uri);
+
+      // try to get authorization request from other profile (should fail)
+      {
+        const otherAuthzReqUrl = `${exchangeId}/openid/clients/foo` +
+          '/authorization/request';
+        let err;
+        let response;
+        try {
+          response = await getAuthorizationRequest(
+            {url: otherAuthzReqUrl, agent});
+        } catch(error) {
+          err = error;
+        }
+        should.not.exist(response);
+        should.exist(err);
+        err.message.should.include('already in progress');
+        err.cause.response.status.should.equal(403);
+        err.cause.data.error.should.equal('not_allowed_error');
+      }
 
       // exchange should be complete and contain the VP and open ID results
       // exchange state should be complete
