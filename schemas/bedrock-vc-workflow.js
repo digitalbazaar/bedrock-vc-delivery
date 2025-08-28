@@ -279,21 +279,26 @@ const openIdExchangeOptions = {
   }
 };
 
-export const createExchangeBody = {
-  title: 'Create Exchange',
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    ttl: {
-      type: 'number'
-    },
-    variables: {
-      type: 'object',
-      additionalProperties: true
-    },
-    openId: openIdExchangeOptions
-  }
-};
+export function createExchangeBody() {
+  return {
+    title: 'Create Exchange',
+    type: 'object',
+    additionalProperties: false,
+    // optionally use either `expires` or `ttl`, but NOT both
+    not: {required: ['ttl', 'expires']},
+    properties: {
+      ttl: {
+        type: 'number'
+      },
+      expires: schemas.w3cDateTime(),
+      variables: {
+        type: 'object',
+        additionalProperties: true
+      },
+      openId: openIdExchangeOptions
+    }
+  };
+}
 
 const typedTemplate = {
   title: 'Typed Template',
