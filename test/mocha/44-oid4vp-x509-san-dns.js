@@ -4,7 +4,6 @@
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
-import {importJWK} from 'jose';
 import {mockData} from './mock.data.js';
 import {oid4vp} from '@digitalbazaar/oid4-client';
 import {randomUUID as uuid} from 'node:crypto';
@@ -12,7 +11,7 @@ import {randomUUID as uuid} from 'node:crypto';
 const {baseUrl, alumniCredentialTemplate} = mockData;
 const {getAuthorizationRequest} = oid4vp;
 
-describe('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
+describe('exchange w/ OID4VP "x509_san_dns"', () => {
   // issue VC for use with OID4VP
   let verifiableCredential;
   before(async () => {
@@ -62,11 +61,13 @@ describe('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
     ({verifiableCredential: [verifiableCredential]} = vp);
   });
 
+  const leafDnsName = 'test.domain.example';
   let capabilityAgent;
   let workflowId;
   let workflowRootZcap;
   let signAuthorizationRequestRefId;
-  let authorizationRequestPublicKeyJwk;
+  let x5c;
+  let trustedCertificates;
   beforeEach(async () => {
     const deps = await helpers.provisionDependencies();
     const {
@@ -78,9 +79,12 @@ describe('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
     // create OID4VP authz request signing params
     const authzRequestSigningParams = await helpers
       .createWorkflowOid4vpAuthzRequestSigningParams({
-        capabilityAgent
+        capabilityAgent, leafConfig: {dnsName: leafDnsName}
       });
-    ({authorizationRequestPublicKeyJwk} = authzRequestSigningParams);
+    ({
+      x5c,
+      trustedCertificates
+    } = authzRequestSigningParams);
     const {signAuthorizationRequestZcap} = authzRequestSigningParams;
 
     // create workflow instance w/ oauth2-based authz
@@ -147,9 +151,14 @@ describe('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
             default: {
               createAuthorizationRequest: 'authorizationRequest',
               response_mode: 'direct_post.jwt',
+              client_id: leafDnsName,
+              client_id_scheme: 'x509_san_dns',
               // enable signed authz request
               client_metadata: {
                 require_signed_request_object: true
+              },
+              authorizationRequestSigningParameters: {
+                x5c
               },
               zcapReferenceIds: {
                 signAuthorizationRequest: signAuthorizationRequestRefId
@@ -166,20 +175,14 @@ describe('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
     const authzReqUrl =
       `${exchangeId}/openid/clients/default/authorization/request`;
 
-    const getVerificationKey = async ({protectedHeader}) => {
-      if(protectedHeader.kid !== authorizationRequestPublicKeyJwk.kid) {
-        throw new Error(`Key "${protectedHeader.kid}" not found.`);
-      }
-      return importJWK(authorizationRequestPublicKeyJwk);
-    };
+    const getTrustedCertificates = async () => trustedCertificates;
 
     // confirm oid4vp URL matches the one in `protocols`
     let authzRequestFromOid4vpUrl;
     {
       // `openid4vp` URL would be:
       const searchParams = new URLSearchParams({
-        client_id:
-          `${exchangeId}/openid/clients/default/authorization/response`,
+        client_id: leafDnsName,
         request_uri: authzReqUrl
       });
       const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
@@ -197,16 +200,17 @@ describe('exchange w/ OID4VP "direct.jwt" + signed AR', () => {
       ({
         authorizationRequest: authzRequestFromOid4vpUrl
       } = await getAuthorizationRequest({
-        url: openid4vpUrl, getVerificationKey, agent
+        url: openid4vpUrl, getTrustedCertificates, agent
       }));
     }
 
     // get authorization request
     const {authorizationRequest} = await getAuthorizationRequest(
-      {url: authzReqUrl, getVerificationKey, agent});
+      {url: authzReqUrl, getTrustedCertificates, agent});
 
     should.exist(authorizationRequest);
     should.exist(authorizationRequest.presentation_definition);
+    authorizationRequest.client_id.should.equal(leafDnsName);
     authorizationRequest.presentation_definition.id.should.be.a('string');
     authorizationRequest.presentation_definition.input_descriptors.should.be
       .an('array');
