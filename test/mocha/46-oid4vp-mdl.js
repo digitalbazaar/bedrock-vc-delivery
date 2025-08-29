@@ -5,6 +5,7 @@ import * as helpers from './helpers.js';
 import * as mdlUtils from './mdlUtils.js';
 import {agent} from '@bedrock/https-agent';
 import {generateKeyPair} from './certUtils.js';
+import {httpClient} from '@digitalbazaar/http-client';
 import {mockData} from './mock.data.js';
 import {oid4vp} from '@digitalbazaar/oid4-client';
 import {randomUUID as uuid} from 'node:crypto';
@@ -12,11 +13,18 @@ import {randomUUID as uuid} from 'node:crypto';
 const {baseUrl} = mockData;
 const {getAuthorizationRequest} = oid4vp;
 
-describe.skip('exchange w/ OID4VP mDL presentation', () => {
+describe('exchange w/ OID4VP mDL presentation', () => {
+  const leafDnsName = 'mdl.reader.example';
   let capabilityAgent;
   let deviceKeyPair;
+  // `mdlCertChain` is for verifying the mDL issuer's signature
   let mdlCertChain;
   let mdoc;
+  // `x5c` and `trustedCertificates` are for verifying the mDL
+  // reader's signature
+  let x5c;
+  let trustedCertificates;
+  let signAuthorizationRequestRefId;
   let workflowId;
   let workflowRootZcap;
   beforeEach(async () => {
@@ -36,10 +44,23 @@ describe.skip('exchange w/ OID4VP mDL presentation', () => {
     } = deps;
     ({capabilityAgent, mdlCertChain} = deps);
 
+    // create OID4VP authz request signing params
+    const authzRequestSigningParams = await helpers
+      .createWorkflowOid4vpAuthzRequestSigningParams({
+        capabilityAgent, leafConfig: {dnsName: leafDnsName}
+      });
+    ({
+      x5c,
+      trustedCertificates
+    } = authzRequestSigningParams);
+    const {signAuthorizationRequestZcap} = authzRequestSigningParams;
+
     // create workflow instance w/ oauth2-based authz
+    signAuthorizationRequestRefId = `urn:uuid:${uuid()}`;
     const zcaps = {
       createChallenge: workflowCreateChallengeZcap,
-      verifyPresentation: workflowVerifyPresentationZcap
+      verifyPresentation: workflowVerifyPresentationZcap,
+      [signAuthorizationRequestRefId]: signAuthorizationRequestZcap
     };
     // require semantically-named workflow steps
     const steps = {
@@ -108,7 +129,28 @@ describe.skip('exchange w/ OID4VP mDL presentation', () => {
           domain: baseUrl
         },
         openId: {
-          createAuthorizationRequest: 'authorizationRequest'
+          clientProfiles: {
+            default: {
+              createAuthorizationRequest: 'authorizationRequest',
+              response_mode: 'direct_post.jwt',
+              client_id: leafDnsName,
+              client_id_scheme: 'x509_san_dns',
+              // enable signed authz request
+              client_metadata: {
+                require_signed_request_object: true
+              },
+              authorizationRequestSigningParameters: {
+                x5c
+              },
+              protocolUrlParameters: {
+                name: 'mdoc-openid4vp',
+                scheme: 'mdoc-openid4vp'
+              },
+              zcapReferenceIds: {
+                signAuthorizationRequest: signAuthorizationRequestRefId
+              }
+            }
+          }
         }
       }
     };
@@ -116,28 +158,58 @@ describe.skip('exchange w/ OID4VP mDL presentation', () => {
       url: `${workflowId}/exchanges`,
       capabilityAgent, capability: workflowRootZcap, exchange
     });
-    const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
+    const authzReqUrl =
+      `${exchangeId}/openid/clients/default/authorization/request`;
+
+    const getTrustedCertificates = async () => trustedCertificates;
+
+    // confirm oid4vp URL matches the one in `protocols`
+    let authzRequestFromOid4vpUrl;
+    {
+      // `mdoc-openid4vp` URL would be:
+      const searchParams = new URLSearchParams({
+        client_id: leafDnsName,
+        request_uri: authzReqUrl
+      });
+      const mdocUrl = 'mdoc-openid4vp://?' + searchParams.toString();
+
+      const protocolsUrl = `${exchangeId}/protocols`;
+      const response = await httpClient.get(protocolsUrl, {agent});
+      should.exist(response);
+      should.exist(response.data);
+      should.exist(response.data.protocols);
+      // FIXME: enable disabling `vcapi` in protocols?
+      should.exist(response.data.protocols.vcapi);
+      response.data.protocols.vcapi.should.equal(exchangeId);
+      should.exist(response.data.protocols['mdoc-openid4vp']);
+      response.data.protocols['mdoc-openid4vp'].should.equal(mdocUrl);
+
+      ({
+        authorizationRequest: authzRequestFromOid4vpUrl
+      } = await getAuthorizationRequest({
+        url: mdocUrl, getTrustedCertificates, agent
+      }));
+    }
 
     // get authorization request
     const {authorizationRequest} = await getAuthorizationRequest(
-      {url: authzReqUrl, agent});
+      {url: authzReqUrl, getTrustedCertificates, agent});
 
     should.exist(authorizationRequest);
     should.exist(authorizationRequest.presentation_definition);
     authorizationRequest.presentation_definition.id.should.be.a('string');
     authorizationRequest.presentation_definition.input_descriptors.should.be
       .an('array');
-    authorizationRequest.response_mode.should.equal('direct_post');
+    authorizationRequest.response_mode.should.equal('direct_post.jwt');
     authorizationRequest.nonce.should.be.a('string');
     // FIXME: add assertions for `authorizationRequest.presentation_definition`
 
+    // ensure authz request matches the one from mdoc-oid4vp URL
+    authzRequestFromOid4vpUrl.should.deep.equal(authorizationRequest);
+
     // generate VPR from authorization request
-    console.log('converted authorizationRequest',
-      authorizationRequest);
     const {verifiablePresentationRequest} = await oid4vp.toVpr(
       {authorizationRequest});
-    console.log('converted verifiablePresentationRequest',
-      verifiablePresentationRequest);
 
     // VPR should be the same as the one from the exchange, modulo changes
     // comply with OID4VP spec
@@ -236,18 +308,17 @@ describe.skip('exchange w/ OID4VP mDL presentation', () => {
       descriptor_map: [{
         id: 'org.iso.18013.5.1.mDL',
         format: 'mso_mdoc',
-        // FIXME: determine what this should be
-        // format: {
-        //   mso_mdoc: {
-        //     alg: ['ES256']
-        //   }
-        // },
         path: '$'
       }]
     };
     const {result} = await oid4vp.sendAuthorizationResponse({
       vpToken, verifiablePresentation, authorizationRequest, agent,
-      presentationSubmission
+      presentationSubmission,
+      encryptionOptions: {
+        mdl: {
+          sessionTranscript
+        }
+      }
     });
     // should be only an optional `redirect_uri` in the response
     should.exist(result);
