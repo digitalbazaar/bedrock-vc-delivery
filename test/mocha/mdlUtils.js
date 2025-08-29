@@ -110,10 +110,10 @@ export async function verifyPresentation({
     return {
       '@context': [VC_CONTEXT_2],
       type: 'VerifiablePresentation',
-      verifiableCredential: {
+      verifiableCredential: [{
         id: `data:application/mdl;base64,${b64Mdl}`,
         type: 'EnvelopedVerifiableCredential'
-      }
+      }]
     };
   } catch(err) {
     //console.error('Verification failed:', err);
