@@ -145,9 +145,7 @@ describe('exchange w/ OID4VP "x509_san_dns"', () => {
           domain: baseUrl
         },
         openId: {
-          // use `clientProfiles`
           clientProfiles: {
-            // just use `default` client profile, no others
             default: {
               createAuthorizationRequest: 'authorizationRequest',
               response_mode: 'direct_post.jwt',
