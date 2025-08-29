@@ -232,7 +232,7 @@ export async function createWorkflowConfig({
 }
 
 export async function createWorkflowOid4vpAuthzRequestSigningParams({
-  capabilityAgent
+  capabilityAgent, leafConfig
 } = {}) {
   // auto-generate DID using `did:key`
   const publicAliasTemplate =
@@ -268,9 +268,23 @@ export async function createWorkflowOid4vpAuthzRequestSigningParams({
   authorizationRequestPublicKeyJwk.kid = signingKey.id;
   authorizationRequestPublicKeyJwk.alg = 'ES256';
 
-  // FIXME: auto-generate `x5c` that includes public key for signing key
+  // auto-generate `x5c` that includes public key for signing key
+  const certificateChainEntities = await generateCertificateChain({
+    leafConfig: {
+      ...leafConfig,
+      publicKeyJwk: authorizationRequestPublicKeyJwk
+    }
+  });
+  const x5c = [certificateChainEntities.leaf.b64Certificate];
+  const trustedCertificates = [
+    certificateChainEntities.intermediate.pemCertificate,
+    certificateChainEntities.root.pemCertificate,
+  ];
 
-  return {authorizationRequestPublicKeyJwk, signAuthorizationRequestZcap};
+  return {
+    authorizationRequestPublicKeyJwk, signAuthorizationRequestZcap,
+    certificateChainEntities, x5c, trustedCertificates
+  };
 }
 
 export async function createIssuerConfig({

@@ -7,7 +7,31 @@ import {randomUUID, webcrypto} from 'node:crypto';
 
 const crypto = _createCrypto();
 
-export async function generateCertificateChain() {
+export async function importJwk({jwk: inputJwk} = {}) {
+  const algorithm = {
+    algorithm: {name: 'ECDSA', namedCurve: 'P-256'},
+    usages: ['verify']
+  };
+  if(inputJwk.d) {
+    algorithm.usages.push('sign');
+  }
+  const cryptoKey = await crypto.subtle.importKey(
+    'jwk', inputJwk, algorithm.algorithm, true, algorithm.usages);
+  let keyPair;
+  if(cryptoKey.privateKey) {
+    keyPair = cryptoKey;
+  } else {
+    keyPair = {publicKey: cryptoKey};
+  }
+  const jwk = await crypto.subtle.exportKey(
+    'jwk', keyPair.privateKey ?? keyPair.publicKey);
+  jwk.kid = inputJwk.kid ?? `urn:uuid:${randomUUID()}`;
+  delete jwk.key_ops;
+  delete jwk.ext;
+  return {keyPair, jwk};
+}
+
+export async function generateCertificateChain({leafConfig} = {}) {
   const root = await _createEntity({
     commonName: 'Root',
     cA: true,
@@ -23,9 +47,11 @@ export async function generateCertificateChain() {
 
   const leaf = await _createEntity({
     issuer: intermediate.subject,
-    commonName: 'Leaf',
-    dnsName: 'example.test',
-    serialNumber: 3
+    commonName: leafConfig?.commonName ?? 'Leaf',
+    dnsName: leafConfig?.dnsName ?? 'example.test',
+    serialNumber: 3,
+    privateKeyJwk: leafConfig?.privateKeyJwk,
+    publicKeyJwk: leafConfig?.publicKeyJwk
   });
 
   return {root, intermediate, leaf};
@@ -46,10 +72,13 @@ export async function generateKeyPair() {
 }
 
 async function _createEntity({
-  issuer, commonName, dnsName, cA = false, serialNumber
+  issuer, commonName, dnsName, cA = false, serialNumber,
+  privateKeyJwk, publicKeyJwk
 } = {}) {
-  // generate subject key pair
-  const {keyPair, jwk} = await generateKeyPair();
+  // import or generate key pair
+  const givenJwk = privateKeyJwk || publicKeyJwk;
+  const {keyPair, jwk} = await (givenJwk ?
+    importJwk({jwk: givenJwk}) : generateKeyPair());
 
   // subject ID
   const subject = {
@@ -120,14 +149,16 @@ async function _createEntity({
   // `KeyUsage` extension
   const bitArray = new ArrayBuffer(1);
   const bitView = new Uint8Array(bitArray);
-  // key usage `cRLSign` flag
-  bitView[0] |= 0x02;
-  // key usage `keyCertSign` flag
-  bitView[0] |= 0x04;
+  if(cA) {
+    // key usage `cRLSign` flag
+    bitView[0] |= 0x02;
+    // key usage `keyCertSign` flag
+    bitView[0] |= 0x04;
+  }
   const keyUsage = new asn1js.BitString({valueHex: bitArray});
   certificate.extensions.push(new pkijs.Extension({
     extnID: '2.5.29.15',
-    critical: false,
+    critical: true,
     extnValue: keyUsage.toBER(false),
     // Parsed value for well-known extensions
     parsedValue: keyUsage
@@ -170,8 +201,9 @@ async function _createEntity({
   // export certificate to PEM
   const raw = certificate.toSchema().toBER();
   const pemCertificate = _toPem(raw);
+  const b64Certificate = Buffer.from(raw).toString('base64');
 
-  return {subject, issuer, certificate, pemCertificate};
+  return {subject, issuer, certificate, pemCertificate, b64Certificate};
 }
 
 function _createCrypto() {
