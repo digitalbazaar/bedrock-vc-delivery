@@ -99,6 +99,31 @@ describe('exchange w/ OID4VP mDL presentation', () => {
   });
 
   it('should pass', async () => {
+    // mDL presentation definition
+    const presentationDefinition = {
+      id: 'mdl-test-age-over-21',
+      input_descriptors: [
+        {
+          id: 'org.iso.18013.5.1.mDL',
+          format: {
+            mso_mdoc: {
+              alg: ['ES256']
+            }
+          },
+          constraints: {
+            limit_disclosure: 'required',
+            fields: [
+              {
+                // eslint-disable-next-line quotes
+                path: ["$['org.iso.18013.5.1']['age_over_21']"],
+                intent_to_retain: false
+              }
+            ]
+          }
+        }
+      ]
+    };
+
     // create an exchange with appropriate variables for the step template
     const exchange = {
       // 15 minute expiry in seconds
@@ -142,6 +167,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
               authorizationRequestSigningParameters: {
                 x5c
               },
+              presentation_definition: presentationDefinition,
               protocolUrlParameters: {
                 name: 'mdoc-openid4vp',
                 scheme: 'mdoc-openid4vp'
@@ -202,6 +228,8 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       .an('array');
     authorizationRequest.response_mode.should.equal('direct_post.jwt');
     authorizationRequest.nonce.should.be.a('string');
+    authorizationRequest.client_metadata
+      .vp_formats.should.include.keys(['mso_mdoc']);
     // FIXME: add assertions for `authorizationRequest.presentation_definition`
 
     // ensure authz request matches the one from mdoc-oid4vp URL
@@ -252,35 +280,9 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       verifierGeneratedNonce: challenge
     };
 
-    // create MDL enveloped presentation
-    // FIXME: ensure `authorizationRequest.presentation_definition` is proper
-    // for mDL presentation
-    const presentationDefinition = {
-      id: 'mdl-test-age-over-21',
-      input_descriptors: [
-        {
-          id: 'org.iso.18013.5.1.mDL',
-          format: {
-            mso_mdoc: {
-              alg: ['ES256']
-            }
-          },
-          constraints: {
-            limit_disclosure: 'required',
-            fields: [
-              {
-                // eslint-disable-next-line quotes
-                path: ["$['org.iso.18013.5.1']['age_over_21']"],
-                intent_to_retain: false
-              }
-            ]
-          }
-        }
-      ]
-    };
+    // create mDL enveloped presentation
     const verifiablePresentation = await mdlUtils.createPresentation({
-      //presentationDefinition: authorizationRequest.presentation_definition,
-      presentationDefinition,
+      presentationDefinition: authorizationRequest.presentation_definition,
       mdoc,
       sessionTranscript,
       devicePrivateJwk: deviceKeyPair.privateJwk
