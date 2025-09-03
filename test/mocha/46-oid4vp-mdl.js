@@ -551,10 +551,9 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       verifiablePresentation.id.indexOf(',') + 1);
 
     // get expected presentation response
-    let expectedPresentation;
     {
       const deviceResponse = Buffer.from(vpToken, 'base64url');
-      expectedPresentation = await mdlUtils.verifyPresentation({
+      await mdlUtils.verifyPresentation({
         deviceResponse, sessionTranscript,
         trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
       });
