@@ -352,7 +352,32 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     }
   });
 
-  it.skip('should fail w/invalid device signature', async () => {
+  it('should fail w/invalid device signature', async () => {
+    // mDL presentation definition
+    const presentationDefinition = {
+      id: 'mdl-test-age-over-21',
+      input_descriptors: [
+        {
+          id: 'org.iso.18013.5.1.mDL',
+          format: {
+            mso_mdoc: {
+              alg: ['ES256']
+            }
+          },
+          constraints: {
+            limit_disclosure: 'required',
+            fields: [
+              {
+                // eslint-disable-next-line quotes
+                path: ["$['org.iso.18013.5.1']['age_over_21']"],
+                intent_to_retain: false
+              }
+            ]
+          }
+        }
+      ]
+    };
+
     // create an exchange with appropriate variables for the step template
     const exchange = {
       // 15 minute expiry in seconds
@@ -383,7 +408,29 @@ describe('exchange w/ OID4VP mDL presentation', () => {
           domain: baseUrl
         },
         openId: {
-          createAuthorizationRequest: 'authorizationRequest'
+          clientProfiles: {
+            default: {
+              createAuthorizationRequest: 'authorizationRequest',
+              response_mode: 'direct_post.jwt',
+              client_id: leafDnsName,
+              client_id_scheme: 'x509_san_dns',
+              // enable signed authz request
+              client_metadata: {
+                require_signed_request_object: true
+              },
+              authorizationRequestSigningParameters: {
+                x5c
+              },
+              presentation_definition: presentationDefinition,
+              protocolUrlParameters: {
+                name: 'mdoc-openid4vp',
+                scheme: 'mdoc-openid4vp'
+              },
+              zcapReferenceIds: {
+                signAuthorizationRequest: signAuthorizationRequestRefId
+              }
+            }
+          }
         }
       }
     };
@@ -391,20 +438,56 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       url: `${workflowId}/exchanges`,
       capabilityAgent, capability: workflowRootZcap, exchange
     });
-    const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
+    const authzReqUrl =
+      `${exchangeId}/openid/clients/default/authorization/request`;
+
+    const getTrustedCertificates = async () => trustedCertificates;
+
+    // confirm oid4vp URL matches the one in `protocols`
+    let authzRequestFromOid4vpUrl;
+    {
+      // `mdoc-openid4vp` URL would be:
+      const searchParams = new URLSearchParams({
+        client_id: leafDnsName,
+        request_uri: authzReqUrl
+      });
+      const mdocUrl = 'mdoc-openid4vp://?' + searchParams.toString();
+
+      const protocolsUrl = `${exchangeId}/protocols`;
+      const response = await httpClient.get(protocolsUrl, {agent});
+      should.exist(response);
+      should.exist(response.data);
+      should.exist(response.data.protocols);
+      // FIXME: enable disabling `vcapi` in protocols?
+      should.exist(response.data.protocols.vcapi);
+      response.data.protocols.vcapi.should.equal(exchangeId);
+      should.exist(response.data.protocols['mdoc-openid4vp']);
+      response.data.protocols['mdoc-openid4vp'].should.equal(mdocUrl);
+
+      ({
+        authorizationRequest: authzRequestFromOid4vpUrl
+      } = await getAuthorizationRequest({
+        url: mdocUrl, getTrustedCertificates, agent
+      }));
+    }
 
     // get authorization request
     const {authorizationRequest} = await getAuthorizationRequest(
-      {url: authzReqUrl, agent});
+      {url: authzReqUrl, getTrustedCertificates, agent});
 
     should.exist(authorizationRequest);
     should.exist(authorizationRequest.presentation_definition);
     authorizationRequest.presentation_definition.id.should.be.a('string');
     authorizationRequest.presentation_definition.input_descriptors.should.be
       .an('array');
-    authorizationRequest.response_mode.should.equal('direct_post');
+    authorizationRequest.response_mode.should.equal('direct_post.jwt');
     authorizationRequest.nonce.should.be.a('string');
+    authorizationRequest.client_metadata
+      .vp_formats.should.include.keys(['mso_mdoc']);
     // FIXME: add assertions for `authorizationRequest.presentation_definition`
+
+    // ensure authz request matches the one from mdoc-oid4vp URL
+    authzRequestFromOid4vpUrl.should.deep.equal(authorizationRequest);
 
     // generate VPR from authorization request
     const {verifiablePresentationRequest} = await oid4vp.toVpr(
@@ -412,7 +495,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
 
     // VPR should be the same as the one from the exchange, modulo changes
     // comply with OID4VP spec
-    const expectedVpr = {
+    /*const expectedVpr = {
       query: [{
         type: 'QueryByExample',
         credentialQuery: [{
@@ -436,8 +519,9 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       domain: authorizationRequest.response_uri,
       // challenge should be set to authz nonce
       challenge: authorizationRequest.nonce
-    };
-    verifiablePresentationRequest.should.deep.equal(expectedVpr);
+    };*/
+    // FIXME: enable
+    //verifiablePresentationRequest.should.deep.equal(expectedVpr);
 
     // generate mDL device response as VP...
 
@@ -452,19 +536,29 @@ describe('exchange w/ OID4VP mDL presentation', () => {
 
     // generate a different JWK to sign with so that the signature will NOT
     // match
-    const otherDeviceJwk = await generateKeyPair();
+    const {jwk: otherDevicePrivateJwk} = await generateKeyPair();
 
     // create MDL enveloped presentation
     const verifiablePresentation = await mdlUtils.createPresentation({
       presentationDefinition: authorizationRequest.presentation_definition,
       mdoc,
       sessionTranscript,
-      devicePrivateJwk: otherDeviceJwk.privateJwk
+      devicePrivateJwk: otherDevicePrivateJwk
     });
 
     // vpToken is base64url-encoded mDL device response
     const vpToken = verifiablePresentation.id.slice(
       verifiablePresentation.id.indexOf(',') + 1);
+
+    // get expected presentation response
+    let expectedPresentation;
+    {
+      const deviceResponse = Buffer.from(vpToken, 'base64url');
+      expectedPresentation = await mdlUtils.verifyPresentation({
+        deviceResponse, sessionTranscript,
+        trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
+      });
+    }
 
     // send authorization response
     // FIXME: auto-generate proper presentation submission
@@ -474,22 +568,27 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       descriptor_map: [{
         id: 'org.iso.18013.5.1.mDL',
         format: 'mso_mdoc',
-        // FIXME: determine what this should be
-        // format: {
-        //   mso_mdoc: {
-        //     alg: ['ES256']
-        //   }
-        // },
         path: '$'
       }]
     };
-    const {result} = await oid4vp.sendAuthorizationResponse({
-      vpToken, verifiablePresentation, authorizationRequest, agent,
-      presentationSubmission
-    });
-    // should be only an optional `redirect_uri` in the response
-    should.exist(result);
-    //should.exist(result.redirect_uri);
+    {
+      let err;
+      try {
+        await oid4vp.sendAuthorizationResponse({
+          vpToken, verifiablePresentation, authorizationRequest, agent,
+          presentationSubmission,
+          encryptionOptions: {
+            mdl: {
+              sessionTranscript
+            }
+          }
+        });
+      } catch(error) {
+        err = error;
+      }
+      should.exist(err);
+      err.message.should.include('authorization response: Verification error');
+    }
 
     // exchange should NOT be complete and should have a `lastError`
     {
@@ -498,12 +597,13 @@ describe('exchange w/ OID4VP mDL presentation', () => {
         const {exchange} = await helpers.getExchange(
           {id: exchangeId, capabilityAgent});
         should.exist(exchange?.state);
-        exchange.state.should.equal('pending');
+        exchange.state.should.equal('active');
         should.exist(exchange.lastError);
-        exchange.lastError.name.should.equal('VerificationError');
-        should.exist(exchange.lastError.errors);
-        exchange.lastError.errors[0].name.should.equal('MDLError');
-        exchange.lastError.errors[0].message.should.include(
+        exchange.lastError.name.should.equal('DataError');
+        exchange.lastError.message.should.include('Verification error');
+        should.exist(exchange.lastError.details?.errors);
+        exchange.lastError.details.errors[0].name.should.equal('MDLError');
+        exchange.lastError.details.errors[0].message.should.include(
           'Device signature must be valid');
       } catch(error) {
         err = error;
