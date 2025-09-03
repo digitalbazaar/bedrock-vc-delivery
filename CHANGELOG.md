@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.5.0 - 2025-mm-dd
+## 7.5.0 - 2025-09-03
 
 ### Added
 - Add support for accepting mDL device responses as presentations using
@@ -8,6 +8,10 @@
 - Add support for optional OID4VP `clientProfiles`, enabling, for example,
   a VC API exchange to offer the ISO 18013-7 protocol alongside other
   protocol options.
+
+### Changed
+- Evaluate the first step of an exchange (when the step is expressed as
+  a template) prior to exchange creation to surface errors earlier.
 
 ## 7.4.0 - 2025-07-25
 
