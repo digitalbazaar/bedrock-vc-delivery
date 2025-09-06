@@ -98,7 +98,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     });
   });
 
-  it('should pass', async () => {
+  it('should pass w/ also VC API enabled', async () => {
     // mDL presentation definition
     const presentationDefinition = {
       id: 'mdl-test-age-over-21',
@@ -268,6 +268,206 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     };*/
     // FIXME: enable
     //verifiablePresentationRequest.should.deep.equal(expectedVpr);
+
+    // generate mDL device response as VP...
+
+    // create an MDL session transcript
+    const {domain, challenge} = verifiablePresentationRequest;
+    const sessionTranscript = {
+      mdocGeneratedNonce: uuid(),
+      clientId: authorizationRequest.client_id,
+      responseUri: domain,
+      verifierGeneratedNonce: challenge
+    };
+
+    // create mDL enveloped presentation
+    const verifiablePresentation = await mdlUtils.createPresentation({
+      presentationDefinition: authorizationRequest.presentation_definition,
+      mdoc,
+      sessionTranscript,
+      devicePrivateJwk: deviceKeyPair.privateJwk
+    });
+
+    // vpToken is base64url-encoded mDL device response
+    const vpToken = verifiablePresentation.id.slice(
+      verifiablePresentation.id.indexOf(',') + 1);
+
+    // get expected presentation response
+    let expectedPresentation;
+    {
+      const deviceResponse = Buffer.from(vpToken, 'base64url');
+      expectedPresentation = await mdlUtils.verifyPresentation({
+        deviceResponse, sessionTranscript,
+        trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
+      });
+    }
+
+    // send authorization response
+    // FIXME: auto-generate proper presentation submission
+    const presentationSubmission = {
+      id: 'ex:example',
+      definition_id: 'ex:definition',
+      descriptor_map: [{
+        id: 'org.iso.18013.5.1.mDL',
+        format: 'mso_mdoc',
+        path: '$'
+      }]
+    };
+    const {result} = await oid4vp.sendAuthorizationResponse({
+      vpToken, verifiablePresentation, authorizationRequest, agent,
+      presentationSubmission,
+      encryptionOptions: {
+        mdl: {
+          sessionTranscript
+        }
+      }
+    });
+    // should be only an optional `redirect_uri` in the response
+    should.exist(result);
+    //should.exist(result.redirect_uri);
+
+    // exchange should be complete and contain the VP and open ID results
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+        should.exist(exchange?.variables?.results?.myStep);
+        should.exist(
+          exchange?.variables?.results?.myStep?.verifiablePresentation);
+        exchange.variables.results.myStep.verifiablePresentation
+          .should.deep.equal(expectedPresentation);
+        should.exist(exchange.variables.results.myStep.openId);
+        exchange.variables.results.myStep.openId.authorizationRequest
+          .should.deep.equal(authorizationRequest);
+        exchange.variables.results.myStep.openId.presentationSubmission
+          .should.deep.equal(presentationSubmission);
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+  });
+
+  it('should pass w/o VC API also enabled', async () => {
+    // mDL presentation definition
+    const presentationDefinition = {
+      id: 'mdl-test-age-over-21',
+      input_descriptors: [
+        {
+          id: 'org.iso.18013.5.1.mDL',
+          format: {
+            mso_mdoc: {
+              alg: ['ES256']
+            }
+          },
+          constraints: {
+            limit_disclosure: 'required',
+            fields: [
+              {
+                // eslint-disable-next-line quotes
+                path: ["$['org.iso.18013.5.1']['age_over_21']"],
+                intent_to_retain: false
+              }
+            ]
+          }
+        }
+      ]
+    };
+
+    // create an exchange with appropriate variables for the step template
+    const exchange = {
+      // 15 minute expiry in seconds
+      ttl: 60 * 15,
+      // template variables
+      variables: {
+        openId: {
+          clientProfiles: {
+            default: {
+              createAuthorizationRequest: 'authorizationRequest',
+              response_mode: 'direct_post.jwt',
+              client_id: leafDnsName,
+              client_id_scheme: 'x509_san_dns',
+              // enable signed authz request
+              client_metadata: {
+                require_signed_request_object: true
+              },
+              authorizationRequestSigningParameters: {
+                x5c
+              },
+              presentation_definition: presentationDefinition,
+              protocolUrlParameters: {
+                name: 'mdoc-openid4vp',
+                scheme: 'mdoc-openid4vp'
+              },
+              zcapReferenceIds: {
+                signAuthorizationRequest: signAuthorizationRequestRefId
+              }
+            }
+          }
+        }
+      }
+    };
+    const {id: exchangeId} = await helpers.createExchange({
+      url: `${workflowId}/exchanges`,
+      capabilityAgent, capability: workflowRootZcap, exchange
+    });
+    const authzReqUrl =
+      `${exchangeId}/openid/clients/default/authorization/request`;
+
+    const getTrustedCertificates = async () => trustedCertificates;
+
+    // confirm oid4vp URL matches the one in `protocols`
+    let authzRequestFromOid4vpUrl;
+    {
+      // `mdoc-openid4vp` URL would be:
+      const searchParams = new URLSearchParams({
+        client_id: leafDnsName,
+        request_uri: authzReqUrl
+      });
+      const mdocUrl = 'mdoc-openid4vp://?' + searchParams.toString();
+
+      const protocolsUrl = `${exchangeId}/protocols`;
+      const response = await httpClient.get(protocolsUrl, {agent});
+      should.exist(response);
+      should.exist(response.data);
+      should.exist(response.data.protocols);
+      // should be NO `vcapi` protocol option
+      should.not.exist(response.data.protocols.vcapi);
+      should.exist(response.data.protocols['mdoc-openid4vp']);
+      response.data.protocols['mdoc-openid4vp'].should.equal(mdocUrl);
+
+      ({
+        authorizationRequest: authzRequestFromOid4vpUrl
+      } = await getAuthorizationRequest({
+        url: mdocUrl, getTrustedCertificates, agent
+      }));
+    }
+
+    // get authorization request
+    const {authorizationRequest} = await getAuthorizationRequest(
+      {url: authzReqUrl, getTrustedCertificates, agent});
+
+    should.exist(authorizationRequest);
+    should.exist(authorizationRequest.presentation_definition);
+    authorizationRequest.presentation_definition.id.should.be.a('string');
+    authorizationRequest.presentation_definition.input_descriptors.should.be
+      .an('array');
+    authorizationRequest.response_mode.should.equal('direct_post.jwt');
+    authorizationRequest.nonce.should.be.a('string');
+    authorizationRequest.client_metadata
+      .vp_formats.should.include.keys(['mso_mdoc']);
+    // FIXME: add assertions for `authorizationRequest.presentation_definition`
+
+    // ensure authz request matches the one from mdoc-oid4vp URL
+    authzRequestFromOid4vpUrl.should.deep.equal(authorizationRequest);
+
+    // generate VPR from authorization request
+    const {verifiablePresentationRequest} = await oid4vp.toVpr(
+      {authorizationRequest});
 
     // generate mDL device response as VP...
 
