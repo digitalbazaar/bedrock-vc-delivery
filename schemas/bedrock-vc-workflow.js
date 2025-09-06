@@ -397,7 +397,7 @@ const issueRequestParameters = {
 
 export function inviteResponseBody() {
   return {
-    title: 'OID4VP Authorization Response',
+    title: 'Invite Response',
     type: 'object',
     additionalProperties: false,
     required: ['url', 'purpose'],
