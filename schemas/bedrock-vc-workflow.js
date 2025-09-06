@@ -395,6 +395,26 @@ const issueRequestParameters = {
   }
 };
 
+export function inviteResponseBody() {
+  return {
+    title: 'OID4VP Authorization Response',
+    type: 'object',
+    additionalProperties: false,
+    required: ['url', 'purpose'],
+    properties: {
+      url: {
+        type: 'string'
+      },
+      purpose: {
+        type: 'string'
+      },
+      referenceId: {
+        type: 'string'
+      }
+    }
+  };
+}
+
 const oid4vpClientProfile = {
   title: 'OID4VP Client Profile',
   type: 'object',
