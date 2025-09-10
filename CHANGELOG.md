@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.6.0 - 2025-mm-dd
+## 7.6.0 - 2025-09-10
 
 ### Added
 - Add support for `inviteRequest` protocol in exchanges.
