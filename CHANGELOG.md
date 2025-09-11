@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.7.0 - 2025-09-dd
+
+### Added
+- Export `workflowService` symbol for programmatic access to workflow service.
+
 ## 7.6.0 - 2025-09-10
 
 ### Added
