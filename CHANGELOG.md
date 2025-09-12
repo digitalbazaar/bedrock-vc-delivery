@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.7.1 - 2025-09-dd
+
+### Fixed
+- Ensure exchange callbacks are awaited.
+
 ## 7.7.0 - 2025-09-11
 
 ### Added
