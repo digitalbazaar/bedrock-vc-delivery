@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.7.2 - 2025-10-dd
+## 7.7.2 - 2025-10-14
 
 ### Fixed
 - Correct `peerDependencies` constraint for `@bedrock/app-identity`.
