@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.8.0 - 2025-mm-dd
+## 7.8.0 - 2025-11-20
 
 ### Added
 - Add automatic zcap-refresh feature.
