@@ -1165,8 +1165,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
                 'ex:name': ''
               }
             },
-            // FIXME: format conversion not yet supported
-            //acceptedEnvelopes: ['application/jwt']
+            acceptedEnvelopes: ['application/jwt']
           }]
         }],
         // OID4VP requires this to be the authz response URL
@@ -1419,8 +1418,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
                 'ex:name': ''
               }
             },
-            // FIXME: format conversion not yet supported
-            //acceptedEnvelopes: ['application/jwt']
+            acceptedEnvelopes: ['application/jwt']
           }]
         }],
         // OID4VP requires this to be the authz response URL

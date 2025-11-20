@@ -517,8 +517,7 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
             ],
             type: 'AlumniCredential'
           },
-          // FIXME: format conversion not yet supported
-          //acceptedEnvelopes: ['application/jwt']
+          acceptedEnvelopes: ['application/jwt']
         }]
       }],
       // OID4VP requires this to be the authz response URL
