@@ -338,7 +338,9 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         // challenge should be set to authz nonce
         challenge: authorizationRequest.nonce
       };
-      verifiablePresentationRequest.should.deep.equal(expectedVpr);
+      helpers.assertVpr({
+        actual: verifiablePresentationRequest, expected: expectedVpr
+      });
 
       // generate enveloped VP
       const {domain, challenge} = verifiablePresentationRequest;
@@ -588,7 +590,9 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         // challenge should be set to authz nonce
         challenge: authorizationRequest.nonce
       };
-      verifiablePresentationRequest.should.deep.equal(expectedVpr);
+      helpers.assertVpr({
+        actual: verifiablePresentationRequest, expected: expectedVpr
+      });
 
       // generate enveloped VP
       const {domain, challenge} = verifiablePresentationRequest;
@@ -889,7 +893,9 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         // challenge should be set to authz nonce
         challenge: authorizationRequest.nonce
       };
-      verifiablePresentationRequest.should.deep.equal(expectedVpr);
+      helpers.assertVpr({
+        actual: verifiablePresentationRequest, expected: expectedVpr
+      });
 
       // generate enveloped VP
       const {domain, challenge} = verifiablePresentationRequest;
@@ -1168,7 +1174,9 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         // challenge should be set to authz nonce
         challenge: authorizationRequest.nonce
       };
-      verifiablePresentationRequest.should.deep.equal(expectedVpr);
+      helpers.assertVpr({
+        actual: verifiablePresentationRequest, expected: expectedVpr
+      });
 
       // generate enveloped VP
       const {domain, challenge} = verifiablePresentationRequest;
@@ -1420,7 +1428,9 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
         // challenge should be set to authz nonce
         challenge: authorizationRequest.nonce
       };
-      verifiablePresentationRequest.should.deep.equal(expectedVpr);
+      helpers.assertVpr({
+        actual: verifiablePresentationRequest, expected: expectedVpr
+      });
 
       // generate enveloped VP
       const {domain, challenge} = verifiablePresentationRequest;
