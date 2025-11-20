@@ -53,6 +53,44 @@ const documentLoader = async url => {
   return defaultDocumentLoader(url);
 };
 
+export function assertVpr({
+  actual, expected, options = {ignoreGroups: true}
+} = {}) {
+  const cmp = (q1, q2) => {
+    if(q1.type === q2.type) {
+      return 0;
+    }
+    return q1.type < q2.type ? -1 : 1;
+  };
+
+  const vprs = {actual, expected};
+  for(const [key, original] of Object.entries(vprs)) {
+    let vpr = original;
+    if(options.ignoreGroups) {
+      // remove any groups
+      vpr = _removeVprGroups({vpr});
+    }
+
+    if(Array.isArray(vpr.query)) {
+      vpr = structuredClone(vpr);
+
+      // sort queries by type
+      vpr.query.sort(cmp);
+
+      // normalize `credentialQuery` to object if possible
+      for(const query of vpr.query) {
+        if(query.credentialQuery?.length === 1) {
+          query.credentialQuery = query.credentialQuery[0];
+        }
+      }
+    }
+
+    vprs[key] = vpr;
+  }
+
+  vprs.actual.should.deep.equal(vprs.expected);
+}
+
 // Note: `userId` left here to model how systems would potentially integrate
 // with VC-API exchange services
 export async function createCredentialOffer({
@@ -723,4 +761,15 @@ async function keyResolver({id}) {
   // support HTTP-based keys; currently a requirement for WebKMS
   const {data} = await httpClient.get(id, {agent: httpsAgent});
   return data;
+}
+
+function _removeVprGroups({vpr}) {
+  vpr = structuredClone(vpr);
+  const queries = Array.isArray(vpr.query) ? vpr.query : [vpr.query];
+  for(const query of queries) {
+    if(query.group !== undefined) {
+      delete query.group;
+    }
+  }
+  return vpr;
 }
