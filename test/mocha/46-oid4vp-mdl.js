@@ -267,7 +267,9 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       challenge: authorizationRequest.nonce
     };*/
     // FIXME: enable
-    //verifiablePresentationRequest.should.deep.equal(expectedVpr);
+    // helpers.assertVpr({
+    //   actual: verifiablePresentationRequest, expected: expectedVpr
+    // });
 
     // generate mDL device response as VP...
 
@@ -721,7 +723,9 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       challenge: authorizationRequest.nonce
     };*/
     // FIXME: enable
-    //verifiablePresentationRequest.should.deep.equal(expectedVpr);
+    // helpers.assertVpr({
+    //   actual: verifiablePresentationRequest, expected: expectedVpr
+    // });
 
     // generate mDL device response as VP...
 

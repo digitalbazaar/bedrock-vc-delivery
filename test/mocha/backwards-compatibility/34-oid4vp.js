@@ -362,7 +362,9 @@ describe('exchanger backwards-compatibility: ' +
       // challenge should be set to authz nonce
       challenge: authorizationRequest.nonce
     };
-    verifiablePresentationRequest.should.deep.equal(expectedVpr);
+    helpers.assertVpr({
+      actual: verifiablePresentationRequest, expected: expectedVpr
+    });
 
     // generate VP
     const {domain, challenge} = verifiablePresentationRequest;
