@@ -91,10 +91,8 @@ describe('exchange w/ VC-API delivery + "issueRequests"', () => {
     verifiableCredential = vp.verifiableCredential[0];
   });
 
-  // provision workflow that will require the provisioned VC above
-  let workflowId;
-  let workflowRootZcap;
-  beforeEach(async () => {
+  async function _provisionWorkflow({stepCount}) {
+    // provision workflow that will require the provisioned VC above
     const deps = await helpers.provisionDependencies();
     const {
       workflowIssueZcap,
@@ -123,63 +121,187 @@ describe('exchange w/ VC-API delivery + "issueRequests"', () => {
     jsonSchema.properties.verifiableCredential.oneOf[1].items
       .properties.issuer = {const: verifiableCredential.issuer};
     // require semantically-named workflow steps
-    const steps = {
-      // DID Authn step, additionally require VC that was issued from
-      // workflow 1
-      didAuthn: {
-        createChallenge: true,
-        verifiablePresentationRequest: {
-          query: [{
-            type: 'DIDAuthentication',
-            acceptedMethods: [{method: 'key'}]
+    let steps;
+    if(stepCount === 1) {
+      steps = {
+        // DID Authn step, additionally require VC that was issued from
+        // workflow 1
+        didAuthn: {
+          createChallenge: true,
+          verifiablePresentationRequest: {
+            query: [{
+              type: 'DIDAuthentication',
+              acceptedMethods: [{method: 'key'}]
+            }, {
+              type: 'QueryByExample',
+              credentialQuery: [{
+                reason: 'We require a verifiable credential to pass this test',
+                example: {
+                  '@context': [
+                    'https://www.w3.org/2018/credentials/v1',
+                    'https://www.w3.org/2018/credentials/examples/v1'
+                  ],
+                  type: 'UniversityDegreeCredential'
+                }
+              }]
+            }],
+            domain: baseUrl
+          },
+          presentationSchema: {
+            type: 'JsonSchema',
+            jsonSchema
+          },
+          // issue same VC twice
+          issueRequests: [{
+            credentialTemplateId: 'urn:credential-template-1'
           }, {
-            type: 'QueryByExample',
-            credentialQuery: [{
-              reason: 'We require a verifiable credential to pass this test',
-              example: {
-                '@context': [
-                  'https://www.w3.org/2018/credentials/v1',
-                  'https://www.w3.org/2018/credentials/examples/v1'
-                ],
-                type: 'UniversityDegreeCredential'
-              }
-            }]
-          }],
-          domain: baseUrl
-        },
-        presentationSchema: {
-          type: 'JsonSchema',
-          jsonSchema
-        },
-        // issue same VC twice
-        issueRequests: [{
-          credentialTemplateId: 'urn:credential-template-1'
-        }, {
-          credentialTemplateId: 'urn:credential-template-1',
-          // use different variables
-          variables: {
-            credentialId: 'urn:different',
-            issuanceDate: '2024-01-01T00:00:00Z',
-            results: {
-              didAuthn: {
-                did: 'did:example:1'
+            credentialTemplateId: 'urn:credential-template-1',
+            // use different variables
+            variables: {
+              credentialId: 'urn:different',
+              issuanceDate: '2024-01-01T00:00:00Z',
+              results: {
+                didAuthn: {
+                  did: 'did:example:1'
+                }
               }
             }
-          }
-        }]
-      }
-    };
+          }]
+        }
+      };
+    } else {
+      steps = {
+        // DID Authn step, additionally require VC that was issued from
+        // workflow 1
+        didAuthn: {
+          createChallenge: true,
+          verifiablePresentationRequest: {
+            query: [{
+              type: 'DIDAuthentication',
+              acceptedMethods: [{method: 'key'}]
+            }, {
+              type: 'QueryByExample',
+              credentialQuery: [{
+                reason: 'We require a verifiable credential to pass this test',
+                example: {
+                  '@context': [
+                    'https://www.w3.org/2018/credentials/v1',
+                    'https://www.w3.org/2018/credentials/examples/v1'
+                  ],
+                  type: 'UniversityDegreeCredential'
+                }
+              }]
+            }],
+            domain: baseUrl
+          },
+          presentationSchema: {
+            type: 'JsonSchema',
+            jsonSchema
+          },
+          nextStep: 'issue'
+        },
+        issue: {
+          // issue same VC twice
+          issueRequests: [{
+            credentialTemplateId: 'urn:credential-template-1'
+          }, {
+            credentialTemplateId: 'urn:credential-template-1',
+            // use different variables
+            variables: {
+              credentialId: 'urn:different',
+              issuanceDate: '2024-01-01T00:00:00Z',
+              results: {
+                didAuthn: {
+                  did: 'did:example:1'
+                }
+              }
+            }
+          }]
+        }
+      };
+    }
     // set initial step
     const initialStep = 'didAuthn';
     const workflowConfig = await helpers.createWorkflowConfig({
       capabilityAgent, zcaps, credentialTemplates, steps, initialStep,
       oauth2: true
     });
-    workflowId = workflowConfig.id;
-    workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
+    const workflowId = workflowConfig.id;
+    const workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
+    return {workflowId, workflowRootZcap};
+  }
+
+  it('should pass when sending VP in single call w/one step', async () => {
+    const {workflowId, workflowRootZcap} = await _provisionWorkflow({
+      stepCount: 1
+    });
+
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap
+    });
+
+    // generate VP
+    const {verifiablePresentation} = await helpers.createDidAuthnVP({
+      domain: baseUrl,
+      challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
+      did, signer, verifiableCredential
+    });
+
+    // post VP to get VP in response
+    const response = await httpClient.post(
+      exchangeId, {agent, json: {verifiablePresentation}});
+    should.exist(response?.data?.verifiablePresentation);
+    // ensure DID in VC matches `did`
+    const {verifiablePresentation: vp} = response.data;
+    should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
+    should.exist(vp?.verifiableCredential?.[1]?.credentialSubject?.id);
+    const {verifiableCredential: [vc1, vc2]} = vp;
+    vc1.credentialSubject.id.should.equal(did);
+    // ensure VC ID matches
+    should.exist(vc1.id);
+    vc1.id.should.equal(credentialId);
+
+    // check second VC
+    vc2.credentialSubject.id.should.equal('did:example:1');
+    // ensure VC ID matches expected value
+    should.exist(vc2.id);
+    vc2.id.should.equal('urn:different');
+
+    // exchange should be complete and contain the VP and original VC
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+        should.exist(exchange?.variables?.results?.didAuthn);
+        should.exist(
+          exchange?.variables?.results?.didAuthn?.verifiablePresentation);
+        exchange?.variables?.results?.didAuthn.did.should.equal(did);
+        exchange.variables.results.didAuthn.verifiablePresentation
+          .should.deep.equal(verifiablePresentation);
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
   });
 
-  it('should pass when sending VP in single call', async () => {
+  it('should pass when sending VP in single call w/two steps', async () => {
+    const {workflowId, workflowRootZcap} = await _provisionWorkflow({
+      stepCount: 2
+    });
+
     const credentialId = `urn:uuid:${uuid()}`;
     const {exchangeId} = await helpers.createCredentialOffer({
       // local target user
