@@ -145,6 +145,260 @@ after(async () => {
 });
 
 describe('exchange with `verifyPresentationOptions` and ' +
+  'no schema enforcing status checks', () => {
+  let capabilityAgent;
+
+  // provision a VC to use in the workflow below
+  let vcUnrevoked;
+  let vcRevoked;
+  let did;
+  let signer;
+  let keyData;
+  let keyPair;
+  let suite;
+
+  // provision workflow that will require the provisioned VC above
+  let workflowId;
+  let workflowRootZcap;
+  beforeEach(async () => {
+    keyData = {
+      id: 'did:key:z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv#' +
+        'z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv',
+      controller: 'did:key:z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv',
+      type: 'Ed25519VerificationKey2020',
+      publicKeyMultibase: 'z6Mktpn6cXks1PBKLMgZH2VaahvCtBMF6K8eCa7HzrnuYLZv',
+      privateKeyMultibase: 'zrv2rP9yjtz3YwCas9m6hnoPxmoqZV72xbCEuomXi4wwSS' +
+        '4ShekesADYiAMHoxoqfyBDKQowGMvYx9rp6QGJ7Qbk7Y4'
+    };
+    keyPair = await Ed25519VerificationKey2020.from(keyData);
+    suite = new Ed25519Signature2020({key: keyPair});
+
+    ({did, signer} = await helpers.createDidProofSigner());
+
+    const deps = await helpers.provisionDependencies();
+    const {
+      workflowIssueZcap,
+      workflowCredentialStatusZcap,
+      workflowCreateChallengeZcap,
+      workflowVerifyPresentationZcap
+    } = deps;
+    ({capabilityAgent} = deps);
+
+    // create workflow instance w/ oauth2-based authz
+    const zcaps = {
+      issue: workflowIssueZcap,
+      credentialStatus: workflowCredentialStatusZcap,
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
+    };
+    const credentialTemplates = [{
+      type: 'jsonata',
+      template: didAuthnCredentialTemplate
+    }];
+
+    // require semantically-named workflow steps
+    const steps = {
+      // DID Authn step, additionally require VC that was issued from
+      // workflow 1
+      didAuthn: {
+        createChallenge: true,
+        verifiablePresentationRequest: {
+          query: [{
+            type: 'DIDAuthentication',
+            acceptedMethods: [{method: 'key'}]
+          }, {
+            type: 'QueryByExample',
+            credentialQuery: [{
+              reason: 'We require a verifiable credential to pass this test',
+              example: {
+                '@context': [
+                  'https://www.w3.org/ns/credentials/v2'
+                ],
+              }
+            }]
+          }],
+          domain: baseUrl
+        },
+        verifyPresentationOptions: {
+          checks: {
+            credentialStatus: true
+          }
+        }
+      }
+    };
+    // set initial step
+    const initialStep = 'didAuthn';
+    const workflowConfig = await helpers.createWorkflowConfig({
+      capabilityAgent, zcaps, credentialTemplates, steps, initialStep,
+      oauth2: true
+    });
+    workflowId = workflowConfig.id;
+    workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
+
+    slcRevocation = await vc.issue({
+      credential: slcRevocation,
+      documentLoader: _documentLoader,
+      suite
+    });
+    vcUnrevoked = await vc.issue({
+      credential: unsignedCredentialWithUnrevokedIndex,
+      documentLoader: _documentLoader,
+      suite
+    });
+    vcRevoked = await vc.issue({
+      credential: unsignedCredentialWithRevokedIndex,
+      documentLoader: _documentLoader,
+      suite
+    });
+  });
+
+  it('should pass with an unrevoked credential', async () => {
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap
+    });
+
+    // generate VP
+    const {verifiablePresentation} = await helpers.createDidAuthnVP({
+      domain: baseUrl,
+      challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
+      did, signer, verifiableCredential: vcUnrevoked
+    });
+
+    // post VP to get VP in response
+    const response = await httpClient.post(
+      exchangeId, {agent, json: {verifiablePresentation}});
+    should.exist(response?.data?.verifiablePresentation);
+    // ensure DID in VC matches `did`
+    const {verifiablePresentation: vp} = response.data;
+    should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
+    const {verifiableCredential: [vc]} = vp;
+    vc.credentialSubject.id.should.equal(did);
+    // ensure VC ID matches
+    should.exist(vc.id);
+    vc.id.should.equal(credentialId);
+
+    // exchange should be complete and contain the VP and original VC
+    {
+      const {exchange} = await helpers.getExchange(
+        {id: exchangeId, capabilityAgent});
+      should.exist(exchange?.state);
+      exchange.state.should.equal('complete');
+      should.exist(exchange?.variables?.results?.didAuthn);
+      should.exist(
+        exchange?.variables?.results?.didAuthn?.verifiablePresentation);
+      exchange?.variables?.results?.didAuthn.did.should.equal(did);
+      exchange.variables.results.didAuthn.verifiablePresentation
+        .should.deep.equal(verifiablePresentation);
+      should.exist(
+        exchange.variables.results.didAuthn.verifyPresentationResults);
+      exchange.variables.results.didAuthn.verifyPresentationResults.verified
+        .should.equal(true);
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.should.be.an('object');
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.presentation.verified.should.equal(true);
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials.should.be.an('array');
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials[0].verified.should.equal(true);
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials[0].results.should.be.an('object');
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials[0].results.credentialStatus
+        .should.be.an('array');
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials[0].results.credentialStatus[0]
+        .verified.should.equal(true);
+      // status value of `false` means NOT revoked
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials[0].results.credentialStatus[0]
+        .value.should.equal(false);
+    }
+  });
+  it('should pass with a revoked credential', async () => {
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap
+    });
+
+    // generate VP
+    const {verifiablePresentation} = await helpers.createDidAuthnVP({
+      domain: baseUrl,
+      challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
+      did, signer, verifiableCredential: vcRevoked
+    });
+
+    // post VP to get VP in response
+    const response = await httpClient.post(
+      exchangeId, {agent, json: {verifiablePresentation}});
+    should.exist(response?.data?.verifiablePresentation);
+    // ensure DID in VC matches `did`
+    const {verifiablePresentation: vp} = response.data;
+    should.exist(vp?.verifiableCredential?.[0]?.credentialSubject?.id);
+    const {verifiableCredential: [vc]} = vp;
+    vc.credentialSubject.id.should.equal(did);
+    // ensure VC ID matches
+    should.exist(vc.id);
+    vc.id.should.equal(credentialId);
+
+    // exchange should be complete and contain the VP and original VC
+    {
+      const {exchange} = await helpers.getExchange(
+        {id: exchangeId, capabilityAgent});
+      should.exist(exchange?.state);
+      exchange.state.should.equal('complete');
+      should.exist(exchange?.variables?.results?.didAuthn);
+      should.exist(
+        exchange?.variables?.results?.didAuthn?.verifiablePresentation);
+      exchange?.variables?.results?.didAuthn.did.should.equal(did);
+      exchange.variables.results.didAuthn.verifiablePresentation
+        .should.deep.equal(verifiablePresentation);
+      should.exist(
+        exchange.variables.results.didAuthn.verifyPresentationResults);
+      exchange.variables.results.didAuthn.verifyPresentationResults.verified
+        .should.equal(true);
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.should.be.an('object');
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.presentation.verified.should.equal(true);
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials.should.be.an('array');
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials[0].verified.should.equal(true);
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials[0].results.should.be.an('object');
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials[0].results.credentialStatus
+        .should.be.an('array');
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials[0].results.credentialStatus[0]
+        .verified.should.equal(true);
+      // status value of `true` means revoked
+      exchange.variables.results.didAuthn.verifyPresentationResults
+        .results.credentials[0].results.credentialStatus[0]
+        .value.should.equal(true);
+    }
+  });
+});
+
+describe('exchange with `verifyPresentationOptions` and ' +
   '`verifyPresentationResultSchema` enforcing status checks', () => {
   let capabilityAgent;
 
@@ -344,6 +598,40 @@ describe('exchange with `verifyPresentationOptions` and ' +
     should.exist(err);
     err.data?.name?.should.equal('ValidationError');
   });
+  it('should pass with a revoked credential when ', async () => {
+    const credentialId = `urn:uuid:${uuid()}`;
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinition,
+      credentialId,
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap
+    });
+
+    // generate VP
+    const {verifiablePresentation} = await helpers.createDidAuthnVP({
+      domain: baseUrl,
+      challenge: exchangeId.slice(exchangeId.lastIndexOf('/') + 1),
+      did, signer, verifiableCredential: vcRevoked
+    });
+
+    // send VP containing revoked credential
+    // this will fail the verifyPresentationResultSchema check
+    let err;
+    try {
+      const response = await httpClient.post(
+        exchangeId, {agent, json: {verifiablePresentation}});
+      should.exist(response?.data?.verifiablePresentation);
+    } catch(error) {
+      err = error;
+    }
+    should.exist(err);
+    err.data?.name?.should.equal('ValidationError');
+  });
 });
 
 describe('exchange with `verifyPresentationResultSchema` checking correct ' +
@@ -389,7 +677,7 @@ describe('exchange with `verifyPresentationResultSchema` checking correct ' +
   });
 
   it('should pass when `verifyPresentationOptions` enables status check ' +
-    'and `verifyPresentationResultSchema` requires is', async () => {
+    'and `verifyPresentationResultSchema` requires it', async () => {
     const deps = await helpers.provisionDependencies();
     const {
       workflowIssueZcap,
