@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.9.0 - 2025-12-dd
+## 7.9.0 - 2025-12-03
 
 ### Added
 - Add `verifyPresentationResults` to exchange state for use by coordinators.
