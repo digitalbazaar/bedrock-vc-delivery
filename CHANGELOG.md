@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.10.0 - 2026-mm-dd
+## 7.10.0 - 2026-01-12
 
 ### Added
 - Add `verifiablePresentation` to workflow step for use by coordinators; this
