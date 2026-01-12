@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
  */
 import {MAX_ISSUER_INSTANCES} from '../lib/constants.js';
 import {schemas} from '@bedrock/validation';
@@ -150,6 +150,21 @@ const jwkKeyPair = {
   }
 };
 
+function verifiableOrEnvelopedCredentials() {
+  return {
+    anyOf: [
+      verifiableCredential(),
+      envelopedVerifiableCredential, {
+        type: 'array',
+        minItems: 1,
+        items: {
+          anyOf: [verifiableCredential(), envelopedVerifiableCredential]
+        }
+      }
+    ]
+  };
+}
+
 export function verifiablePresentation() {
   return {
     title: 'Verifiable Presentation',
@@ -173,18 +188,7 @@ export function verifiablePresentation() {
           type: 'string'
         }
       },
-      verifiableCredential: {
-        anyOf: [
-          verifiableCredential(),
-          envelopedVerifiableCredential, {
-            type: 'array',
-            minItems: 1,
-            items: {
-              anyOf: [verifiableCredential(), envelopedVerifiableCredential]
-            }
-          }
-        ]
-      },
+      verifiableCredential: verifiableOrEnvelopedCredentials(),
       holder: idOrObjectWithId(),
       proof: schemas.proof()
     }
@@ -319,12 +323,14 @@ const typedTemplate = {
   }
 };
 
-export const credentialTemplates = {
-  title: 'Credential Templates',
-  type: 'array',
-  minItems: 1,
-  items: typedTemplate
-};
+export function credentialTemplates() {
+  return {
+    title: 'Credential Templates',
+    type: 'array',
+    minItems: 1,
+    items: typedTemplate
+  };
+}
 
 // to be updated in specific locations with `properties` and `required`
 const zcapReferenceIds = {
@@ -364,13 +370,15 @@ const issuerInstance = {
   }
 };
 
-export const issuerInstances = {
-  title: 'Issuer Instances',
-  type: 'array',
-  minItems: 1,
-  maxItems: MAX_ISSUER_INSTANCES,
-  items: issuerInstance
-};
+export function issuerInstances() {
+  return {
+    title: 'Issuer Instances',
+    type: 'array',
+    minItems: 1,
+    maxItems: MAX_ISSUER_INSTANCES,
+    items: issuerInstance
+  };
+}
 
 const issueRequestParameters = {
   title: 'Issue Request Parameters',
@@ -493,168 +501,182 @@ const oid4vpClientProfile = {
   }
 };
 
-export const oid4vpClientProfiles = {
-  title: 'OID4VP Client Profiles',
-  type: 'object',
-  additionalProperties: false,
-  patternProperties: {
-    '^.*$': oid4vpClientProfile
-  }
-};
+export function oid4vpClientProfiles() {
+  return {
+    title: 'OID4VP Client Profiles',
+    type: 'object',
+    additionalProperties: false,
+    patternProperties: {
+      '^.*$': oid4vpClientProfile
+    }
+  };
+}
 
-const step = {
-  title: 'Exchange Step',
-  type: 'object',
-  minProperties: 1,
-  additionalProperties: false,
-  // step can either use a template so it will be generated using variables
-  // associated with the exchange, or static values can be provided
-  oneOf: [{
-    // `stepTemplate` must be present and nothing else
-    required: ['stepTemplate'],
-    not: {
-      required: [
-        'allowUnprotectedPresentation',
-        'callback',
-        'createChallenge',
-        'issueRequests',
-        'jwtDidProofRequest',
-        'nextStep',
-        'openId',
-        'presentationSchema',
-        'verifiablePresentationRequest'
-      ]
-    }
-  }, {
-    // anything except `stepTemplate` can be used
-    not: {
-      required: ['stepTemplate']
-    }
-  }],
-  properties: {
-    allowUnprotectedPresentation: {
-      type: 'boolean'
-    },
-    callback: {
-      type: 'object',
-      required: ['url'],
-      additionalProperties: false,
-      properties: {
-        url: {
-          type: 'string'
-        }
+function step() {
+  return {
+    title: 'Exchange Step',
+    type: 'object',
+    minProperties: 1,
+    additionalProperties: false,
+    // step can either use a template so it will be generated using variables
+    // associated with the exchange, or static values can be provided
+    oneOf: [{
+      // `stepTemplate` must be present and nothing else
+      required: ['stepTemplate'],
+      not: {
+        required: [
+          'allowUnprotectedPresentation',
+          'callback',
+          'createChallenge',
+          'issueRequests',
+          'jwtDidProofRequest',
+          'nextStep',
+          'openId',
+          'presentationSchema',
+          'verifiablePresentationRequest'
+        ]
       }
-    },
-    createChallenge: {
-      type: 'boolean'
-    },
-    issueRequests: {
-      type: 'array',
-      minItems: 0,
-      items: issueRequestParameters
-    },
-    jwtDidProofRequest: {
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        acceptedMethods: {
-          title: 'Accepted DID Methods',
-          type: 'array',
-          minItems: 1,
-          items: {
-            title: 'Accepted DID Method',
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              method: {
-                type: 'string'
-              }
-            }
-          }
-        },
-        allowedAlgorithms: {
-          title: 'Allowed JWT Algorithms',
-          type: 'array',
-          minItems: 1,
-          items: {
+    }, {
+      // anything except `stepTemplate` can be used
+      not: {
+        required: ['stepTemplate']
+      }
+    }],
+    properties: {
+      allowUnprotectedPresentation: {
+        type: 'boolean'
+      },
+      callback: {
+        type: 'object',
+        required: ['url'],
+        additionalProperties: false,
+        properties: {
+          url: {
             type: 'string'
           }
         }
-      }
-    },
-    nextStep: {
-      type: 'string'
-    },
-    // required to support OID4VP (but can be provided by step template instead)
-    openId: {
-      // either a single top-level client profile is specified here or
-      // `clientProfiles` is specified with nested client profiles
-      oneOf: [{
-        oid4vpClientProfile
-      }, {
+      },
+      createChallenge: {
+        type: 'boolean'
+      },
+      // issue request parameters for VCs that are to be issued and delivered
+      // during this step
+      issueRequests: {
+        type: 'array',
+        minItems: 0,
+        items: issueRequestParameters
+      },
+      jwtDidProofRequest: {
         type: 'object',
-        required: ['clientProfiles'],
         additionalProperties: false,
         properties: {
-          clientProfiles: oid4vpClientProfiles
-        }
-      }]
-    },
-    presentationSchema: {
-      type: 'object',
-      required: ['type', 'jsonSchema'],
-      additionalProperties: false,
-      properties: {
-        type: {
-          type: 'string'
-        },
-        jsonSchema: {
-          type: 'object'
-        }
-      }
-    },
-    stepTemplate: typedTemplate,
-    verifiablePresentationRequest: {
-      type: 'object'
-    },
-    verifyPresentationOptions: {
-      type: 'object',
-      properties: {
-        checks: {
-          type: 'object'
+          acceptedMethods: {
+            title: 'Accepted DID Methods',
+            type: 'array',
+            minItems: 1,
+            items: {
+              title: 'Accepted DID Method',
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                method: {
+                  type: 'string'
+                }
+              }
+            }
+          },
+          allowedAlgorithms: {
+            title: 'Allowed JWT Algorithms',
+            type: 'array',
+            minItems: 1,
+            items: {
+              type: 'string'
+            }
+          }
         }
       },
-      additionalProperties: true
-    },
-    verifyPresentationResultSchema: {
-      type: 'object',
-      required: ['type', 'jsonSchema'],
-      additionalProperties: false,
-      properties: {
-        type: {
-          type: 'string'
+      nextStep: {
+        type: 'string'
+      },
+      // required to support OID4VP
+      // (but can be provided by step template instead)
+      openId: {
+        // either a single top-level client profile is specified here or
+        // `clientProfiles` is specified with nested client profiles
+        oneOf: [{
+          oid4vpClientProfile
+        }, {
+          type: 'object',
+          required: ['clientProfiles'],
+          additionalProperties: false,
+          properties: {
+            clientProfiles: oid4vpClientProfiles()
+          }
+        }]
+      },
+      presentationSchema: {
+        type: 'object',
+        required: ['type', 'jsonSchema'],
+        additionalProperties: false,
+        properties: {
+          type: {
+            type: 'string'
+          },
+          jsonSchema: {
+            type: 'object'
+          }
+        }
+      },
+      stepTemplate: typedTemplate,
+      // verifiable credentials that were previously issued but are to be
+      // delivered during this step
+      verifiableCredentials: verifiableOrEnvelopedCredentials(),
+      verifiablePresentationRequest: {
+        type: 'object'
+      },
+      verifyPresentationOptions: {
+        type: 'object',
+        properties: {
+          checks: {
+            type: 'object'
+          }
         },
-        jsonSchema: {
-          type: 'object'
+        additionalProperties: true
+      },
+      verifyPresentationResultSchema: {
+        type: 'object',
+        required: ['type', 'jsonSchema'],
+        additionalProperties: false,
+        properties: {
+          type: {
+            type: 'string'
+          },
+          jsonSchema: {
+            type: 'object'
+          }
         }
       }
     }
-  }
-};
+  };
+}
 
-export const steps = {
-  title: 'Exchange Steps',
-  type: 'object',
-  additionalProperties: false,
-  patternProperties: {
-    '^.*$': step
-  }
-};
+export function steps() {
+  return {
+    title: 'Exchange Steps',
+    type: 'object',
+    additionalProperties: false,
+    patternProperties: {
+      '^.*$': step()
+    }
+  };
+}
 
-export const initialStep = {
-  title: 'Initial Exchange Step',
-  type: 'string'
-};
+export function initialStep() {
+  return {
+    title: 'Initial Exchange Step',
+    type: 'string'
+  };
+}
 
 export function useExchangeBody() {
   return {
@@ -672,83 +694,89 @@ export function useExchangeBody() {
   };
 }
 
-const openIdCredentialRequest = {
-  title: 'OpenID Credential Request',
-  type: 'object',
-  additionalProperties: false,
-  required: ['credential_definition', 'format'],
-  properties: {
-    credential_definition: credentialDefinition,
-    format: {
-      type: 'string',
-      enum: ['di_vc', 'ldp_vc', 'jwt_vc_json-ld', 'jwt_vc_json']
-    },
-    did: {
-      type: 'string'
-    },
-    proof: {
-      title: 'DID Authn Proof JWT',
-      type: 'object',
-      additionalProperties: false,
-      required: ['proof_type', 'jwt'],
-      properties: {
-        proof_type: {
-          type: 'string',
-          enum: ['jwt']
-        },
-        jwt: {
-          type: 'string'
+function openIdCredentialRequest() {
+  return {
+    title: 'OpenID Credential Request',
+    type: 'object',
+    additionalProperties: false,
+    required: ['credential_definition', 'format'],
+    properties: {
+      credential_definition: credentialDefinition,
+      format: {
+        type: 'string',
+        enum: ['di_vc', 'ldp_vc', 'jwt_vc_json-ld', 'jwt_vc_json']
+      },
+      did: {
+        type: 'string'
+      },
+      proof: {
+        title: 'DID Authn Proof JWT',
+        type: 'object',
+        additionalProperties: false,
+        required: ['proof_type', 'jwt'],
+        properties: {
+          proof_type: {
+            type: 'string',
+            enum: ['jwt']
+          },
+          jwt: {
+            type: 'string'
+          }
         }
       }
     }
-  }
-};
+  };
+}
 
 export const openIdCredentialBody = openIdCredentialRequest;
 
-export const openIdBatchCredentialBody = {
-  title: 'OpenID Batch Credential Request',
-  type: 'object',
-  additionalProperties: false,
-  required: ['credential_requests'],
-  properties: {
-    credential_requests: {
-      title: 'OpenID Credential Requests',
-      type: 'array',
-      minItems: 1,
-      items: openIdCredentialRequest
+export function openIdBatchCredentialBody() {
+  return {
+    title: 'OpenID Batch Credential Request',
+    type: 'object',
+    additionalProperties: false,
+    required: ['credential_requests'],
+    properties: {
+      credential_requests: {
+        title: 'OpenID Credential Requests',
+        type: 'array',
+        minItems: 1,
+        items: openIdCredentialRequest()
+      }
     }
-  }
-};
+  };
+}
 
-export const openIdTokenBody = {
-  title: 'OpenID Token Request',
-  type: 'object',
-  additionalProperties: false,
-  required: ['grant_type'],
-  properties: {
-    grant_type: {
-      type: 'string'
-    },
-    'pre-authorized_code': {
-      type: 'string'
-    },
-    // FIXME: there is no implementation for using these fields yet:
-    // user_pin: {
-    //   type: 'string'
-    // },
-    // // params for `authorization_code` grant type
-    // code: {
-    //   type: 'string'
-    // },
-    // verifier: {
-    //   type: 'string'
-    // },
-    // redirect_uri: {
-    //   type: 'string'
-    // }
-  }
-};
+export function openIdTokenBody() {
+  return {
+    title: 'OpenID Token Request',
+    type: 'object',
+    additionalProperties: false,
+    required: ['grant_type'],
+    properties: {
+      grant_type: {
+        type: 'string'
+      },
+      'pre-authorized_code': {
+        type: 'string'
+      },
+      // FIXME: there is no implementation for using these fields yet:
+      // user_pin: {
+      //   type: 'string'
+      // },
+      // // params for `authorization_code` grant type
+      // code: {
+      //   type: 'string'
+      // },
+      // verifier: {
+      //   type: 'string'
+      // },
+      // redirect_uri: {
+      //   type: 'string'
+      // }
+    }
+  };
+}
 
 const presentationDescriptor = {
   title: 'Presentation Submission Descriptor',
@@ -771,26 +799,28 @@ const presentationDescriptor = {
   }
 };
 
-export const presentationSubmission = {
-  title: 'Presentation Submission',
-  type: 'object',
-  additionalProperties: false,
-  required: ['id', 'definition_id', 'descriptor_map'],
-  properties: {
-    id: {
-      type: 'string'
-    },
-    definition_id: {
-      type: 'string'
-    },
-    descriptor_map: {
-      title: 'Presentation Submission Descriptor Map',
-      type: 'array',
-      minItems: 0,
-      items: presentationDescriptor
+export function presentationSubmission() {
+  return {
+    title: 'Presentation Submission',
+    type: 'object',
+    additionalProperties: false,
+    required: ['id', 'definition_id', 'descriptor_map'],
+    properties: {
+      id: {
+        type: 'string'
+      },
+      definition_id: {
+        type: 'string'
+      },
+      descriptor_map: {
+        title: 'Presentation Submission Descriptor Map',
+        type: 'array',
+        minItems: 0,
+        items: presentationDescriptor
+      }
     }
-  }
-};
+  };
+}
 
 export function openIdAuthorizationResponseBody() {
   return {

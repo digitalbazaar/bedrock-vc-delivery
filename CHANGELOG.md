@@ -1,5 +1,12 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.10.0 - 2026-mm-dd
+
+### Added
+- Add `verifiableCredentials` to workflow step for use by coordinators; this
+  property allows out-of-band issued credentials be delivered in the
+  workflow step.
+
 ## 7.9.0 - 2025-12-03
 
 ### Added
