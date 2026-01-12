@@ -3,9 +3,14 @@
 ## 7.10.0 - 2026-mm-dd
 
 ### Added
-- Add `verifiableCredentials` to workflow step for use by coordinators; this
-  property allows out-of-band issued credentials be delivered in the
-  workflow step.
+- Add `verifiablePresentation` to workflow step for use by coordinators; this
+  property allows an explicit verifiable presentation to be defined for  use
+  in a step, including the possibility of expressing credentials that were
+  previously issued out-of-band and are to be delivered along with zero to
+  more other credentials that might be issued during the workflow step. Note
+  that if an explicit verifiable presentation is defined that includes a proof,
+  this proof will likely be invalidated if there are also `issueRequests`
+  defined in the step that add newly issued credentials to the presentation.
 
 ## 7.9.0 - 2025-12-03
 

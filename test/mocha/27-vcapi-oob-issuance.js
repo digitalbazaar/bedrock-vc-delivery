@@ -115,7 +115,11 @@ describe('exchange w/ VC-API delivery of out-of-band issued VCs', () => {
           type: 'jsonata',
           template: `
           {
-            "verifiableCredentials": [issuedOutOfBand]
+            "verifiablePresentation": {
+              "@context": ["https://www.w3.org/ns/credentials/v2"],
+              "type": ["VerifiablePresentation"],
+              "verifiableCredential": [issuedOutOfBand]
+            }
           }`
         }
       }
@@ -161,11 +165,15 @@ describe('exchange w/ VC-API delivery of out-of-band issued VCs', () => {
           template: `
           {
             "createChallenge": true,
-            "verifiablePresentationRequest": verifiablePresentationRequest,
             "issueRequests": [{
               "credentialTemplateIndex": 0
             }],
-            "verifiableCredentials": [issuedOutOfBand]
+            "verifiablePresentation": {
+              "@context": ["https://www.w3.org/ns/credentials/v2"],
+              "type": ["VerifiablePresentation"],
+              "verifiableCredential": [issuedOutOfBand]
+            },
+            "verifiablePresentationRequest": verifiablePresentationRequest
           }`
         }
       }
@@ -224,7 +232,11 @@ describe('exchange w/ VC-API delivery of out-of-band issued VCs', () => {
             "issueRequests": [{
               "credentialTemplateIndex": 0
             }],
-            "verifiableCredentials": [issuedOutOfBand]
+            "verifiablePresentation": {
+              "@context": ["https://www.w3.org/ns/credentials/v2"],
+              "type": ["VerifiablePresentation"],
+              "verifiableCredential": [issuedOutOfBand]
+            }
           }`
         }
       }

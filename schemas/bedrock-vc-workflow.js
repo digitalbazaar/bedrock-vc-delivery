@@ -533,6 +533,7 @@ function step() {
           'nextStep',
           'openId',
           'presentationSchema',
+          'verifiablePresentation',
           'verifiablePresentationRequest'
         ]
       }
@@ -628,9 +629,14 @@ function step() {
         }
       },
       stepTemplate: typedTemplate,
-      // verifiable credentials that were previously issued but are to be
-      // delivered during this step
-      verifiableCredentials: verifiableOrEnvelopedCredentials(),
+      // the base verifiable presentation to use in this step; any VCs that
+      // are issued in this step (see: `issueRequests`) will be added to this
+      // VP, in which case any proofs on it will be invalidated; VCs that were
+      // previously issued but are to be delivered during this step can be
+      // present in `verifiablePresentation.verifiableCredential` and any newly
+      // issued ones will be appended to that field; if not present and any
+      // VCs are to be issued, this will be auto-generated
+      verifiablePresentation: verifiablePresentation(),
       verifiablePresentationRequest: {
         type: 'object'
       },
