@@ -367,8 +367,8 @@ describe('exchange w/ VC-API delivery of out-of-band issued VCs', () => {
       preAuthorized: true,
       userPinRequired: false,
       capabilityAgent,
-      workflowId: workflowId2,
-      workflowRootZcap: workflowRootZcap2,
+      workflowId: workflowId3,
+      workflowRootZcap: workflowRootZcap3,
       variables: {
         credentialId,
         issuedOutOfBand: verifiableCredential,
