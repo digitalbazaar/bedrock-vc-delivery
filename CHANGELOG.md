@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.10.1 - 2026-01-dd
+
+### Fixed
+- Use `@digitalbazaar/oid4-client@5.4.1` to improve `acceptedCryptosuites`
+  processing when generating authz requests for OID4VP.
+
 ## 7.10.0 - 2026-01-12
 
 ### Added

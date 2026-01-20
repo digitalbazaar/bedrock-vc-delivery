@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {
@@ -213,7 +213,11 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       query: [{
         type: 'DIDAuthentication',
         acceptedMethods: [{method: 'key'}],
-        acceptedCryptosuites: [{cryptosuite: 'Ed25519Signature2020'}]
+        acceptedCryptosuites: [
+          {cryptosuite: 'ecdsa-rdfc-2019'},
+          {cryptosuite: 'eddsa-rdfc-2022'},
+          {cryptosuite: 'Ed25519Signature2020'}
+        ]
       }, {
         type: 'QueryByExample',
         credentialQuery: [{
@@ -463,7 +467,11 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       query: [{
         type: 'DIDAuthentication',
         acceptedMethods: [{method: 'key'}],
-        acceptedCryptosuites: [{cryptosuite: 'Ed25519Signature2020'}]
+        acceptedCryptosuites: [
+          {cryptosuite: 'ecdsa-rdfc-2019'},
+          {cryptosuite: 'eddsa-rdfc-2022'},
+          {cryptosuite: 'Ed25519Signature2020'}
+        ]
       }, {
         type: 'QueryByExample',
         credentialQuery: [{
@@ -720,7 +728,11 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       query: [{
         type: 'DIDAuthentication',
         acceptedMethods: [{method: 'key'}],
-        acceptedCryptosuites: [{cryptosuite: 'Ed25519Signature2020'}]
+        acceptedCryptosuites: [
+          {cryptosuite: 'ecdsa-rdfc-2019'},
+          {cryptosuite: 'eddsa-rdfc-2022'},
+          {cryptosuite: 'Ed25519Signature2020'}
+        ]
       }, {
         type: 'QueryByExample',
         credentialQuery: [{
@@ -1044,7 +1056,11 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       query: [{
         type: 'DIDAuthentication',
         acceptedMethods: [{method: 'key'}],
-        acceptedCryptosuites: [{cryptosuite: 'Ed25519Signature2020'}]
+        acceptedCryptosuites: [
+          {cryptosuite: 'ecdsa-rdfc-2019'},
+          {cryptosuite: 'eddsa-rdfc-2022'},
+          {cryptosuite: 'Ed25519Signature2020'}
+        ]
       }, {
         type: 'QueryByExample',
         credentialQuery: [{
@@ -1297,7 +1313,11 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       query: [{
         type: 'DIDAuthentication',
         acceptedMethods: [{method: 'key'}],
-        acceptedCryptosuites: [{cryptosuite: 'Ed25519Signature2020'}]
+        acceptedCryptosuites: [
+          {cryptosuite: 'ecdsa-rdfc-2019'},
+          {cryptosuite: 'eddsa-rdfc-2022'},
+          {cryptosuite: 'Ed25519Signature2020'}
+        ]
       }, {
         type: 'QueryByExample',
         credentialQuery: [{

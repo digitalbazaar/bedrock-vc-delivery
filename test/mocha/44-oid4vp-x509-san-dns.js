@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2025-2026 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
@@ -128,7 +128,11 @@ describe('exchange w/ OID4VP "x509_san_dns"', () => {
           query: [{
             type: 'DIDAuthentication',
             acceptedMethods: [{method: 'key'}],
-            acceptedCryptosuites: [{cryptosuite: 'Ed25519Signature2020'}]
+            acceptedCryptosuites: [
+              {cryptosuite: 'ecdsa-rdfc-2019'},
+              {cryptosuite: 'eddsa-rdfc-2022'},
+              {cryptosuite: 'Ed25519Signature2020'}
+            ]
           }, {
             type: 'QueryByExample',
             credentialQuery: [{
