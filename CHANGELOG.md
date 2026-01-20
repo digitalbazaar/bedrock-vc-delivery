@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.10.1 - 2026-01-dd
+## 7.10.1 - 2026-01-20
 
 ### Fixed
 - Use `@digitalbazaar/oid4-client@5.4.1` to improve `acceptedCryptosuites`
