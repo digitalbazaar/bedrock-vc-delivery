@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.11.0 - 2026-02-dd
+
+### Added
+- Add `globals.localExchangeId` and `globals.exchangeId` to template variables.
+
 ## 7.10.1 - 2026-01-20
 
 ### Fixed
