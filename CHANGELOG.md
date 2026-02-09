@@ -4,6 +4,8 @@
 
 ### Added
 - Add `globals.localExchangeId` and `globals.exchangeId` to template variables.
+- Support using JSON pointer values for variable names, e.g., when specifying
+  the variable in which to store an auto-generated authorization request.
 
 ## 7.10.1 - 2026-01-20
 

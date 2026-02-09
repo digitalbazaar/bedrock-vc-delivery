@@ -34,12 +34,14 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
       didAuthn: {
         stepTemplate: {
           type: 'jsonata',
+          // note: use JSON pointer for authorization request variable name
+          // to ensure that feature works
           template: `
           {
             "createChallenge": true,
             "verifiablePresentationRequest": verifiablePresentationRequest,
             "openId": {
-              "createAuthorizationRequest": "authorizationRequest",
+              "createAuthorizationRequest": "/authorizationRequest",
               "client_id_scheme": "redirect_uri",
               "client_id": globals.workflow.id &
                 "/exchanges/" &
@@ -304,7 +306,9 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
           domain: baseUrl
         },
         openId: {
-          createAuthorizationRequest: 'authorizationRequest'
+          // note: use JSON pointer for authorization request variable name
+          // to ensure that feature works
+          createAuthorizationRequest: '/authorizationRequest'
         }
       }
     };
@@ -464,7 +468,9 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
           domain: baseUrl
         },
         openId: {
-          createAuthorizationRequest: 'authorizationRequest'
+          // note: use JSON pointer for authorization request variable name
+          // to ensure that feature works
+          createAuthorizationRequest: '/authorizationRequest'
         }
       }
     };
