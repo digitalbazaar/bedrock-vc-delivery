@@ -396,6 +396,11 @@ const issueRequestParameters = {
     credentialTemplateIndex: {
       type: 'number'
     },
+    // optional specify where to store the issued VCs instead of automatically
+    // including it in a VP to be returned to the client
+    result: {
+      type: 'string'
+    },
     // optionally specify different variables
     variables: {
       oneOf: [{type: 'string'}, {type: 'object'}]
@@ -533,6 +538,7 @@ function step() {
           'nextStep',
           'openId',
           'presentationSchema',
+          'redirectUrl',
           'verifiablePresentation',
           'verifiablePresentationRequest'
         ]
@@ -627,6 +633,9 @@ function step() {
             type: 'object'
           }
         }
+      },
+      redirectUrl: {
+        type: 'string'
       },
       stepTemplate: typedTemplate,
       // the base verifiable presentation to use in this step; any VCs that
