@@ -3,6 +3,16 @@
 ## 7.11.0 - 2026-02-dd
 
 ### Added
+- Add a `issueRequest.result` option for specifying an exchange variable
+  name (a top-level name or a JSON pointer into `exchange.variables`) to
+  store an issued credential instead of including it a presentation during
+  a step. This feature can be used to implement continuing interactions that
+  need to read issued VCs rather than delivering them directly. To facilitate
+  this, an exchange can return an interaction URL as a `redirectUrl` from
+  the same step or a subsequent step that stored an issued VC in an exchange
+  variable. The subsequent interaction URL can be to a coordinator that is
+  authorized to read the exchange state and generate a new exchange to continue
+  the interaction with the client as needed.
 - Add `globals.localExchangeId` and `globals.exchangeId` to template variables.
 - Support using JSON pointer values for variable names, e.g., when specifying
   the variable in which to store an auto-generated authorization request.
