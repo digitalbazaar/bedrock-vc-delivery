@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.11.1 - 2026-02-dd
+
+### Fixed
+- Use `application/oauth-authz-req+jwt` in the JWT `typ` header used with
+  an authz request in order to be compliant with OID4VP 1.0.
+
 ## 7.11.0 - 2026-02-10
 
 ### Added
