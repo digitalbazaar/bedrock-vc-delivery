@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.11.0 - 2026-02-dd
+## 7.11.0 - 2026-02-10
 
 ### Added
 - Add a `issueRequest.result` option for specifying an exchange variable
