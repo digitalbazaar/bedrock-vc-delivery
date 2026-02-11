@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.11.1 - 2026-02-dd
+## 7.11.1 - 2026-02-10
 
 ### Fixed
 - Use `application/oauth-authz-req+jwt` in the JWT `typ` header used with
