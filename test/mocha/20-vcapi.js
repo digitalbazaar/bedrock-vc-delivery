@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
@@ -207,7 +207,7 @@ describe('exchange w/ VC-API delivery', () => {
       err = error;
     }
     should.exist(err);
-    should.equal(err?.data?.name, 'DuplicateError');
+    should.equal(err?.data?.name, 'NotAllowedError');
 
     // exchange state should be complete
     {
@@ -219,11 +219,11 @@ describe('exchange w/ VC-API delivery', () => {
         exchange.state.should.equal('complete');
         // error should be set
         should.exist(exchange.lastError);
-        exchange.lastError.name.should.equal('DuplicateError');
+        exchange.lastError.name.should.equal('NotAllowedError');
       } catch(error) {
         err = error;
       }
-      should.not.exist(err);
+      assertNoError(err);
     }
 
     // getting exchange state w/o auth should fail
