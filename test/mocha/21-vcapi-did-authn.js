@@ -223,7 +223,7 @@ describe('exchange w/ VC-API delivery + DID authn', () => {
       } catch(error) {
         err = error;
       }
-      should.not.exist(err);
+      assertNoError(err);
     }
 
     // generate VP
