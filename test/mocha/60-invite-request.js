@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
@@ -110,7 +110,7 @@ describe('exchange w/ only "inviteRequest"', () => {
       } catch(error) {
         err = error;
       }
-      should.not.exist(err);
+      assertNoError(err);
     }
   });
 });
