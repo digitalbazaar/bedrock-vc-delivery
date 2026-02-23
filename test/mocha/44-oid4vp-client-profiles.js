@@ -632,7 +632,7 @@ describe('exchange w/ OID4VP multiple client profiles', () => {
         }
         should.not.exist(response);
         should.exist(err);
-        err.message.should.include('already in progress');
+        err.message.should.include('is complete');
         err.cause.response.status.should.equal(403);
         err.cause.data.error.should.equal('not_allowed_error');
       }
