@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.11.3 - 2026-02-23
+
+### Fixed
+- Internal code refactoring, no expected external changes.
+
 ## 7.11.2 - 2026-02-12
 
 ### Fixed
