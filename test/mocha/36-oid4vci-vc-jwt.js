@@ -341,6 +341,6 @@ describe('exchange w/OID4VCI delivery of VC-JWT', () => {
       err = error;
     }
     should.exist(err);
-    should.equal(err?.cause?.data?.error, 'duplicate_error');
+    should.equal(err?.cause?.data?.error, 'not_allowed_error');
   });
 });
