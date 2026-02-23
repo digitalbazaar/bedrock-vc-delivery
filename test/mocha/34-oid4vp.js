@@ -180,7 +180,7 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
       } catch(error) {
         err = error;
       }
-      should.not.exist(err);
+      assertNoError(err);
     }
   });
 });
