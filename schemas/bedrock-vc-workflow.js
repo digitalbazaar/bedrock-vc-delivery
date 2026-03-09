@@ -460,6 +460,7 @@ const oid4vpClientProfile = {
     client_id: {type: 'string'},
     client_id_scheme: {type: 'string'},
     client_metadata: {type: 'object'},
+    dcql_query: {type: 'object'},
     nonce: {type: 'string'},
     presentation_definition: {type: 'object'},
     response_mode: {type: 'string'},
