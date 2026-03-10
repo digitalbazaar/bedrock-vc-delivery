@@ -9,9 +9,6 @@ import {agent} from '@bedrock/https-agent';
 import {createPresentation} from '@digitalbazaar/vc';
 import {httpClient} from '@digitalbazaar/http-client';
 import {mockData} from './mock.data.js';
-import {
-  unenvelopeCredential
-} from '@bedrock/vc-delivery/lib/helpers.js';
 import {randomUUID as uuid} from 'node:crypto';
 
 const {
@@ -445,7 +442,7 @@ describe('exchange w/OID4VCI + "issueRequests"', () => {
     // check first VC
     {
       result.credentials[0].should.be.a('string');
-      const {credential} = await unenvelopeCredential({
+      const {credential} = await helpers.unenvelopeCredential({
         envelopedCredential: result.credentials[0],
         format: credentialFormat
       });
@@ -460,7 +457,7 @@ describe('exchange w/OID4VCI + "issueRequests"', () => {
     // check second VC
     {
       result.credentials[1].should.be.a('string');
-      const {credential} = await unenvelopeCredential({
+      const {credential} = await helpers.unenvelopeCredential({
         envelopedCredential: result.credentials[1],
         format: credentialFormat
       });
