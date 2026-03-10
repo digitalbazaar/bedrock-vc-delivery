@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.12.0 - 2026-mm-dd
+
+### Added
+- Add support for OID4VP w/DC API (ISO 18013-7 Annex C and D).
+
 ## 7.11.3 - 2026-02-23
 
 ### Fixed
