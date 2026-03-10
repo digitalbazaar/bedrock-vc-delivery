@@ -1,28 +1,30 @@
 /*
- * Copyright (c) 2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2025-2026 Digital Bazaar, Inc. All rights reserved.
  */
-import {
-  DataItem, DeviceResponse, Document, MDoc, /*parse,*/ Verifier
-} from '@auth0/mdl';
+import {DeviceResponse, Document, MDoc, /*parse,*/ Verifier} from '@auth0/mdl';
+import {oid4vp} from '@digitalbazaar/oid4-client';
 
 const VC_CONTEXT_2 = 'https://www.w3.org/ns/credentials/v2';
 
 const MDL_NAMESPACE = 'org.iso.18013.5.1';
 const MDOC_TYPE_MDL = `${MDL_NAMESPACE}.mDL`;
 
+const {encodeSessionTranscript} = oid4vp.mdl;
+
 export async function createPresentation({
   presentationDefinition,
-  mdoc, sessionTranscript, devicePrivateJwk
+  mdoc, handover, devicePrivateJwk
 } = {}) {
-  // `sessionTranscript` has:
-  // {mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce}
+  // pick input_descriptor w/ID: `MDOC_TYPE_MDL` as needed by auth0 lib
+  presentationDefinition = {
+    ...presentationDefinition,
+    input_descriptors: presentationDefinition.input_descriptors.filter(
+      e => e.id === MDOC_TYPE_MDL)
+  };
+  const encodedSessionTranscript = await encodeSessionTranscript({handover});
   const deviceResponse = await DeviceResponse.from(mdoc)
     .usingPresentationDefinition(presentationDefinition)
-    .usingSessionTranscriptForOID4VP(
-      sessionTranscript.mdocGeneratedNonce,
-      sessionTranscript.clientId,
-      sessionTranscript.responseUri,
-      sessionTranscript.verifierGeneratedNonce)
+    .usingSessionTranscriptBytes(encodedSessionTranscript)
     .authenticateWithSignature(devicePrivateJwk, 'ES256')
     .sign();
   //console.log('Device response', deviceResponse);
@@ -79,7 +81,7 @@ export async function issue({
 }
 
 export async function verifyPresentation({
-  deviceResponse, sessionTranscript, trustedCertificates
+  deviceResponse, handover, trustedCertificates
 } = {}) {
   // uncomment to debug:
   /*const parsed = parse(deviceResponse);
@@ -88,7 +90,7 @@ export async function verifyPresentation({
   console.log('issuer certificate', issuerCertificate);*/
 
   // produced on the verifier side
-  const encodedSessionTranscript = _encodeSessionTranscript(sessionTranscript);
+  const encodedSessionTranscript = await encodeSessionTranscript({handover});
 
   const verifier = new Verifier(trustedCertificates);
   // console.log('Getting diagnostic information...');
@@ -119,21 +121,4 @@ export async function verifyPresentation({
     //console.error('Verification failed:', err);
     return;
   }
-}
-
-function _encodeSessionTranscript(sessionTranscript) {
-  const {
-    mdocGeneratedNonce,
-    clientId,
-    responseUri,
-    verifierGeneratedNonce
-  } = sessionTranscript;
-  const encoded = DataItem.fromData([
-    // deviceEngagementBytes
-    null,
-    // eReaderKeyBytes
-    null,
-    [mdocGeneratedNonce, clientId, responseUri, verifierGeneratedNonce],
-  ]);
-  return DataItem.fromData(encoded).buffer;
 }
