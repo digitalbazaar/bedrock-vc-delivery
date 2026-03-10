@@ -4,6 +4,7 @@
 import * as bedrock from '@bedrock/core';
 import * as EcdsaMultikey from '@digitalbazaar/ecdsa-multikey';
 import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
+import * as vcjwt from './vcjwt.js';
 import {
   generateKeyPair as _generateKeyPair,
   exportJWK,
@@ -33,6 +34,18 @@ import {v4 as uuid} from 'uuid';
 import {ZcapClient} from '@digitalbazaar/ezcap';
 
 import {mockData} from './mock.data.js';
+
+const {util: {BedrockError}} = bedrock;
+
+const JWT_FORMAT_ALIASES = new Set([
+  'application/jwt',
+  'application/vc+jwt',
+  'application/vp+jwt',
+  'jwt_vp',
+  'jwt_vp_json',
+  'jwt_vc_json-ld',
+  'jwt_vc_json'
+]);
 
 const VC_CONTEXT_2 = 'https://www.w3.org/ns/credentials/v2';
 const TEXT_ENCODER = new TextEncoder();
@@ -1035,6 +1048,16 @@ export async function revokeDelegatedCapability({
   return zcapClient.write({url, json: capabilityToRevoke});
 }
 
+export async function unenvelopeCredential({
+  envelopedCredential, format
+} = {}) {
+  const result = _getEnvelope({envelope: envelopedCredential, format});
+
+  // only supported format is VC-JWT at this time
+  const credential = vcjwt.decodeVCJWTCredential({jwt: result.envelope});
+  return {credential, ...result};
+}
+
 async function keyResolver({id}) {
   // support DID-based keys only
   if(id.startsWith('did:')) {
@@ -1125,6 +1148,32 @@ async function _generateMultikey({
   return new AsymmetricKey({
     id, kmsId: keyId, type, invocationSigner, kmsClient, keyDescription
   });
+}
+
+function _getEnvelope({envelope, format}) {
+  const isString = typeof envelope === 'string';
+  if(isString) {
+    // supported formats
+    if(JWT_FORMAT_ALIASES.has(format)) {
+      format = 'application/jwt';
+    }
+  } else {
+    const {id} = envelope;
+    if(id?.startsWith('data:application/jwt,')) {
+      format = 'application/jwt';
+      envelope = id.slice('data:application/jwt,'.length);
+    }
+  }
+
+  if(format === 'application/jwt' && envelope !== undefined) {
+    return {envelope, format};
+  }
+
+  throw new BedrockError(
+    `Unsupported credential or presentation envelope format "${format}".`, {
+      name: 'NotSupportedError',
+      details: {httpStatusCode: 400, public: true}
+    });
 }
 
 function _removeVprGroups({vpr}) {

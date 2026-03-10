@@ -9,9 +9,6 @@ import {agent} from '@bedrock/https-agent';
 import {createPresentation} from '@digitalbazaar/vc';
 import {httpClient} from '@digitalbazaar/http-client';
 import {mockData} from './mock.data.js';
-import {
-  unenvelopeCredential
-} from '@bedrock/vc-delivery/lib/helpers.js';
 import {randomUUID as uuid} from 'node:crypto';
 
 const {
@@ -423,7 +420,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT w/did:jwk', () => {
     result.should.include.keys(['format', 'credential']);
     result.format.should.equal(credentialFormat);
     result.credential.should.be.a('string');
-    const {credential} = await unenvelopeCredential({
+    const {credential} = await helpers.unenvelopeCredential({
       envelopedCredential: result.credential,
       format: credentialFormat
     });
@@ -678,7 +675,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT w/did:jwk', () => {
     result.should.include.keys(['format', 'credential']);
     result.format.should.equal(credentialFormat);
     result.credential.should.be.a('string');
-    const {credential} = await unenvelopeCredential({
+    const {credential} = await helpers.unenvelopeCredential({
       envelopedCredential: result.credential,
       format: credentialFormat
     });
@@ -935,7 +932,7 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT w/did:jwk', () => {
     result.should.include.keys(['format', 'credential']);
     result.format.should.equal(credentialFormat);
     result.credential.should.be.a('string');
-    const {credential} = await unenvelopeCredential({
+    const {credential} = await helpers.unenvelopeCredential({
       envelopedCredential: result.credential,
       format: credentialFormat
     });
