@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import * as mdlUtils from './mdlUtils.js';
@@ -98,7 +98,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     });
   });
 
-  it('should pass w/ also VC API enabled', async () => {
+  it('should pass Annex B w/ VC API also enabled', async () => {
     // mDL presentation definition
     const presentationDefinition = {
       id: 'mdl-test-age-over-21',
@@ -133,7 +133,8 @@ describe('exchange w/ OID4VP mDL presentation', () => {
         verifiablePresentationRequest: {
           query: [{
             type: 'QueryByExample',
-            credentialQuery: [{
+            group: 'vc',
+            credentialQuery: {
               reason: 'You must be over 18 years old to use this service.',
               example: {
                 '@context': [
@@ -146,10 +147,19 @@ describe('exchange w/ OID4VP mDL presentation', () => {
                     age_over_18: true
                   }
                 }
+              }
+            }
+          }, {
+            type: 'QueryByExample',
+            group: 'mdl',
+            credentialQuery: {
+              example: {
+                'org.iso.18013.5.1': {
+                  age_over_21: ''
+                }
               },
-              // allow mDL presentation
-              acceptedEnvelopes: ['application/mdl-vp-token']
-            }]
+              acceptedEnvelopes: ['application/mdl']
+            }
           }],
           domain: baseUrl
         },
@@ -244,7 +254,8 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     /*const expectedVpr = {
       query: [{
         type: 'QueryByExample',
-        credentialQuery: [{
+        group: 'vc',
+        credentialQuery: {
           reason: 'You must be over 18 years old to use this service.',
           example: {
             '@context': [
@@ -257,9 +268,19 @@ describe('exchange w/ OID4VP mDL presentation', () => {
                 age_over_18: true
               }
             }
+          }
+        }
+      }, {
+        type: 'QueryByExample',
+        group: 'mdl',
+        credentialQuery: {
+          example: {
+            'org.iso.18013.5.1': {
+              age_over_21: ''
+            }
           },
-          acceptedEnvelopes: ['application/mdl-vp-token']
-        }]
+          acceptedEnvelopes: ['application/mdl']
+        }
       }],
       // OID4VP requires this to be the authz response URL
       domain: authorizationRequest.response_uri,
@@ -273,9 +294,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
 
     // generate mDL device response as VP...
 
-    // create an MDL session transcript
+    // create an MDL Annex B handover
     const {domain, challenge} = verifiablePresentationRequest;
-    const sessionTranscript = {
+    const handover = {
+      type: 'AnnexBHandover',
       mdocGeneratedNonce: uuid(),
       clientId: authorizationRequest.client_id,
       responseUri: domain,
@@ -286,7 +308,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     const verifiablePresentation = await mdlUtils.createPresentation({
       presentationDefinition: authorizationRequest.presentation_definition,
       mdoc,
-      sessionTranscript,
+      handover,
       devicePrivateJwk: deviceKeyPair.privateJwk
     });
 
@@ -299,9 +321,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     {
       const deviceResponse = Buffer.from(vpToken, 'base64url');
       expectedPresentation = await mdlUtils.verifyPresentation({
-        deviceResponse, sessionTranscript,
+        deviceResponse, handover,
         trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
       });
+      should.exist(expectedPresentation);
     }
 
     // send authorization response
@@ -319,9 +342,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       vpToken, verifiablePresentation, authorizationRequest, agent,
       presentationSubmission,
       encryptionOptions: {
-        mdl: {
-          sessionTranscript
-        }
+        mdl: {handover}
       }
     });
     // should be only an optional `redirect_uri` in the response
@@ -339,7 +360,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
         exchange.state.should.equal('complete');
         should.exist(exchange?.variables?.results?.myStep);
         should.exist(
-          exchange?.variables?.results?.myStep?.verifiablePresentation);
+          exchange.variables?.results?.myStep?.verifiablePresentation);
         exchange.variables.results.myStep.verifiablePresentation
           .should.deep.equal(expectedPresentation);
         should.exist(exchange.variables.results.myStep.openId);
@@ -350,11 +371,11 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       } catch(error) {
         err = error;
       }
-      should.not.exist(err);
+      assertNoError(err);
     }
   });
 
-  it('should pass w/o VC API also enabled', async () => {
+  it('should pass Annex B w/o VC API also enabled', async () => {
     // mDL presentation definition
     const presentationDefinition = {
       id: 'mdl-test-age-over-21',
@@ -473,9 +494,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
 
     // generate mDL device response as VP...
 
-    // create an MDL session transcript
+    // create an MDL Annex B handover
     const {domain, challenge} = verifiablePresentationRequest;
-    const sessionTranscript = {
+    const handover = {
+      type: 'AnnexBHandover',
       mdocGeneratedNonce: uuid(),
       clientId: authorizationRequest.client_id,
       responseUri: domain,
@@ -486,7 +508,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     const verifiablePresentation = await mdlUtils.createPresentation({
       presentationDefinition: authorizationRequest.presentation_definition,
       mdoc,
-      sessionTranscript,
+      handover,
       devicePrivateJwk: deviceKeyPair.privateJwk
     });
 
@@ -499,9 +521,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     {
       const deviceResponse = Buffer.from(vpToken, 'base64url');
       expectedPresentation = await mdlUtils.verifyPresentation({
-        deviceResponse, sessionTranscript,
+        deviceResponse, handover,
         trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
       });
+      should.exist(expectedPresentation);
     }
 
     // send authorization response
@@ -519,9 +542,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       vpToken, verifiablePresentation, authorizationRequest, agent,
       presentationSubmission,
       encryptionOptions: {
-        mdl: {
-          sessionTranscript
-        }
+        mdl: {handover}
       }
     });
     // should be only an optional `redirect_uri` in the response
@@ -539,7 +560,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
         exchange.state.should.equal('complete');
         should.exist(exchange?.variables?.results?.myStep);
         should.exist(
-          exchange?.variables?.results?.myStep?.verifiablePresentation);
+          exchange.variables?.results?.myStep?.verifiablePresentation);
         exchange.variables.results.myStep.verifiablePresentation
           .should.deep.equal(expectedPresentation);
         should.exist(exchange.variables.results.myStep.openId);
@@ -550,7 +571,270 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       } catch(error) {
         err = error;
       }
-      should.not.exist(err);
+      assertNoError(err);
+    }
+  });
+
+  it('should pass Annex D', async () => {
+    // FIXME: add `expected_origins` to authz request
+
+    // create an exchange with appropriate variables for the step template
+    const exchange = {
+      // 15 minute expiry in seconds
+      ttl: 60 * 15,
+      // template variables
+      variables: {
+        verifiablePresentationRequest: {
+          query: [{
+            type: 'QueryByExample',
+            group: 'vc',
+            credentialQuery: {
+              reason: 'You must be over 18 years old to use this service.',
+              example: {
+                '@context': [
+                  'https://www.w3.org/ns/credentials/v2',
+                  'https://w3id.org/vdl/v2'
+                ],
+                type: 'Iso18013DriversLicenseCredential',
+                credentialSubject: {
+                  driversLicense: {
+                    age_over_18: true
+                  }
+                }
+              }
+            }
+          }, {
+            type: 'QueryByExample',
+            group: 'mdl',
+            credentialQuery: {
+              example: {
+                'org.iso.18013.5.1': {
+                  age_over_21: ''
+                }
+              },
+              acceptedEnvelopes: ['application/mdl']
+            }
+          }],
+          domain: baseUrl
+        },
+        openId: {
+          clientProfiles: {
+            default: {
+              createAuthorizationRequest: 'authorizationRequest',
+              response_mode: 'dc_api.jwt',
+              client_id: leafDnsName,
+              client_id_scheme: 'x509_san_dns',
+              // enable signed authz request
+              client_metadata: {
+                require_signed_request_object: true
+              },
+              authorizationRequestSigningParameters: {
+                x5c
+              },
+              dcql_query: {
+                credentials: [{
+                  id: 'mdl-id',
+                  format: 'mso_mdoc',
+                  meta: {
+                    doctype_value: 'org.iso.18013.5.1.mDL'
+                  },
+                  claims: [{
+                    path: ['org.iso.18013.5.1', 'age_over_21'],
+                    intent_to_retain: false
+                  }]
+                }]
+              },
+              protocolUrlParameters: {
+                name: 'mdoc-openid4vp',
+                scheme: 'mdoc-openid4vp'
+              },
+              zcapReferenceIds: {
+                signAuthorizationRequest: signAuthorizationRequestRefId
+              }
+            }
+          }
+        }
+      }
+    };
+    const {id: exchangeId} = await helpers.createExchange({
+      url: `${workflowId}/exchanges`,
+      capabilityAgent, capability: workflowRootZcap, exchange
+    });
+    const authzReqUrl =
+      `${exchangeId}/openid/clients/default/authorization/request`;
+
+    const getTrustedCertificates = async () => trustedCertificates;
+
+    // confirm oid4vp URL matches the one in `protocols`
+    let authzRequestFromOid4vpUrl;
+    {
+      // `mdoc-openid4vp` URL would be:
+      const searchParams = new URLSearchParams({
+        client_id: leafDnsName,
+        request_uri: authzReqUrl
+      });
+      const mdocUrl = 'mdoc-openid4vp://?' + searchParams.toString();
+
+      const protocolsUrl = `${exchangeId}/protocols`;
+      const response = await httpClient.get(protocolsUrl, {agent});
+      should.exist(response);
+      should.exist(response.data);
+      should.exist(response.data.protocols);
+      // FIXME: enable disabling `vcapi` in protocols?
+      should.exist(response.data.protocols.vcapi);
+      response.data.protocols.vcapi.should.equal(exchangeId);
+      should.exist(response.data.protocols['mdoc-openid4vp']);
+      response.data.protocols['mdoc-openid4vp'].should.equal(mdocUrl);
+
+      ({
+        authorizationRequest: authzRequestFromOid4vpUrl
+      } = await getAuthorizationRequest({
+        url: mdocUrl, getTrustedCertificates, agent
+      }));
+    }
+
+    // get authorization request
+    const {authorizationRequest} = await getAuthorizationRequest(
+      {url: authzReqUrl, getTrustedCertificates, agent});
+
+    should.exist(authorizationRequest);
+    // PE should be auto-generated
+    should.exist(authorizationRequest.presentation_definition);
+    authorizationRequest.presentation_definition.id.should.be.a('string');
+    authorizationRequest.presentation_definition.input_descriptors.should.be
+      .an('array');
+    authorizationRequest.response_mode.should.equal('dc_api.jwt');
+    authorizationRequest.nonce.should.be.a('string');
+    authorizationRequest.client_metadata
+      .vp_formats.should.include.keys(['mso_mdoc']);
+    // ensure DCQL is set
+    should.exist(authorizationRequest.dcql_query);
+    authorizationRequest.dcql_query.should.eql(
+      exchange.variables.openId.clientProfiles.default.dcql_query);
+
+    // ensure authz request matches the one from mdoc-oid4vp URL
+    authzRequestFromOid4vpUrl.should.deep.equal(authorizationRequest);
+
+    // generate VPR from authorization request
+    /*const {verifiablePresentationRequest} = await oid4vp.toVpr(
+      {authorizationRequest});
+    // VPR should be the same as the one from the exchange, modulo changes
+    // comply with OID4VP spec
+    const expectedVpr = {
+      query: [{
+        type: 'QueryByExample',
+        group: 'vc',
+        credentialQuery: {
+          reason: 'You must be over 18 years old to use this service.',
+          example: {
+            '@context': [
+              'https://www.w3.org/ns/credentials/v2',
+              'https://w3id.org/vdl/v2'
+            ],
+            type: 'Iso18013DriversLicenseCredential',
+            credentialSubject: {
+              driversLicense: {
+                age_over_18: true
+              }
+            }
+          }
+        }
+      }, {
+        type: 'QueryByExample',
+        group: 'mdl',
+        credentialQuery: {
+          example: {
+            'org.iso.18013.5.1': {
+              age_over_21: ''
+            }
+          },
+          acceptedEnvelopes: ['application/mdl']
+        }
+      }],
+      // OID4VP requires this to be the authz response URL
+      domain: authorizationRequest.response_uri,
+      // challenge should be set to authz nonce
+      challenge: authorizationRequest.nonce
+    };*/
+    // FIXME: enable
+    // helpers.assertVpr({
+    //   actual: verifiablePresentationRequest, expected: expectedVpr
+    // });
+
+    // generate mDL device response as VP...
+
+    // select recipient public key for encryption
+    let recipientPublicJwk;
+    if(authorizationRequest.response_mode === 'dc_api.jwt') {
+      recipientPublicJwk = oid4vp.authzResponse.selectRecipientPublicJwk({
+        authorizationRequest
+      });
+    }
+
+    // create an MDL Annex D handover
+    const handover = {
+      type: 'OpenID4VPDCAPIHandover',
+      origin: new URL(authorizationRequest.response_uri).origin,
+      nonce: authorizationRequest.nonce,
+      recipientPublicJwk
+    };
+
+    // create mDL enveloped presentation
+    const verifiablePresentation = await mdlUtils.createPresentation({
+      presentationDefinition: authorizationRequest.presentation_definition,
+      mdoc,
+      handover,
+      devicePrivateJwk: deviceKeyPair.privateJwk
+    });
+
+    // vpToken is base64url-encoded mDL device response
+    const vpToken = verifiablePresentation.id.slice(
+      verifiablePresentation.id.indexOf(',') + 1);
+
+    // get expected presentation response
+    let expectedPresentation;
+    {
+      const deviceResponse = Buffer.from(vpToken, 'base64url');
+      expectedPresentation = await mdlUtils.verifyPresentation({
+        deviceResponse, handover,
+        trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
+      });
+      should.exist(expectedPresentation);
+    }
+
+    // send authorization response
+    const {result} = await oid4vp.sendAuthorizationResponse({
+      vpToken, vpTokenMediaType: 'application/mdl-vp-token',
+      verifiablePresentation, authorizationRequest, agent,
+      encryptionOptions: {
+        mdl: {handover}
+      }
+    });
+    // should be only an optional `redirect_uri` in the response
+    should.exist(result);
+    //should.exist(result.redirect_uri);
+
+    // exchange should be complete and contain the VP and open ID results
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+        should.exist(exchange.variables?.results?.myStep);
+        should.exist(
+          exchange.variables?.results?.myStep?.verifiablePresentation);
+        exchange.variables.results.myStep.verifiablePresentation
+          .should.deep.equal(expectedPresentation);
+        should.exist(exchange.variables.results.myStep.openId);
+        exchange.variables.results.myStep.openId.authorizationRequest
+          .should.deep.equal(authorizationRequest);
+      } catch(error) {
+        err = error;
+      }
+      assertNoError(err);
     }
   });
 
@@ -589,7 +873,8 @@ describe('exchange w/ OID4VP mDL presentation', () => {
         verifiablePresentationRequest: {
           query: [{
             type: 'QueryByExample',
-            credentialQuery: [{
+            group: 'vc',
+            credentialQuery: {
               reason: 'You must be over 18 years old to use this service.',
               example: {
                 '@context': [
@@ -602,10 +887,19 @@ describe('exchange w/ OID4VP mDL presentation', () => {
                     age_over_18: true
                   }
                 }
+              }
+            }
+          }, {
+            type: 'QueryByExample',
+            group: 'mdl',
+            credentialQuery: {
+              example: {
+                'org.iso.18013.5.1': {
+                  age_over_21: ''
+                }
               },
-              // allow mDL presentation
-              acceptedEnvelopes: ['application/mdl-vp-token']
-            }]
+              acceptedEnvelopes: ['application/mdl']
+            }
           }],
           domain: baseUrl
         },
@@ -700,7 +994,8 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     /*const expectedVpr = {
       query: [{
         type: 'QueryByExample',
-        credentialQuery: [{
+        group: 'vc',
+        credentialQuery: {
           reason: 'You must be over 18 years old to use this service.',
           example: {
             '@context': [
@@ -713,9 +1008,19 @@ describe('exchange w/ OID4VP mDL presentation', () => {
                 age_over_18: true
               }
             }
+          }
+        }
+      }, {
+        type: 'QueryByExample',
+        group: 'mdl',
+        credentialQuery: {
+          example: {
+            'org.iso.18013.5.1': {
+              age_over_21: ''
+            }
           },
-          acceptedEnvelopes: ['application/mdl-vp-token']
-        }]
+          acceptedEnvelopes: ['application/mdl']
+        }
       }],
       // OID4VP requires this to be the authz response URL
       domain: authorizationRequest.response_uri,
@@ -729,9 +1034,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
 
     // generate mDL device response as VP...
 
-    // create an MDL session transcript
+    // create an MDL Annex B handover
     const {domain, challenge} = verifiablePresentationRequest;
-    const sessionTranscript = {
+    const handover = {
+      type: 'AnnexBHandover',
       mdocGeneratedNonce: uuid(),
       clientId: authorizationRequest.client_id,
       responseUri: domain,
@@ -746,7 +1052,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     const verifiablePresentation = await mdlUtils.createPresentation({
       presentationDefinition: authorizationRequest.presentation_definition,
       mdoc,
-      sessionTranscript,
+      handover,
       devicePrivateJwk: otherDevicePrivateJwk
     });
 
@@ -755,12 +1061,14 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       verifiablePresentation.id.indexOf(',') + 1);
 
     // get expected presentation response
+    let expectedPresentation;
     {
       const deviceResponse = Buffer.from(vpToken, 'base64url');
       await mdlUtils.verifyPresentation({
-        deviceResponse, sessionTranscript,
+        deviceResponse, handover,
         trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
       });
+      should.not.exist(expectedPresentation);
     }
 
     // send authorization response
@@ -781,9 +1089,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
           vpToken, verifiablePresentation, authorizationRequest, agent,
           presentationSubmission,
           encryptionOptions: {
-            mdl: {
-              sessionTranscript
-            }
+            mdl: {handover}
           }
         });
       } catch(error) {
@@ -811,7 +1117,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       } catch(error) {
         err = error;
       }
-      should.not.exist(err);
+      assertNoError(err);
     }
   });
 });
