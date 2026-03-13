@@ -1,5 +1,24 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.13.0 - 2026-03-dd
+
+### Added
+- Support OID4VP 1.0+ `request_uri_method=post` metadata option and default
+  to using it (clients that understand it will use it, clients that do not
+  will use the old `GET` method).
+- Support OID4VP 1.0+ style prefixed client IDs and maintain compatibility
+  with OID4VP draft 18 by translating to non-prefixed client IDs when
+  `request_uri_method=post` is set but not honored by clients, i.e., if `GET`
+  is used, then the server will assume a draft 18 client is requesting the
+  authorization request.
+
+### Changed
+- Auto-generated `client_id` values will now include the `redirect_uri:`
+  prefix when using `client_id_scheme=redirect_uri`. This is not expected to be
+  a breaking change because the client ID should be treated as opaque by a
+  an OID4VP-Draft18-compliant client. This prefix is a requirement for
+  OID4VP 1.0+ clients.
+
 ## 7.12.0 - 2026-03-11
 
 ### Added

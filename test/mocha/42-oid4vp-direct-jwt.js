@@ -155,9 +155,10 @@ describe('exchange w/ OID4VP "direct.jwt" response mode', () => {
     {
       // `openid4vp` URL would be:
       const searchParams = new URLSearchParams({
-        client_id:
-          `${exchangeId}/openid/clients/default/authorization/response`,
-        request_uri: authzReqUrl
+        client_id: `redirect_uri:${exchangeId}/openid/clients/default` +
+          '/authorization/response',
+        request_uri: authzReqUrl,
+        request_uri_method: 'post'
       });
       const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
 

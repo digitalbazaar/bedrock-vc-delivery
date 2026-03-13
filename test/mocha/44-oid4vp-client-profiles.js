@@ -147,7 +147,11 @@ describe('exchange w/ OID4VP multiple client profiles', () => {
           // use `clientProfiles`
           clientProfiles: {
             foo: {
-              createAuthorizationRequest: 'authorizationRequestFoo'
+              createAuthorizationRequest: 'authorizationRequestFoo',
+              // test draft-18 version with other defaults
+              protocolUrlParameters: {
+                version: 'OID4VP-draft18'
+              }
             },
             bar: {
               createAuthorizationRequest: 'authorizationRequestBar',
@@ -317,7 +321,11 @@ describe('exchange w/ OID4VP multiple client profiles', () => {
           // use `clientProfiles`
           clientProfiles: {
             foo: {
-              createAuthorizationRequest: 'authorizationRequestFoo'
+              createAuthorizationRequest: 'authorizationRequestFoo',
+              // test draft-18 version with other defaults
+              protocolUrlParameters: {
+                version: 'OID4VP-draft18'
+              }
             },
             bar: {
               createAuthorizationRequest: 'authorizationRequestBar',
@@ -349,8 +357,9 @@ describe('exchange w/ OID4VP multiple client profiles', () => {
     {
       // `bar` URL would be:
       const searchParams = new URLSearchParams({
-        client_id: `${clientBaseUrl}/authorization/response`,
-        request_uri: authzReqUrl
+        client_id: `redirect_uri:${clientBaseUrl}/authorization/response`,
+        request_uri: authzReqUrl,
+        request_uri_method: 'post'
       });
       const barUrl = 'oid4vp-bar://?' + searchParams.toString();
 
@@ -531,8 +540,9 @@ describe('exchange w/ OID4VP multiple client profiles', () => {
       {
         // `bar` URL would be:
         const searchParams = new URLSearchParams({
-          client_id: `${clientBaseUrl}/authorization/response`,
-          request_uri: authzReqUrl
+          client_id: `redirect_uri:${clientBaseUrl}/authorization/response`,
+          request_uri: authzReqUrl,
+          request_uri_method: 'post'
         });
         const barUrl = 'oid4vp-bar://?' + searchParams.toString();
 

@@ -180,7 +180,9 @@ describe('exchange w/ OID4VP mDL presentation', () => {
               presentation_definition: presentationDefinition,
               protocolUrlParameters: {
                 name: 'mdoc-openid4vp',
-                scheme: 'mdoc-openid4vp'
+                scheme: 'mdoc-openid4vp',
+                // version should default to this because of scheme name
+                //version: 'OID4VP-draft18'
               },
               zcapReferenceIds: {
                 signAuthorizationRequest: signAuthorizationRequestRefId
@@ -214,7 +216,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       should.exist(response);
       should.exist(response.data);
       should.exist(response.data.protocols);
-      // FIXME: enable disabling `vcapi` in protocols?
       should.exist(response.data.protocols.vcapi);
       response.data.protocols.vcapi.should.equal(exchangeId);
       should.exist(response.data.protocols['mdoc-openid4vp']);
@@ -240,7 +241,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     authorizationRequest.nonce.should.be.a('string');
     authorizationRequest.client_metadata
       .vp_formats.should.include.keys(['mso_mdoc']);
-    // FIXME: add assertions for `authorizationRequest.presentation_definition`
 
     // ensure authz request matches the one from mdoc-oid4vp URL
     authzRequestFromOid4vpUrl.should.deep.equal(authorizationRequest);
@@ -328,7 +328,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     }
 
     // send authorization response
-    // FIXME: auto-generate proper presentation submission
     const presentationSubmission = {
       id: 'ex:example',
       definition_id: 'ex:definition',
@@ -483,7 +482,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     authorizationRequest.nonce.should.be.a('string');
     authorizationRequest.client_metadata
       .vp_formats.should.include.keys(['mso_mdoc']);
-    // FIXME: add assertions for `authorizationRequest.presentation_definition`
 
     // ensure authz request matches the one from mdoc-oid4vp URL
     authzRequestFromOid4vpUrl.should.deep.equal(authorizationRequest);
@@ -528,7 +526,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     }
 
     // send authorization response
-    // FIXME: auto-generate proper presentation submission
     const presentationSubmission = {
       id: 'ex:example',
       definition_id: 'ex:definition',
@@ -645,8 +642,8 @@ describe('exchange w/ OID4VP mDL presentation', () => {
                 }]
               },
               protocolUrlParameters: {
-                name: 'mdoc-openid4vp',
-                scheme: 'mdoc-openid4vp'
+                name: 'OID4VP',
+                scheme: 'openid4vp'
               },
               zcapReferenceIds: {
                 signAuthorizationRequest: signAuthorizationRequestRefId
@@ -665,39 +662,45 @@ describe('exchange w/ OID4VP mDL presentation', () => {
 
     const getTrustedCertificates = async () => trustedCertificates;
 
-    // confirm oid4vp URL matches the one in `protocols`
-    let authzRequestFromOid4vpUrl;
+    // confirm client ID prefix is removed for Draft 18 support when fetching
+    // via `get` instead of `post`
     {
-      // `mdoc-openid4vp` URL would be:
-      const searchParams = new URLSearchParams({
-        client_id: leafDnsName,
-        request_uri: authzReqUrl
-      });
-      const mdocUrl = 'mdoc-openid4vp://?' + searchParams.toString();
+      const {authorizationRequest} = await getAuthorizationRequest(
+        {url: authzReqUrl, getTrustedCertificates, agent});
+      should.exist(authorizationRequest);
+      should.exist(authorizationRequest.client_id.should.equal(leafDnsName));
+    }
 
+    let oid4vpUrl;
+    {
+      // `openid4vp` URL would be:
+      const searchParams = new URLSearchParams({
+        client_id: `x509_san_dns:${leafDnsName}`,
+        request_uri: authzReqUrl,
+        request_uri_method: 'post'
+      });
+      oid4vpUrl = 'openid4vp://?' + searchParams.toString();
+
+      // confirm oid4vp URL matches the one in `protocols`
       const protocolsUrl = `${exchangeId}/protocols`;
       const response = await httpClient.get(protocolsUrl, {agent});
       should.exist(response);
       should.exist(response.data);
       should.exist(response.data.protocols);
-      // FIXME: enable disabling `vcapi` in protocols?
       should.exist(response.data.protocols.vcapi);
       response.data.protocols.vcapi.should.equal(exchangeId);
-      should.exist(response.data.protocols['mdoc-openid4vp']);
-      response.data.protocols['mdoc-openid4vp'].should.equal(mdocUrl);
-
-      ({
-        authorizationRequest: authzRequestFromOid4vpUrl
-      } = await getAuthorizationRequest({
-        url: mdocUrl, getTrustedCertificates, agent
-      }));
+      should.exist(response.data.protocols.OID4VP);
+      response.data.protocols.OID4VP.should.equal(oid4vpUrl);
     }
 
     // get authorization request
     const {authorizationRequest} = await getAuthorizationRequest(
-      {url: authzReqUrl, getTrustedCertificates, agent});
-
+      {url: oid4vpUrl, getTrustedCertificates, agent});
+    // client ID should be prefixed
     should.exist(authorizationRequest);
+    should.exist(authorizationRequest.client_id.should.equal(
+      `x509_san_dns:${leafDnsName}`
+    ));
     // PE should be auto-generated
     should.exist(authorizationRequest.presentation_definition);
     authorizationRequest.presentation_definition.id.should.be.a('string');
@@ -711,9 +714,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     should.exist(authorizationRequest.dcql_query);
     authorizationRequest.dcql_query.should.eql(
       exchange.variables.openId.clientProfiles.default.dcql_query);
-
-    // ensure authz request matches the one from mdoc-oid4vp URL
-    authzRequestFromOid4vpUrl.should.deep.equal(authorizationRequest);
 
     // generate VPR from authorization request
     /*const {verifiablePresentationRequest} = await oid4vp.toVpr(
@@ -954,7 +954,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       should.exist(response);
       should.exist(response.data);
       should.exist(response.data.protocols);
-      // FIXME: enable disabling `vcapi` in protocols?
       should.exist(response.data.protocols.vcapi);
       response.data.protocols.vcapi.should.equal(exchangeId);
       should.exist(response.data.protocols['mdoc-openid4vp']);
@@ -980,7 +979,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     authorizationRequest.nonce.should.be.a('string');
     authorizationRequest.client_metadata
       .vp_formats.should.include.keys(['mso_mdoc']);
-    // FIXME: add assertions for `authorizationRequest.presentation_definition`
 
     // ensure authz request matches the one from mdoc-oid4vp URL
     authzRequestFromOid4vpUrl.should.deep.equal(authorizationRequest);
@@ -1072,7 +1070,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     }
 
     // send authorization response
-    // FIXME: auto-generate proper presentation submission
     const presentationSubmission = {
       id: 'ex:example',
       definition_id: 'ex:definition',

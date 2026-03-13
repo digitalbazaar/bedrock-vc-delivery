@@ -92,8 +92,10 @@ describe('exchanger backwards-compatibility: ' +
     // `openid4vp` URL would be:
     /*
     const searchParams = new URLSearchParams({
-      client_id: `${exchangeId}/openid/client/authorization/response`,
-      request_uri: authzReqUrl
+      client_id:
+        `redirect_uri:${exchangeId}/openid/client/authorization/response`,
+      request_uri: authzReqUrl,
+      request_uri_method: 'post'
     });
     const openid4vpUrl = 'openid4vp://?' + searchParams.toString();*/
 
@@ -165,10 +167,9 @@ describe('exchanger backwards-compatibility: ' +
           {id: exchangeId, capabilityAgent});
         should.exist(exchange?.state);
         exchange.state.should.equal('complete');
-        should.exist(exchange?.variables?.results?.didAuthn);
         should.exist(
-          exchange?.variables?.results?.didAuthn?.verifiablePresentation);
-        exchange?.variables?.results?.didAuthn.did.should.equal(did);
+          exchange.variables?.results?.didAuthn?.verifiablePresentation);
+        exchange.variables.results.didAuthn.did.should.equal(did);
         exchange.variables.results.didAuthn.verifiablePresentation
           .should.deep.equal(verifiablePresentation);
         should.exist(exchange.variables.results.didAuthn.openId);
@@ -318,7 +319,8 @@ describe('exchanger backwards-compatibility: ' +
 
     // `openid4vp` URL would be:
     /*const searchParams = new URLSearchParams({
-      client_id: `${exchangeId}/openid/client/authorization/response`,
+      client_id:
+        `redirect_uri:${exchangeId}/openid/client/authorization/response`,
       request_uri: authzReqUrl
     });
     const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
@@ -398,10 +400,9 @@ describe('exchanger backwards-compatibility: ' +
           {id: exchangeId, capabilityAgent});
         should.exist(exchange?.state);
         exchange.state.should.equal('complete');
-        should.exist(exchange?.variables?.results?.myStep);
         should.exist(
-          exchange?.variables?.results?.myStep?.verifiablePresentation);
-        exchange?.variables?.results?.myStep.did.should.equal(did);
+          exchange.variables?.results?.myStep?.verifiablePresentation);
+        exchange.variables.results.myStep.did.should.equal(did);
         exchange.variables.results.myStep.verifiablePresentation
           .should.deep.equal(verifiablePresentation);
         should.exist(exchange.variables.results.myStep.openId);
