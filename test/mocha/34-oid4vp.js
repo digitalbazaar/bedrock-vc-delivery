@@ -93,8 +93,10 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
     // `openid4vp` URL would be:
     /*
     const searchParams = new URLSearchParams({
-      client_id: `${exchangeId}/openid/client/authorization/response`,
-      request_uri: authzReqUrl
+      client_id:
+        `redirect_uri:${exchangeId}/openid/client/authorization/response`,
+      request_uri: authzReqUrl,
+      request_uri_method: 'post'
     });
     const openid4vpUrl = 'openid4vp://?' + searchParams.toString();*/
 
@@ -112,9 +114,15 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
       should.not.exist(err);
     }
 
-    // get authorization request
-    const {authorizationRequest} = await getAuthorizationRequest(
-      {url: authzReqUrl, agent});
+    // get authorization request with post method
+    const {authorizationRequest} = await getAuthorizationRequest({
+      url: authzReqUrl, agent, overrideMethod: 'post'
+    });
+
+    // ensure client ID prefix is present
+    should.exist(authorizationRequest.client_id);
+    authorizationRequest.client_id.slice(0, 19)
+      .should.eql('redirect_uri:https:');
 
     // exchange state should be active
     {
@@ -166,10 +174,142 @@ describe('exchange w/ OID4VP presentation w/DID Authn only', () => {
           {id: exchangeId, capabilityAgent});
         should.exist(exchange?.state);
         exchange.state.should.equal('complete');
-        should.exist(exchange?.variables?.results?.didAuthn);
         should.exist(
-          exchange?.variables?.results?.didAuthn?.verifiablePresentation);
-        exchange?.variables?.results?.didAuthn.did.should.equal(did);
+          exchange.variables?.results?.didAuthn?.verifiablePresentation);
+        exchange.variables.results.didAuthn.did.should.equal(did);
+        exchange.variables.results.didAuthn.verifiablePresentation
+          .should.deep.equal(verifiablePresentation);
+        should.exist(exchange.variables.results.didAuthn.openId);
+        exchange.variables.results.didAuthn.openId.authorizationRequest
+          .should.deep.equal(authorizationRequest);
+        exchange.variables.results.didAuthn.openId.presentationSubmission
+          .should.deep.equal(presentationSubmission);
+      } catch(error) {
+        err = error;
+      }
+      assertNoError(err);
+    }
+  });
+
+  it('should pass w/request_uri_method=get override', async () => {
+    // create an exchange with appropriate variables for the step template
+    const exchange = {
+      // 15 minute expiry in seconds
+      ttl: 60 * 15,
+      // template variables
+      variables: {
+        verifiablePresentationRequest: {
+          query: {
+            type: 'DIDAuthentication',
+            acceptedMethods: [{method: 'key'}],
+            acceptedCryptosuites: [
+              {cryptosuite: 'ecdsa-rdfc-2019'},
+              {cryptosuite: 'eddsa-rdfc-2022'},
+              {cryptosuite: 'Ed25519Signature2020'}
+            ]
+          },
+          domain: baseUrl
+        }
+      }
+    };
+    const {id: exchangeId} = await helpers.createExchange({
+      url: `${workflowId}/exchanges`,
+      capabilityAgent, capability: workflowRootZcap, exchange
+    });
+
+    // request URI
+    const authzReqUrl = `${exchangeId}/openid/client/authorization/request`;
+
+    // `openid4vp` URL would be:
+    /*
+    const searchParams = new URLSearchParams({
+      client_id:
+        `redirect_uri:${exchangeId}/openid/client/authorization/response`,
+      request_uri: authzReqUrl,
+      request_uri_method: 'post'
+    });
+    const openid4vpUrl = 'openid4vp://?' + searchParams.toString();*/
+
+    // exchange state should be pending
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('pending');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+
+    // get authorization request with `get` method
+    const {authorizationRequest} = await getAuthorizationRequest({
+      url: authzReqUrl, agent, overrideMethod: 'get'
+    });
+
+    // ensure client ID prefix is present
+    should.exist(authorizationRequest.client_id);
+    authorizationRequest.client_id.slice(0, 19)
+      .should.eql('redirect_uri:https:');
+    // ensure `client_id_scheme` present on `get`
+    should.exist(authorizationRequest.client_id_scheme);
+    authorizationRequest.client_id_scheme.should.eql('redirect_uri');
+
+    // exchange state should be active
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('active');
+      } catch(error) {
+        err = error;
+      }
+      should.not.exist(err);
+    }
+
+    should.exist(authorizationRequest);
+    should.exist(authorizationRequest.presentation_definition);
+    authorizationRequest.presentation_definition.id.should.be.a('string');
+    authorizationRequest.presentation_definition.input_descriptors.should.be
+      .an('array');
+    authorizationRequest.response_mode.should.equal('direct_post');
+    authorizationRequest.nonce.should.be.a('string');
+
+    // generate VPR from authorization request
+    const {verifiablePresentationRequest} = await oid4vp.toVpr(
+      {authorizationRequest});
+
+    // generate VP
+    const {domain, challenge} = verifiablePresentationRequest;
+    const {verifiablePresentation, did} = await helpers.createDidAuthnVP(
+      {domain, challenge});
+
+    // send authorization response
+    const {
+      result, presentationSubmission
+    } = await oid4vp.sendAuthorizationResponse({
+      verifiablePresentation, authorizationRequest, agent
+    });
+    // should be only an optional `redirect_uri` in the response
+    should.exist(result);
+    //should.exist(result.redirect_uri);
+
+    // exchange should be complete and contain the VP and open ID results
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+        should.exist(
+          exchange.variables?.results?.didAuthn?.verifiablePresentation);
+        exchange.variables.results.didAuthn.did.should.equal(did);
         exchange.variables.results.didAuthn.verifiablePresentation
           .should.deep.equal(verifiablePresentation);
         should.exist(exchange.variables.results.didAuthn.openId);
@@ -322,8 +462,10 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
     {
       // `openid4vp` URL would be:
       const searchParams = new URLSearchParams({
-        client_id: `${exchangeId}/openid/client/authorization/response`,
-        request_uri: authzReqUrl
+        client_id:
+          `redirect_uri:${exchangeId}/openid/client/authorization/response`,
+        request_uri: authzReqUrl,
+        request_uri_method: 'post'
       });
       const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
 
@@ -412,10 +554,9 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
           {id: exchangeId, capabilityAgent});
         should.exist(exchange?.state);
         exchange.state.should.equal('complete');
-        should.exist(exchange?.variables?.results?.myStep);
         should.exist(
-          exchange?.variables?.results?.myStep?.verifiablePresentation);
-        exchange?.variables?.results?.myStep.did.should.equal(did);
+          exchange.variables?.results?.myStep?.verifiablePresentation);
+        exchange.variables.results.myStep.did.should.equal(did);
         exchange.variables.results.myStep.verifiablePresentation
           .should.deep.equal(verifiablePresentation);
         should.exist(exchange.variables.results.myStep.openId);
@@ -484,8 +625,10 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
     {
       // `openid4vp` URL would be:
       const searchParams = new URLSearchParams({
-        client_id: `${exchangeId}/openid/client/authorization/response`,
-        request_uri: authzReqUrl
+        client_id:
+          `redirect_uri:${exchangeId}/openid/client/authorization/response`,
+        request_uri: authzReqUrl,
+        request_uri_method: 'post'
       });
       const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
 
@@ -575,10 +718,9 @@ describe('exchange w/ OID4VP presentation w/VC', () => {
           {id: exchangeId, capabilityAgent});
         should.exist(exchange?.state);
         exchange.state.should.equal('complete');
-        should.exist(exchange?.variables?.results?.myStep);
         should.exist(
-          exchange?.variables?.results?.myStep?.verifiablePresentation);
-        exchange?.variables?.results?.myStep.did.should.equal(did);
+          exchange.variables?.results?.myStep?.verifiablePresentation);
+        exchange.variables.results.myStep.did.should.equal(did);
         exchange.variables.results.myStep.verifiablePresentation
           .should.deep.equal(verifiablePresentation);
         should.exist(exchange.variables.results.myStep.openId);

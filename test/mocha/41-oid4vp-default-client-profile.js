@@ -150,14 +150,14 @@ describe('exchange w/ OID4VP "default" client profile', () => {
     const authzReqUrl = `${clientBaseUrl}/authorization/request`;
 
     // confirm oid4vp URL matches the one in `protocols`
+    const searchParams = new URLSearchParams({
+      client_id: `redirect_uri:${clientBaseUrl}/authorization/response`,
+      request_uri: authzReqUrl,
+      request_uri_method: 'post'
+    });
+    // `openid4vp` URL would be:
+    const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
     {
-      // `openid4vp` URL would be:
-      const searchParams = new URLSearchParams({
-        client_id: `${clientBaseUrl}/authorization/response`,
-        request_uri: authzReqUrl
-      });
-      const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
-
       const protocolsUrl = `${exchangeId}/protocols`;
       const response = await httpClient.get(protocolsUrl, {agent});
       should.exist(response);
@@ -180,7 +180,6 @@ describe('exchange w/ OID4VP "default" client profile', () => {
       .an('array');
     authorizationRequest.response_mode.should.equal('direct_post');
     authorizationRequest.nonce.should.be.a('string');
-    // FIXME: add assertions for `authorizationRequest.presentation_definition`
 
     // generate VPR from authorization request
     const {verifiablePresentationRequest} = await oid4vp.toVpr(

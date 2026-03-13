@@ -153,7 +153,7 @@ describe('exchange w/ OID4VP "x509_san_dns"', () => {
             default: {
               createAuthorizationRequest: 'authorizationRequest',
               response_mode: 'direct_post.jwt',
-              client_id: leafDnsName,
+              client_id: `x509_san_dns:${leafDnsName}`,
               client_id_scheme: 'x509_san_dns',
               // enable signed authz request
               client_metadata: {
@@ -179,16 +179,17 @@ describe('exchange w/ OID4VP "x509_san_dns"', () => {
 
     const getTrustedCertificates = async () => trustedCertificates;
 
-    // confirm oid4vp URL matches the one in `protocols`
-    let authzRequestFromOid4vpUrl;
+    let openid4vpUrl;
     {
       // `openid4vp` URL would be:
       const searchParams = new URLSearchParams({
-        client_id: leafDnsName,
-        request_uri: authzReqUrl
+        client_id: `x509_san_dns:${leafDnsName}`,
+        request_uri: authzReqUrl,
+        request_uri_method: 'post'
       });
-      const openid4vpUrl = 'openid4vp://?' + searchParams.toString();
+      openid4vpUrl = 'openid4vp://?' + searchParams.toString();
 
+      // confirm oid4vp URL matches the one in `protocols`
       const protocolsUrl = `${exchangeId}/protocols`;
       const response = await httpClient.get(protocolsUrl, {agent});
       should.exist(response);
@@ -199,29 +200,31 @@ describe('exchange w/ OID4VP "x509_san_dns"', () => {
       should.exist(response.data.protocols.OID4VP);
       response.data.protocols.OID4VP.should.equal(openid4vpUrl);
 
-      ({
-        authorizationRequest: authzRequestFromOid4vpUrl
-      } = await getAuthorizationRequest({
-        url: openid4vpUrl, getTrustedCertificates, agent
-      }));
+      // confirm client ID prefix is removed for Draft 18 support when fetching
+      // via `get` instead of `post`
+      {
+        const {authorizationRequest} = await getAuthorizationRequest(
+          {url: authzReqUrl, getTrustedCertificates, agent});
+        should.exist(authorizationRequest);
+        should.exist(authorizationRequest.client_id.should.equal(leafDnsName));
+      }
     }
 
     // get authorization request
     const {authorizationRequest} = await getAuthorizationRequest(
-      {url: authzReqUrl, getTrustedCertificates, agent});
-
+      {url: openid4vpUrl, getTrustedCertificates, agent});
     should.exist(authorizationRequest);
+    // client ID should be prefixed
+    should.exist(authorizationRequest);
+    should.exist(authorizationRequest.client_id.should.equal(
+      `x509_san_dns:${leafDnsName}`
+    ));
     should.exist(authorizationRequest.presentation_definition);
-    authorizationRequest.client_id.should.equal(leafDnsName);
     authorizationRequest.presentation_definition.id.should.be.a('string');
     authorizationRequest.presentation_definition.input_descriptors.should.be
       .an('array');
     authorizationRequest.response_mode.should.equal('direct_post.jwt');
     authorizationRequest.nonce.should.be.a('string');
-    // FIXME: add assertions for `authorizationRequest.presentation_definition`
-
-    // ensure authz request matches the one from OID4VP URL
-    authzRequestFromOid4vpUrl.should.deep.equal(authorizationRequest);
 
     // generate VPR from authorization request
     const {verifiablePresentationRequest} = await oid4vp.toVpr(
