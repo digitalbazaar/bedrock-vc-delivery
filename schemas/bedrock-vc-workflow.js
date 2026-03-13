@@ -472,6 +472,10 @@ const oid4vpClientProfile = {
     presentation_definition: {type: 'object'},
     response_mode: {type: 'string'},
     response_uri: {type: 'string'},
+    response_uri_method: {
+      type: 'string',
+      enum: ['get', 'post']
+    },
     // optional parameters for signing authorization requests
     authorizationRequestSigningParameters: {
       type: 'object',
@@ -498,6 +502,10 @@ const oid4vpClientProfile = {
         },
         scheme: {
           type: 'string'
+        },
+        version: {
+          type: 'string',
+          enum: ['OID4VP-draft18', 'OID4VP-1.0']
         }
       }
     },
