@@ -715,6 +715,8 @@ export function useExchangeBody() {
     type: 'object',
     additionalProperties: false,
     properties: {
+      referenceId: {type: 'string'},
+      verifiablePresentationRequest: {type: 'object'},
       verifiablePresentation: {
         anyOf: [
           envelopedVerifiablePresentation,
