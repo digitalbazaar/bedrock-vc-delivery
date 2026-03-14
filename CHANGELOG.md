@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.13.1 - 2026-03-dd
+
+### Fixed
+- Allow `verifiablePresentationRequest` and `referenceId` in exchange body.
+
 ## 7.13.0 - 2026-03-14
 
 ### Added
