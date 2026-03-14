@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.13.0 - 2026-03-dd
+## 7.13.0 - 2026-03-14
 
 ### Added
 - Support OID4VP 1.0+ `request_uri_method=post` metadata option and default
