@@ -6,11 +6,12 @@
 - Support OID4VP 1.0+ `request_uri_method=post` metadata option and default
   to using it (clients that understand it will use it, clients that do not
   will use the old `GET` method).
-- Support OID4VP 1.0+ style prefixed client IDs and maintain compatibility
-  with OID4VP draft 18 by translating to non-prefixed client IDs when
-  `request_uri_method=post` is set but not honored by clients, i.e., if `GET`
-  is used, then the server will assume a draft 18 client is requesting the
-  authorization request.
+- Support OID4VP 1.0+ style prefixed client IDs and enable `OID4VP-draft18`
+  client profiles for maximum compatibility with OID4VP draft 18. Draft 18
+  clients should also be compatible when using the `redirect_uri` client ID
+  prefix since it should be treated as opaque by existing clients -- and
+  those clients should parse any origin to present to a user or to check
+  against an allow list by using `response_uri`, which is unchanged.
 
 ### Changed
 - Auto-generated `client_id` values will now include the `redirect_uri:`
