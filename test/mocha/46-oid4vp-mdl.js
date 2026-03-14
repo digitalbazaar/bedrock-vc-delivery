@@ -573,8 +573,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
   });
 
   it('should pass Annex D', async () => {
-    // FIXME: add `expected_origins` to authz request
-
     // create an exchange with appropriate variables for the step template
     const exchange = {
       // 15 minute expiry in seconds
@@ -625,6 +623,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
               client_metadata: {
                 require_signed_request_object: true
               },
+              expected_origins: [`https://${leafDnsName}`],
               authorizationRequestSigningParameters: {
                 x5c
               },
@@ -706,8 +705,9 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     authorizationRequest.dcql_query.should.eql(
       exchange.variables.openId.clientProfiles.default.dcql_query);
 
+    /*
     // generate VPR from authorization request
-    /*const {verifiablePresentationRequest} = await oid4vp.toVpr(
+    const {verifiablePresentationRequest} = await oid4vp.toVpr(
       {authorizationRequest});
     // VPR should be the same as the one from the exchange, modulo changes
     // comply with OID4VP spec
@@ -765,7 +765,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     // create an MDL Annex D handover
     const handover = {
       type: 'OpenID4VPDCAPIHandover',
-      origin: new URL(authorizationRequest.response_uri).origin,
+      origin: `https://${leafDnsName}`,
       nonce: authorizationRequest.nonce,
       recipientPublicJwk
     };
