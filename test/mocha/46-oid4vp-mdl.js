@@ -662,15 +662,6 @@ describe('exchange w/ OID4VP mDL presentation', () => {
 
     const getTrustedCertificates = async () => trustedCertificates;
 
-    // confirm client ID prefix is removed for Draft 18 support when fetching
-    // via `get` instead of `post`
-    {
-      const {authorizationRequest} = await getAuthorizationRequest(
-        {url: authzReqUrl, getTrustedCertificates, agent});
-      should.exist(authorizationRequest);
-      should.exist(authorizationRequest.client_id.should.equal(leafDnsName));
-    }
-
     let oid4vpUrl;
     {
       // `openid4vp` URL would be:

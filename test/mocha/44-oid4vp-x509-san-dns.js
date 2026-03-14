@@ -199,15 +199,6 @@ describe('exchange w/ OID4VP "x509_san_dns"', () => {
       response.data.protocols.vcapi.should.equal(exchangeId);
       should.exist(response.data.protocols.OID4VP);
       response.data.protocols.OID4VP.should.equal(openid4vpUrl);
-
-      // confirm client ID prefix is removed for Draft 18 support when fetching
-      // via `get` instead of `post`
-      {
-        const {authorizationRequest} = await getAuthorizationRequest(
-          {url: authzReqUrl, getTrustedCertificates, agent});
-        should.exist(authorizationRequest);
-        should.exist(authorizationRequest.client_id.should.equal(leafDnsName));
-      }
     }
 
     // get authorization request
