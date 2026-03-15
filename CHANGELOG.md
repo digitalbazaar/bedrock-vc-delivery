@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.13.2 - 2026-03-dd
+## 7.13.2 - 2026-03-15
 
 ### Fixed
 - Allow OID4VP+OID4VCI-draft13 combinations w/o using presentation submission.
