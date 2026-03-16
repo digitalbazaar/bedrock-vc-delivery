@@ -12,11 +12,10 @@ const vcContext = {
   minItems: 1,
   // the first context must be the VC context
   items: [{
-    oneOf: [{
-      const: VC_CONTEXT_1
-    }, {
-      const: VC_CONTEXT_2
-    }]
+    oneOf: [
+      {const: VC_CONTEXT_1},
+      {const: VC_CONTEXT_2}
+    ]
   }],
   // additional contexts maybe strings or objects
   additionalItems: {
@@ -31,9 +30,7 @@ const vcContext2StringOrArray = {
     type: 'array',
     minItems: 1,
     // the first context must be the VC 2.0 context
-    items: [{
-      const: VC_CONTEXT_2
-    }],
+    items: [{const: VC_CONTEXT_2}],
     // additional contexts maybe strings or objects
     additionalItems: {
       anyOf: [{type: 'string'}, {type: 'object'}]
@@ -102,18 +99,10 @@ const envelopedVerifiableCredential = {
   additionalProperties: true,
   properties: {
     '@context': vcContext2StringOrArray,
-    id: {
-      type: 'string'
-    },
-    type: {
-      const: 'EnvelopedVerifiableCredential'
-    }
+    id: {type: 'string'},
+    type: {const: 'EnvelopedVerifiableCredential'}
   },
-  required: [
-    '@context',
-    'id',
-    'type'
-  ]
+  required: ['@context', 'id', 'type']
 };
 
 const envelopedVerifiablePresentation = {
@@ -122,18 +111,10 @@ const envelopedVerifiablePresentation = {
   additionalProperties: true,
   properties: {
     '@context': vcContext2StringOrArray,
-    id: {
-      type: 'string'
-    },
-    type: {
-      const: 'EnvelopedVerifiablePresentation'
-    }
+    id: {type: 'string'},
+    type: {const: 'EnvelopedVerifiablePresentation'}
   },
-  required: [
-    '@context',
-    'id',
-    'type'
-  ]
+  required: ['@context', 'id', 'type']
 };
 
 const jwkKeyPair = {
@@ -141,12 +122,8 @@ const jwkKeyPair = {
   additionalProperties: false,
   required: ['privateKeyJwk', 'publicKeyJwk'],
   properties: {
-    privateKeyJwk: {
-      type: 'object'
-    },
-    publicKeyJwk: {
-      type: 'object'
-    }
+    privateKeyJwk: {type: 'object'},
+    publicKeyJwk: {type: 'object'}
   }
 };
 
@@ -173,9 +150,7 @@ export function verifiablePresentation() {
     additionalProperties: true,
     properties: {
       '@context': vcContext,
-      id: {
-        type: 'string'
-      },
+      id: {type: 'string'},
       type: {
         type: 'array',
         minItems: 1,
@@ -204,24 +179,18 @@ const credentialDefinition = {
     '@context': {
       type: 'array',
       minItems: 1,
-      item: {
-        type: 'string'
-      }
+      item: {type: 'string'}
     },
     type: {
       type: 'array',
       minItems: 1,
-      item: {
-        type: 'string'
-      }
+      item: {type: 'string'}
     },
     // allow `types` to be flexible for OID4VCI draft 20 implementers
     types: {
       type: 'array',
       minItems: 1,
-      item: {
-        type: 'string'
-      }
+      item: {type: 'string'}
     }
   }
 };
@@ -235,6 +204,18 @@ const expectedCredentialRequest = {
     format: {
       type: 'string',
       enum: ['di_vc', 'ldp_vc', 'jwt_vc_json-ld', 'jwt_vc_json']
+    },
+    proof_types_supported: {
+      type: 'object',
+      required: ['proof_signing_al_values_supported'],
+      additionalProperties: false,
+      properties: {
+        proof_signing_alg_values_supported: {
+          type: 'array',
+          minItems: 1,
+          items: {type: 'string'}
+        }
+      }
     }
   }
 };
@@ -251,18 +232,15 @@ const openIdExchangeOptions = {
       minItems: 1,
       items: expectedCredentialRequest
     },
-    preAuthorizedCode: {
-      type: 'string'
-    },
+    preAuthorizedCode: {type: 'string'},
     oauth2: {
       title: 'OpenID Exchange OAuth2 Options',
       type: 'object',
       additionalProperties: false,
-      oneOf: [{
-        required: ['keyPair']
-      }, {
-        required: ['generateKeyPair']
-      }],
+      oneOf: [
+        {required: ['keyPair']},
+        {required: ['generateKeyPair']}
+      ],
       properties: {
         generateKeyPair: {
           type: 'object',
@@ -275,9 +253,7 @@ const openIdExchangeOptions = {
           }
         },
         keyPair: jwkKeyPair,
-        maxClockSkew: {
-          type: 'number'
-        }
+        maxClockSkew: {type: 'number'}
       }
     }
   }
@@ -291,9 +267,7 @@ export function createExchangeBody() {
     // optionally use either `expires` or `ttl`, but NOT both
     not: {required: ['ttl', 'expires']},
     properties: {
-      ttl: {
-        type: 'number'
-      },
+      ttl: {type: 'number'},
       expires: schemas.w3cDateTime(),
       variables: {
         type: 'object',
@@ -310,16 +284,12 @@ const typedTemplate = {
   required: ['type', 'template'],
   additionalProperties: false,
   properties: {
-    id: {
-      type: 'string'
-    },
+    id: {type: 'string'},
     type: {
       type: 'string',
       enum: ['jsonata']
     },
-    template: {
-      type: 'string'
-    }
+    template: {type: 'string'}
   }
 };
 
@@ -354,17 +324,13 @@ const issuerInstance = {
   required: ['supportedFormats', 'zcapReferenceIds'],
   additionalProperties: false,
   properties: {
-    id: {
-      type: 'string'
-    },
+    id: {type: 'string'},
     supportedFormats: vcFormats,
     zcapReferenceIds: {
       ...zcapReferenceIds,
       required: ['issue'],
       properties: {
-        issue: {
-          type: 'string'
-        }
+        issue: {type: 'string'}
       }
     }
   }
@@ -533,55 +499,22 @@ export function oid4vpClientProfiles() {
   };
 }
 
-function step() {
+function computedStep() {
   return {
-    title: 'Exchange Step',
+    title: 'Computed Exchange Step',
     type: 'object',
-    minProperties: 1,
     additionalProperties: false,
-    // step can either use a template so it will be generated using variables
-    // associated with the exchange, or static values can be provided
-    oneOf: [{
-      // `stepTemplate` must be present and nothing else
-      required: ['stepTemplate'],
-      not: {
-        required: [
-          'allowUnprotectedPresentation',
-          'callback',
-          'createChallenge',
-          'issueRequests',
-          'jwtDidProofRequest',
-          'nextStep',
-          'openId',
-          'presentationSchema',
-          'redirectUrl',
-          'verifiablePresentation',
-          'verifiablePresentationRequest'
-        ]
-      }
-    }, {
-      // anything except `stepTemplate` can be used
-      not: {
-        required: ['stepTemplate']
-      }
-    }],
     properties: {
-      allowUnprotectedPresentation: {
-        type: 'boolean'
-      },
+      allowUnprotectedPresentation: {type: 'boolean'},
       callback: {
         type: 'object',
         required: ['url'],
         additionalProperties: false,
         properties: {
-          url: {
-            type: 'string'
-          }
+          url: {type: 'string'}
         }
       },
-      createChallenge: {
-        type: 'boolean'
-      },
+      createChallenge: {type: 'boolean'},
       // issue request parameters for VCs that are to be issued and delivered
       // during this step
       issueRequests: {
@@ -602,9 +535,7 @@ function step() {
               type: 'object',
               additionalProperties: false,
               properties: {
-                method: {
-                  type: 'string'
-                }
+                method: {type: 'string'}
               }
             }
           },
@@ -612,17 +543,12 @@ function step() {
             title: 'Allowed JWT Algorithms',
             type: 'array',
             minItems: 1,
-            items: {
-              type: 'string'
-            }
+            items: {type: 'string'}
           }
         }
       },
-      nextStep: {
-        type: 'string'
-      },
+      nextStep: {type: 'string'},
       // required to support OID4VP
-      // (but can be provided by step template instead)
       openId: {
         // either a single top-level client profile is specified here or
         // `clientProfiles` is specified with nested client profiles
@@ -642,18 +568,11 @@ function step() {
         required: ['type', 'jsonSchema'],
         additionalProperties: false,
         properties: {
-          type: {
-            type: 'string'
-          },
-          jsonSchema: {
-            type: 'object'
-          }
+          type: {type: 'string'},
+          jsonSchema: {type: 'object'}
         }
       },
-      redirectUrl: {
-        type: 'string'
-      },
-      stepTemplate: typedTemplate,
+      redirectUrl: {type: 'string'},
       // the base verifiable presentation to use in this step; any VCs that
       // are issued in this step (see: `issueRequests`) will be added to this
       // VP, in which case any proofs on it will be invalidated; VCs that were
@@ -679,15 +598,34 @@ function step() {
         required: ['type', 'jsonSchema'],
         additionalProperties: false,
         properties: {
-          type: {
-            type: 'string'
-          },
-          jsonSchema: {
-            type: 'object'
-          }
+          type: {type: 'string'},
+          jsonSchema: {type: 'object'}
         }
       }
     }
+  };
+}
+
+function templatedStep() {
+  return {
+    title: 'Templated Exchange Step',
+    type: 'object',
+    minProperties: 1,
+    additionalProperties: false,
+    required: ['stepTemplate'],
+    properties: {
+      stepTemplate: typedTemplate,
+    }
+  };
+}
+
+function step() {
+  return {
+    title: 'Exchange Step',
+    // step can either use a template so it will be generated using variables
+    // associated with the exchange, or static values can be provided that
+    // would be the same as those computed from a template
+    oneOf: [templatedStep(), computedStep()]
   };
 }
 
@@ -696,9 +634,7 @@ export function steps() {
     title: 'Exchange Steps',
     type: 'object',
     additionalProperties: false,
-    patternProperties: {
-      '^.*$': step()
-    }
+    patternProperties: {'^.*$': step()}
   };
 }
 
@@ -727,9 +663,9 @@ export function useExchangeBody() {
   };
 }
 
-function openIdCredentialRequest() {
+function openIdCredentialRequestDraft13() {
   return {
-    title: 'OpenID Credential Request',
+    title: 'OID4VCI-draft13 Credential Request',
     type: 'object',
     additionalProperties: false,
     required: ['credential_definition', 'format'],
@@ -739,9 +675,7 @@ function openIdCredentialRequest() {
         type: 'string',
         enum: ['di_vc', 'ldp_vc', 'jwt_vc_json-ld', 'jwt_vc_json']
       },
-      did: {
-        type: 'string'
-      },
+      did: {type: 'string'},
       proof: {
         title: 'DID Authn Proof JWT',
         type: 'object',
@@ -752,8 +686,42 @@ function openIdCredentialRequest() {
             type: 'string',
             enum: ['jwt']
           },
+          jwt: {type: 'string'}
+        }
+      }
+    }
+  };
+}
+
+function openIdCredentialRequestVersion1() {
+  return {
+    title: 'OID4VCI-1.0 Credential Request',
+    type: 'object',
+    additionalProperties: false,
+    oneOf: [
+      {required: ['credential_identifier']},
+      {required: ['credential_configuration_id']}
+    ],
+    properties: {
+      credential_identifier: {type: 'string'},
+      credential_configuration_id: {type: 'string'},
+      proofs: {
+        type: 'object',
+        additionalProperties: false,
+        oneOf: [
+          {required: ['jwt']},
+          {required: ['di_vp']}
+        ],
+        properties: {
           jwt: {
-            type: 'string'
+            type: 'array',
+            minItems: 1,
+            items: {type: 'string'}
+          },
+          di_vp: {
+            type: 'array',
+            minItems: 1,
+            items: verifiablePresentation()
           }
         }
       }
@@ -761,20 +729,30 @@ function openIdCredentialRequest() {
   };
 }
 
+function openIdCredentialRequest() {
+  return {
+    title: 'OID4VCI Credential Request',
+    oneOf: [
+      openIdCredentialRequestVersion1(),
+      openIdCredentialRequestDraft13()
+    ]
+  };
+}
+
 export const openIdCredentialBody = openIdCredentialRequest;
 
 export function openIdBatchCredentialBody() {
   return {
-    title: 'OpenID Batch Credential Request',
+    title: 'OID4VCI-draft13 Batch Credential Request',
     type: 'object',
     additionalProperties: false,
     required: ['credential_requests'],
     properties: {
       credential_requests: {
-        title: 'OpenID Credential Requests',
+        title: 'OID4VCI-draft13 Credential Requests',
         type: 'array',
         minItems: 1,
-        items: openIdCredentialRequest()
+        items: openIdCredentialRequestDraft13()
       }
     }
   };
