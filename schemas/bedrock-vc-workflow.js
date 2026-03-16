@@ -195,42 +195,62 @@ const credentialDefinition = {
   }
 };
 
-const expectedCredentialRequest = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['credential_definition'],
-  properties: {
-    credential_definition: credentialDefinition,
-    format: {
-      type: 'string',
-      enum: ['di_vc', 'ldp_vc', 'jwt_vc_json-ld', 'jwt_vc_json']
-    },
-    proof_types_supported: {
-      type: 'object',
-      required: ['proof_signing_al_values_supported'],
-      additionalProperties: false,
-      properties: {
-        proof_signing_alg_values_supported: {
-          type: 'array',
-          minItems: 1,
-          items: {type: 'string'}
+function credentialConfiguration() {
+  return {
+    title: 'OID4VCI Credential Configuration',
+    type: 'object',
+    required: ['credential_definition', 'format'],
+    additionalProperties: false,
+    properties: {
+      credential_definition: credentialDefinition,
+      format: {
+        type: 'string',
+        enum: ['di_vc', 'ldp_vc', 'jwt_vc_json-ld', 'jwt_vc_json']
+      },
+      proof_types_supported: {
+        type: 'object',
+        required: ['proof_signing_al_values_supported'],
+        additionalProperties: false,
+        properties: {
+          proof_signing_alg_values_supported: {
+            type: 'array',
+            minItems: 1,
+            items: {type: 'string'}
+          }
         }
       }
     }
-  }
-};
+  };
+}
 
 const openIdExchangeOptions = {
   title: 'OpenID Exchange options',
   type: 'object',
   additionalProperties: false,
-  required: ['expectedCredentialRequests', 'preAuthorizedCode', 'oauth2'],
+  // use either `supportedCredentialConfigurations` (preferred) or
+  // `expectedCredentialRequests` (deprecated), but not both
+  oneOf: [{
+    required: [
+      'supportedCredentialConfigurations', 'preAuthorizedCode', 'oauth2'
+    ]
+  }, {
+    required: [
+      'expectedCredentialRequests', 'preAuthorizedCode', 'oauth2'
+    ]
+  }],
   properties: {
+    // deprecated; for backwards compatibility only, use
+    // `supportedCredentialConfigurations` instead
     expectedCredentialRequests: {
       title: 'OpenID Expected Credential Requests',
       type: 'array',
       minItems: 1,
-      items: expectedCredentialRequest
+      items: {
+        ...credentialConfiguration(),
+        // only `credential_definition` is required here as `format` is
+        // auto-populated in backwards compatibility mode
+        required: ['credential_definition']
+      }
     },
     preAuthorizedCode: {type: 'string'},
     oauth2: {
@@ -254,6 +274,13 @@ const openIdExchangeOptions = {
         },
         keyPair: jwkKeyPair,
         maxClockSkew: {type: 'number'}
+      }
+    },
+    supportedCredentialConfigurations: {
+      type: 'object',
+      additionalProperties: false,
+      patternProperties: {
+        '^.*$': credentialConfiguration()
       }
     }
   }
@@ -699,10 +726,11 @@ function openIdCredentialRequestVersion1() {
     type: 'object',
     additionalProperties: false,
     oneOf: [
-      {required: ['credential_identifier']},
-      {required: ['credential_configuration_id']}
+      {required: ['type', 'credential_identifier']},
+      {required: ['type', 'credential_configuration_id']}
     ],
     properties: {
+      type: {const: 'openid_credential'},
       credential_identifier: {type: 'string'},
       credential_configuration_id: {type: 'string'},
       proofs: {
