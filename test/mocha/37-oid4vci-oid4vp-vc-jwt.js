@@ -334,8 +334,9 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
             }
           }]
         }],
-        // OID4VP requires this to be the authz response URL
-        domain: authorizationRequest.response_uri,
+        // OID4VP requires this to be `client_id` or `response_uri`
+        domain: authorizationRequest.client_id ??
+          authorizationRequest.response_uri,
         // challenge should be set to authz nonce
         challenge: authorizationRequest.nonce
       };
@@ -590,8 +591,9 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
             }
           }]
         }],
-        // OID4VP requires this to be the authz response URL
-        domain: authorizationRequest.response_uri,
+        // OID4VP requires this to be `client_id` or `response_uri`
+        domain: authorizationRequest.client_id ??
+          authorizationRequest.response_uri,
         // challenge should be set to authz nonce
         challenge: authorizationRequest.nonce
       };
@@ -899,8 +901,9 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
             }
           }]
         }],
-        // OID4VP requires this to be the authz response URL
-        domain: authorizationRequest.response_uri,
+        // OID4VP requires this to be `client_id` or `response_uri`
+        domain: authorizationRequest.client_id ??
+          authorizationRequest.response_uri,
         // challenge should be set to authz nonce
         challenge: authorizationRequest.nonce
       };
@@ -1185,14 +1188,16 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
             acceptedEnvelopes: ['application/jwt']
           }]
         }],
-        // OID4VP requires this to be the authz response URL
-        domain: authorizationRequest.response_uri,
+        // OID4VP requires this to be `client_id` or `response_uri`
+        domain: authorizationRequest.client_id ??
+          authorizationRequest.response_uri,
         // challenge should be set to authz nonce
         challenge: authorizationRequest.nonce
       };
       helpers.assertVpr({
         actual: verifiablePresentationRequest, expected: expectedVpr
       });
+      console.log('GOT HERE');
 
       // generate enveloped VP
       const {domain, challenge} = verifiablePresentationRequest;
@@ -1442,8 +1447,9 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
             acceptedEnvelopes: ['application/jwt']
           }]
         }],
-        // OID4VP requires this to be the authz response URL
-        domain: authorizationRequest.response_uri,
+        // OID4VP requires this to be `client_id` or `response_uri`
+        domain: authorizationRequest.client_id ??
+          authorizationRequest.response_uri,
         // challenge should be set to authz nonce
         challenge: authorizationRequest.nonce
       };
