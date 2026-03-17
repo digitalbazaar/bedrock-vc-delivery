@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.13.3 - 2026-03-dd
+## 7.13.3 - 2026-03-17
 
 ### Fixed
 - Use `client_id` as verification `domain` when `redirect_uri` prefix is used
