@@ -245,7 +245,7 @@ describe('exchange w/ OID4VP "x509_san_dns"', () => {
           }
         }]
       }],
-      // OID4VP requires this to be the authz response URL
+      // OID4VP requires this to be `response_uri`
       domain: authorizationRequest.response_uri,
       // challenge should be set to authz nonce
       challenge: authorizationRequest.nonce

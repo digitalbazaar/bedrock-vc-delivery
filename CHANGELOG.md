@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.13.3 - 2026-03-dd
+
+### Fixed
+- Use `client_id` as verification `domain` when `redirect_uri` prefix is used
+  in the `client_id` for OID4VP.
+
 ## 7.13.2 - 2026-03-15
 
 ### Fixed

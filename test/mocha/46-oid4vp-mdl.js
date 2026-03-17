@@ -282,8 +282,9 @@ describe('exchange w/ OID4VP mDL presentation', () => {
           acceptedEnvelopes: ['application/mdl']
         }
       }],
-      // OID4VP requires this to be the authz response URL
-      domain: authorizationRequest.response_uri,
+      // OID4VP requires this to be `client_id` or `response_uri`
+      domain: authorizationRequest.client_id ??
+        authorizationRequest.response_uri,
       // challenge should be set to authz nonce
       challenge: authorizationRequest.nonce
     };*/
@@ -742,8 +743,9 @@ describe('exchange w/ OID4VP mDL presentation', () => {
           acceptedEnvelopes: ['application/mdl']
         }
       }],
-      // OID4VP requires this to be the authz response URL
-      domain: authorizationRequest.response_uri,
+      // OID4VP requires this to be `client_id` or `response_uri`
+      domain: authorizationRequest.client_id ??
+        authorizationRequest.response_uri,
       // challenge should be set to authz nonce
       challenge: authorizationRequest.nonce
     };*/
@@ -1011,8 +1013,9 @@ describe('exchange w/ OID4VP mDL presentation', () => {
           acceptedEnvelopes: ['application/mdl']
         }
       }],
-      // OID4VP requires this to be the authz response URL
-      domain: authorizationRequest.response_uri,
+      // OID4VP requires this to be `client_id` or `response_uri`
+      domain: authorizationRequest.client_id ??
+        authorizationRequest.response_uri,
       // challenge should be set to authz nonce
       challenge: authorizationRequest.nonce
     };*/
