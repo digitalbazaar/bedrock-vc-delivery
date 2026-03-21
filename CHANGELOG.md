@@ -1,5 +1,12 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.14.0 - 2026-03-dd
+
+### Added
+- Add `supportedMediaTypes` to issuer instance options in workflow config
+  `issuerInstances` set. This is the preferred mechanism for specifying the
+  VC media type and `supportedFormats` is now deprecated.
+
 ## 7.13.3 - 2026-03-17
 
 ### Fixed
