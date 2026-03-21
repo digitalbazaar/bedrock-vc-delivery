@@ -345,14 +345,29 @@ const vcFormats = {
   }
 };
 
+const vcMediaTypes = {
+  title: 'Verifiable Credential Media Types',
+  type: 'array',
+  minItems: 1,
+  items: {
+    type: 'string'
+  }
+};
+
 const issuerInstance = {
   title: 'Issuer Instance',
   type: 'object',
-  required: ['supportedFormats', 'zcapReferenceIds'],
+  // use only one of: `supportedMediaTypes` (preferred) or
+  // `supportedFormats` (deprecated)
+  oneOf: [
+    {required: ['supportedMediaTypes', 'zcapReferenceIds']},
+    {required: ['supportedFormats', 'zcapReferenceIds']}
+  ],
   additionalProperties: false,
   properties: {
     id: {type: 'string'},
     supportedFormats: vcFormats,
+    supportedMediaTypes: vcMediaTypes,
     zcapReferenceIds: {
       ...zcapReferenceIds,
       required: ['issue'],
