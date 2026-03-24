@@ -188,7 +188,7 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
       .properties.issuer = {const: verifiableCredential.issuer};
     const {
       exchangeId,
-      openIdUrl: issuanceUrl
+      offerUrl
     } = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
@@ -211,7 +211,7 @@ describe('exchange w/OID4VCI delivery + OID4VP VC requirement', () => {
         }
       }
     });
-    const chapiRequest = {OID4VCI: issuanceUrl};
+    const chapiRequest = {OID4VCI: offerUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
     // like so:
