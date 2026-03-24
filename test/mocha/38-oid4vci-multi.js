@@ -60,7 +60,7 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
     // pre-authorized flow, issuer-initiated
     const credentialId1 = `urn:uuid:${uuid()}`;
     const credentialId2 = `urn:uuid:${uuid()}`;
-    const {openIdUrl: offerUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -137,7 +137,7 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
     // pre-authorized flow, issuer-initiated
     const credentialId1 = `urn:uuid:${uuid()}`;
     const credentialId2 = `urn:uuid:${uuid()}`;
-    const {openIdUrl: offerUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -215,7 +215,7 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
     // pre-authorized flow, issuer-initiated
     const credentialId1 = `urn:uuid:${uuid()}`;
     const credentialId2 = `urn:uuid:${uuid()}`;
-    const {openIdUrl: offerUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -293,7 +293,7 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
     // pre-authorized flow, issuer-initiated
     const credentialId1 = `urn:uuid:${uuid()}`;
     const credentialId2 = `urn:uuid:${uuid()}`;
-    const {openIdUrl: offerUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -320,6 +320,7 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
     const offer = await getCredentialOffer({
       url: parsedChapiRequest.OID4VCI, agent
     });
+    console.log('offer', offer);
 
     // wallet / client gets access token
     const client = await OID4Client.fromCredentialOffer({offer, agent});

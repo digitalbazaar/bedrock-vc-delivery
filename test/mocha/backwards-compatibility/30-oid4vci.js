@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
  */
 import * as helpers from './helpers.js';
 import {OID4Client, parseCredentialOfferUrl} from '@digitalbazaar/oid4-client';
@@ -53,7 +53,7 @@ describe('exchanger backwards-compatibility: ' +
 
     // pre-authorized flow, issuer-initiated
     const credentialId = `urn:uuid:${uuid()}`;
-    const {openIdUrl: offerUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -123,7 +123,7 @@ describe('exchanger backwards-compatibility: ' +
     const credentialId = `urn:uuid:${uuid()}`;
     // generate authorization server key pair
     const openIdKeyPair = await helpers.generateKeyPair();
-    const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -136,7 +136,7 @@ describe('exchanger backwards-compatibility: ' +
       openIdKeyPair
     });
 
-    const chapiRequest = {OID4VCI: issuanceUrl};
+    const chapiRequest = {OID4VCI: offerUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
     // like so:
@@ -181,7 +181,7 @@ describe('exchanger backwards-compatibility: ' +
     const credentialId = `urn:uuid:${uuid()}`;
     // generate authorization server key pair
     const openIdKeyPair = await helpers.generateKeyPair();
-    const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -194,7 +194,7 @@ describe('exchanger backwards-compatibility: ' +
       openIdKeyPair
     });
 
-    const chapiRequest = {OID4VCI: issuanceUrl};
+    const chapiRequest = {OID4VCI: offerUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
     // like so:
@@ -244,7 +244,7 @@ describe('exchanger backwards-compatibility: ' +
 
     // pre-authorized flow, issuer-initiated
     const credentialId = `urn:uuid:${uuid()}`;
-    const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -255,7 +255,7 @@ describe('exchanger backwards-compatibility: ' +
       exchangerId,
       exchangerRootZcap
     });
-    const chapiRequest = {OID4VCI: issuanceUrl};
+    const chapiRequest = {OID4VCI: offerUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
     // like so:

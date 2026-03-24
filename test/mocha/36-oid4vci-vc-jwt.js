@@ -79,7 +79,7 @@ describe('exchange w/OID4VCI delivery of VC-JWT', () => {
 
     // pre-authorized flow, issuer-initiated
     const credentialId = `urn:uuid:${uuid()}`;
-    const {openIdUrl: offerUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -153,7 +153,7 @@ describe('exchange w/OID4VCI delivery of VC-JWT', () => {
     const credentialId = `urn:uuid:${uuid()}`;
     // generate authorization server key pair
     const openIdKeyPair = await helpers.generateKeyPair();
-    const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -167,7 +167,7 @@ describe('exchange w/OID4VCI delivery of VC-JWT', () => {
       openIdKeyPair
     });
 
-    const chapiRequest = {OID4VCI: issuanceUrl};
+    const chapiRequest = {OID4VCI: offerUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
     // like so:
@@ -216,7 +216,7 @@ describe('exchange w/OID4VCI delivery of VC-JWT', () => {
     const credentialId = `urn:uuid:${uuid()}`;
     // generate authorization server key pair
     const openIdKeyPair = await helpers.generateKeyPair();
-    const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -230,7 +230,7 @@ describe('exchange w/OID4VCI delivery of VC-JWT', () => {
       openIdKeyPair
     });
 
-    const chapiRequest = {OID4VCI: issuanceUrl};
+    const chapiRequest = {OID4VCI: offerUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
     // like so:
@@ -283,7 +283,7 @@ describe('exchange w/OID4VCI delivery of VC-JWT', () => {
 
     // pre-authorized flow, issuer-initiated
     const credentialId = `urn:uuid:${uuid()}`;
-    const {openIdUrl: issuanceUrl} = await helpers.createCredentialOffer({
+    const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       credentialDefinition: mockData.credentialDefinition,
@@ -295,7 +295,7 @@ describe('exchange w/OID4VCI delivery of VC-JWT', () => {
       workflowId,
       workflowRootZcap
     });
-    const chapiRequest = {OID4VCI: issuanceUrl};
+    const chapiRequest = {OID4VCI: offerUrl};
     // CHAPI could potentially be used to deliver the URL to a native app
     // that registered a "claimed URL" of `https://myapp.examples/ch`
     // like so:

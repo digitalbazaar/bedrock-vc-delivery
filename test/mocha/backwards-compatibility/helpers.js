@@ -24,6 +24,7 @@ import {generateId} from 'bnid';
 import {getAppIdentity} from '@bedrock/app-identity';
 import {httpClient} from '@digitalbazaar/http-client';
 import {httpsAgent} from '@bedrock/https-agent';
+import {push} from '@bedrock/notify';
 import {randomUUID as uuid} from 'node:crypto';
 import {ZcapClient} from '@digitalbazaar/ezcap';
 
@@ -98,13 +99,19 @@ export async function createCredentialOffer({
   credentialDefinition, credentialId, variables,
   preAuthorized, userPinRequired = false,
   capabilityAgent, exchangerId, exchangerRootZcap,
-  openId = true, openIdKeyPair
+  credentialFormat = 'ldp_vc',
+  openId = true, openIdKeyPair,
+  useCredentialIds,
+  useCredentialConfigurationIds,
+  useCredentialOfferUri,
+  useCallbackUrl = false,
+  // 15 minute expiry in seconds
+  ttl = 60 * 15
 } = {}) {
-  // first, create an exchange with variables based on the local user ID;
+  // create an exchange with variables based on the local user ID;
   // indicate that OID4VCI delivery is permitted
   const exchange = {
-    // 15 minute expiry in seconds
-    ttl: 60 * 15,
+    ttl,
     // template variables
     variables: variables ? {
       issuanceDate: (new Date()).toISOString(),
@@ -114,6 +121,13 @@ export async function createCredentialOffer({
       issuanceDate: (new Date()).toISOString()
     }
   };
+
+  if(useCallbackUrl) {
+    // create a push token
+    const {token} = await push.createPushToken({event: 'exchangeUpdated'});
+    exchange.variables.callbackUrl = `${mockData.baseUrl}/callbacks/${token}`;
+  }
+
   let offer;
   if(openId) {
     // build OID4VCI oauth2 config
@@ -127,17 +141,37 @@ export async function createCredentialOffer({
       credentialDefinition = [credentialDefinition];
     }
     const expectedCredentialRequests = credentialDefinition.map(
-      credential_definition => ({format: 'ldp_vc', credential_definition}));
+      credential_definition => ({
+        format: credentialFormat, credential_definition
+      }));
     exchange.openId = {expectedCredentialRequests, oauth2};
+
+    // default to using `credential_configuration_ids` if neither legacy
+    // `credentials` nor offer URI is enabled
+    if(!(useCredentialIds || useCredentialOfferUri)) {
+      useCredentialConfigurationIds = useCredentialConfigurationIds ?? true;
+    }
 
     // start building OID4VCI credential offer
     offer = {
       credential_issuer: '',
-      // FIXME: use `credentials_supported` string IDs instead
-      credentials: credentialDefinition.map(
-        credential_definition => ({format: 'ldp_vc', credential_definition})),
       grants: {}
     };
+    if(useCredentialIds) {
+      // legacy `offer.credentials`
+      offer.credentials = credentialDefinition.map(
+        credential_definition => _getCredentialConfigurationId({
+          format: credentialFormat, credential_definition
+        }));
+    }
+    if(useCredentialConfigurationIds) {
+      // modern but non-preferred `offer.credential_configuration_ids`;
+      // note: offer URI is preferred
+      offer.credential_configuration_ids = credentialDefinition.map(
+        credential_definition => _getCredentialConfigurationId({
+          format: credentialFormat, credential_definition
+        }));
+    }
 
     if(preAuthorized) {
       exchange.openId.preAuthorizedCode = await generateRandom();
@@ -163,10 +197,15 @@ export async function createCredentialOffer({
   const result = {exchangeId};
 
   if(openId) {
-    offer.credential_issuer = exchangeId;
     const searchParams = new URLSearchParams();
-    searchParams.set('credential_offer', JSON.stringify(offer));
-    result.openIdUrl = `openid-credential-offer://?${searchParams}`;
+    if(useCredentialOfferUri) {
+      const uri = exchangeId + '/openid/credential-offer';
+      searchParams.set('credential_offer_uri', uri);
+    } else {
+      offer.credential_issuer = exchangeId;
+      searchParams.set('credential_offer', JSON.stringify(offer));
+    }
+    result.offerUrl = `openid-credential-offer://?${searchParams}`;
   }
 
   return result;
@@ -761,6 +800,14 @@ async function keyResolver({id}) {
   // support HTTP-based keys; currently a requirement for WebKMS
   const {data} = await httpClient.get(id, {agent: httpsAgent});
   return data;
+}
+
+function _getCredentialConfigurationId({format, credential_definition}) {
+  let types = (credential_definition.type ?? credential_definition.types);
+  if(types.length > 1) {
+    types = types.filter(t => t !== 'VerifiableCredential');
+  }
+  return types.join('_') + '_' + format;
 }
 
 function _removeVprGroups({vpr}) {

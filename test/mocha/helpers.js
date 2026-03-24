@@ -129,9 +129,9 @@ export async function createCredentialOffer({
   capabilityAgent, workflowId, workflowRootZcap,
   credentialFormat = 'ldp_vc',
   openId = true, openIdKeyPair,
-  useCredentialIds = false,
-  useCredentialConfigurationIds = false,
-  useCredentialOfferUri = false,
+  useCredentialIds,
+  useCredentialConfigurationIds,
+  useCredentialOfferUri,
   useCallbackUrl = false,
   // 15 minute expiry in seconds
   ttl = 60 * 15
@@ -174,24 +174,29 @@ export async function createCredentialOffer({
       }));
     exchange.openId = {expectedCredentialRequests, oauth2};
 
+    // default to using `credential_configuration_ids` if neither legacy
+    // `credentials` nor offer URI is enabled
+    if(!(useCredentialIds || useCredentialOfferUri)) {
+      useCredentialConfigurationIds = useCredentialConfigurationIds ?? true;
+    }
+
     // start building OID4VCI credential offer
     offer = {
       credential_issuer: '',
       grants: {}
     };
+    if(useCredentialIds) {
+      // legacy `offer.credentials`
+      offer.credentials = credentialDefinition.map(
+        credential_definition => _getCredentialConfigurationId({
+          format: credentialFormat, credential_definition
+        }));
+    }
     if(useCredentialConfigurationIds) {
+      // modern but non-preferred `offer.credential_configuration_ids`;
+      // note: offer URI is preferred
       offer.credential_configuration_ids = credentialDefinition.map(
         credential_definition => _getCredentialConfigurationId({
-          format: credentialFormat, credential_definition
-        }));
-    } else if(useCredentialIds) {
-      offer.credentials = credentialDefinition.map(
-        credential_definition => _getCredentialConfigurationId({
-          format: credentialFormat, credential_definition
-        }));
-    } else {
-      offer.credentials = credentialDefinition.map(
-        credential_definition => ({
           format: credentialFormat, credential_definition
         }));
     }
@@ -228,7 +233,7 @@ export async function createCredentialOffer({
       offer.credential_issuer = exchangeId;
       searchParams.set('credential_offer', JSON.stringify(offer));
     }
-    result.openIdUrl = `openid-credential-offer://?${searchParams}`;
+    result.offerUrl = `openid-credential-offer://?${searchParams}`;
   }
 
   return result;

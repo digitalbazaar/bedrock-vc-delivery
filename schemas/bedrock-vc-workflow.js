@@ -741,11 +741,13 @@ function openIdCredentialRequestVersion1() {
     type: 'object',
     additionalProperties: false,
     oneOf: [
-      {required: ['type', 'credential_identifier']},
-      {required: ['type', 'credential_configuration_id']}
+      // FIXME: only support `credential_identifier`;
+      // `credential_configuration_id` is for scope-identified credentials,
+      // which is not supported
+      {required: ['credential_identifier']},
+      {required: ['credential_configuration_id']}
     ],
     properties: {
-      type: {const: 'openid_credential'},
       credential_identifier: {type: 'string'},
       credential_configuration_id: {type: 'string'},
       proofs: {
@@ -801,6 +803,23 @@ export function openIdBatchCredentialBody() {
   };
 }
 
+export function authorizationDetails() {
+  return {
+    title: 'Authorization Details Request',
+    type: 'array',
+    minItems: 1,
+    items: {
+      type: 'object',
+      required: ['type', 'credential_configuration_id'],
+      additionalProperties: false,
+      properties: {
+        type: {const: 'openid_credential'},
+        credential_configuration_id: {type: 'string'}
+      }
+    }
+  };
+}
+
 export function openIdTokenBody() {
   return {
     title: 'OpenID Token Request',
@@ -812,6 +831,10 @@ export function openIdTokenBody() {
         type: 'string'
       },
       'pre-authorized_code': {
+        type: 'string'
+      },
+      // expressed as JSON, must be parsed elsewhere
+      authorization_details: {
         type: 'string'
       },
       // FIXME: there is no implementation for using these fields yet:
