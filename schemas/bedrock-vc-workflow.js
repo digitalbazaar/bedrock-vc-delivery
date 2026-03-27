@@ -366,6 +366,11 @@ const issuerInstance = {
   additionalProperties: false,
   properties: {
     id: {type: 'string'},
+    supportedCredentialConfigurationIds: {
+      type: 'array',
+      minItems: 1,
+      items: {type: 'string'}
+    },
     supportedFormats: vcFormats,
     supportedMediaTypes: vcMediaTypes,
     zcapReferenceIds: {
@@ -398,17 +403,12 @@ const issueRequestParameters = {
   }],
   additionalProperties: false,
   properties: {
-    credentialTemplateId: {
-      type: 'string'
-    },
-    credentialTemplateIndex: {
-      type: 'number'
-    },
+    credentialConfigurationId: {type: 'string'},
+    credentialTemplateId: {type: 'string'},
+    credentialTemplateIndex: {type: 'number'},
     // optional specify where to store the issued VCs instead of automatically
     // including it in a VP to be returned to the client
-    result: {
-      type: 'string'
-    },
+    result: {type: 'string'},
     // optionally specify different variables
     variables: {
       oneOf: [{type: 'string'}, {type: 'object'}]
@@ -423,15 +423,9 @@ export function inviteResponseBody() {
     additionalProperties: false,
     required: ['url', 'purpose'],
     properties: {
-      url: {
-        type: 'string'
-      },
-      purpose: {
-        type: 'string'
-      },
-      referenceId: {
-        type: 'string'
-      }
+      url: {type: 'string'},
+      purpose: {type: 'string'},
+      referenceId: {type: 'string'}
     }
   };
 }
