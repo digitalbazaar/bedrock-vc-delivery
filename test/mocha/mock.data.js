@@ -99,6 +99,18 @@ mockData.credentialTemplate = `
   }
 `;
 
+mockData.credentialTemplateV2 = `
+  {
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2"
+    ],
+    "type": ["VerifiableCredential"],
+    "credentialSubject": {
+      "name": subjectName
+    }
+  }
+`;
+
 mockData.alumniCredentialTemplate = `
   {
     "@context": [
@@ -237,6 +249,15 @@ mockData.credentialDefinition = {
   type: [
     'VerifiableCredential',
     'UniversityDegreeCredential'
+  ]
+};
+
+mockData.credentialDefinitionV2 = {
+  '@context': [
+    'https://www.w3.org/ns/credentials/v2'
+  ],
+  type: [
+    'VerifiableCredential'
   ]
 };
 

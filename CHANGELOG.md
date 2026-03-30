@@ -3,6 +3,7 @@
 ## 7.14.0 - 2026-03-dd
 
 ### Added
+- Add support for OID4VCI 1.0+ credential requests.
 - Add `supportedMediaTypes` to issuer instance options in workflow config
   `issuerInstances` set. This is the preferred mechanism for specifying the
   VC media type and `supportedFormats` is now deprecated.
