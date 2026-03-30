@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc.
  */
 import * as helpers from './helpers.js';
 import {OID4Client, parseCredentialOfferUrl} from '@digitalbazaar/oid4-client';
@@ -76,7 +76,9 @@ describe('exchanger backwards-compatibility: ' +
     const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VCI});
 
     // wallet / client gets access token
-    const client = await OID4Client.fromCredentialOffer({offer, agent});
+    const client = await OID4Client.fromCredentialOffer({
+      offer, agent, oid4vciVersion: 'draft13'
+    });
 
     // wallet / client receives credential
     const result = await client.requestCredential({
@@ -148,7 +150,9 @@ describe('exchanger backwards-compatibility: ' +
     const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VCI});
 
     // wallet / client gets access token
-    const client = await OID4Client.fromCredentialOffer({offer, agent});
+    const client = await OID4Client.fromCredentialOffer({
+      offer, agent, oid4vciVersion: 'draft13'
+    });
 
     // wallet / client receives credential
     const result = await client.requestCredential({
@@ -206,7 +210,9 @@ describe('exchanger backwards-compatibility: ' +
     const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VCI});
 
     // wallet / client gets access token
-    const client = await OID4Client.fromCredentialOffer({offer, agent});
+    const client = await OID4Client.fromCredentialOffer({
+      offer, agent, oid4vciVersion: 'draft13'
+    });
 
     // send OID4VCI draft 20 credential definition w/"types" which should
     // work with backwards compatibility support
@@ -267,7 +273,9 @@ describe('exchanger backwards-compatibility: ' +
     const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VCI});
 
     // wallet / client gets access token
-    const client = await OID4Client.fromCredentialOffer({offer, agent});
+    const client = await OID4Client.fromCredentialOffer({
+      offer, agent, oid4vciVersion: 'draft13'
+    });
 
     // wallet / client receives credential
     const result = await client.requestCredential({

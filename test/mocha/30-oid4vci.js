@@ -87,8 +87,9 @@ describe('exchange w/OID4VCI delivery', () => {
     // wallet / client receives credential
     const result = await client.requestCredential({agent});
     should.exist(result);
-    result.should.include.keys(['format', 'credential']);
-    result.format.should.equal('ldp_vc');
+    result.should.include.keys([
+      'credential_responses', 'credentials', 'credential'
+    ]);
     // ensure credential subject ID matches static DID
     should.exist(result.credential?.credentialSubject?.id);
     result.credential.credentialSubject.id.should.equal(
@@ -137,8 +138,9 @@ describe('exchange w/OID4VCI delivery', () => {
     // wallet / client receives credential
     const result = await client.requestCredential({agent});
     should.exist(result);
-    result.should.include.keys(['format', 'credential']);
-    result.format.should.equal('ldp_vc');
+    result.should.include.keys([
+      'credential_responses', 'credentials', 'credential'
+    ]);
     // ensure credential subject ID matches static DID
     should.exist(result.credential?.credentialSubject?.id);
     result.credential.credentialSubject.id.should.equal(
@@ -187,8 +189,9 @@ describe('exchange w/OID4VCI delivery', () => {
     // wallet / client receives credential
     const result = await client.requestCredential({agent});
     should.exist(result);
-    result.should.include.keys(['format', 'credential']);
-    result.format.should.equal('ldp_vc');
+    result.should.include.keys([
+      'credential_responses', 'credentials', 'credential'
+    ]);
     // ensure credential subject ID matches static DID
     should.exist(result.credential?.credentialSubject?.id);
     result.credential.credentialSubject.id.should.equal(
@@ -273,8 +276,9 @@ describe('exchange w/OID4VCI delivery', () => {
     // wallet / client receives credential
     const result = await client.requestCredential({agent});
     should.exist(result);
-    result.should.include.keys(['format', 'credential']);
-    result.format.should.equal('ldp_vc');
+    result.should.include.keys([
+      'credential_responses', 'credentials', 'credential'
+    ]);
     // ensure credential subject ID matches static DID
     should.exist(result.credential?.credentialSubject?.id);
     result.credential.credentialSubject.id.should.equal(
@@ -328,6 +332,7 @@ describe('exchange w/OID4VCI delivery', () => {
       agent
     });
     should.exist(result);
+    // draft 13 response
     result.should.include.keys(['format', 'credential']);
     result.format.should.equal('ldp_vc');
     // ensure credential subject ID matches static DID
@@ -376,6 +381,7 @@ describe('exchange w/OID4VCI delivery', () => {
       agent
     });
     should.exist(result);
+    // draft 13 response
     result.should.include.keys(['format', 'credential']);
     result.format.should.equal('ldp_vc');
     // ensure credential subject ID matches static DID
@@ -414,6 +420,7 @@ describe('exchange w/OID4VCI delivery', () => {
       agent
     });
     should.exist(result);
+    // draft 13 response
     result.should.include.keys(['format', 'credential']);
     result.format.should.equal('ldp_vc');
     // ensure credential subject ID matches static DID

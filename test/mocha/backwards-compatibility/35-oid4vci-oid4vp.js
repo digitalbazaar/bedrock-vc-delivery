@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc.
  */
 import * as helpers from './helpers.js';
 import {
@@ -209,7 +209,9 @@ describe('exchanger backwards-compatibility: ' +
     const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VCI});
 
     // wallet / client gets access token
-    const client = await OID4Client.fromCredentialOffer({offer, agent});
+    const client = await OID4Client.fromCredentialOffer({
+      offer, agent, oid4vciVersion: 'draft13'
+    });
 
     // wallet / client attempts to receive credential, should receive a
     // `presentation_required` error with an authorization request

@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc.
  */
 import * as helpers from './helpers.js';
 import {
@@ -91,8 +91,7 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
     // wallet / client receives credential
     const result = await client.requestCredential({agent});
     should.exist(result);
-    result.should.include.keys(['format', 'credentials']);
-    result.format.should.equal('ldp_vc');
+    result.should.include.keys(['credentials']);
 
     const credentialIdsFound = new Set();
     for(const credential of result.credentials) {
@@ -153,8 +152,7 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
     // wallet / client receives credential
     const result = await client.requestCredential({agent});
     should.exist(result);
-    result.should.include.keys(['format', 'credentials']);
-    result.format.should.equal('ldp_vc');
+    result.should.include.keys(['credentials']);
 
     const credentialIdsFound = new Set();
     for(const credential of result.credentials) {
@@ -215,8 +213,7 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
     // wallet / client receives credential
     const result = await client.requestCredential({agent});
     should.exist(result);
-    result.should.include.keys(['format', 'credentials']);
-    result.format.should.equal('ldp_vc');
+    result.should.include.keys(['credentials']);
 
     const credentialIdsFound = new Set();
     for(const credential of result.credentials) {
@@ -270,7 +267,6 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
 
     // get offer from server
     const offer = await getCredentialOffer({url: offerUrl, agent});
-    console.log('offer', offer);
 
     // wallet / client gets access token
     const client = await OID4Client.fromCredentialOffer({offer, agent});
@@ -278,8 +274,7 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
     // wallet / client receives credential
     const result = await client.requestCredential({agent});
     should.exist(result);
-    result.should.include.keys(['format', 'credentials']);
-    result.format.should.equal('ldp_vc');
+    result.should.include.keys(['credentials']);
 
     const credentialIdsFound = new Set();
     for(const credential of result.credentials) {
