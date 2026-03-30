@@ -125,15 +125,6 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
   });
 
   it('should pass w/ credentials as ID strings in offer', async () => {
-    // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
-
-    /* This flow demonstrates passing an OID4VCI issuance initiation URL
-    through a CHAPI OID4VCI request. The request is passed to a "Claimed URL"
-    which was registered on a user's device by a native app. The native app's
-    domain also published a "manifest.json" file that expressed the same
-    "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
-    `credential_handler.launchType='redirect'` (TBD). */
-
     // pre-authorized flow, issuer-initiated
     const credentialId1 = `urn:uuid:${uuid()}`;
     const credentialId2 = `urn:uuid:${uuid()}`;
@@ -152,16 +143,9 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
       workflowRootZcap,
       useCredentialIds: true
     });
-    const chapiRequest = {OID4VCI: offerUrl};
-    // CHAPI could potentially be used to deliver the URL to a native app
-    // that registered a "claimed URL" of `https://myapp.examples/ch`
-    // like so:
-    const claimedUrlFromChapi = 'https://myapp.example/ch?request=' +
-      encodeURIComponent(JSON.stringify(chapiRequest));
-    const parsedClaimedUrl = new URL(claimedUrlFromChapi);
-    const parsedChapiRequest = JSON.parse(
-      parsedClaimedUrl.searchParams.get('request'));
-    const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VCI});
+
+    // parse offer directly from URL
+    const offer = parseCredentialOfferUrl({url: offerUrl});
 
     // wallet / client gets access token
     const client = await OID4Client.fromCredentialOffer({offer, agent});
@@ -203,15 +187,6 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
   });
 
   it('should pass w/ credential configuration IDs', async () => {
-    // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
-
-    /* This flow demonstrates passing an OID4VCI issuance initiation URL
-    through a CHAPI OID4VCI request. The request is passed to a "Claimed URL"
-    which was registered on a user's device by a native app. The native app's
-    domain also published a "manifest.json" file that expressed the same
-    "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
-    `credential_handler.launchType='redirect'` (TBD). */
-
     // pre-authorized flow, issuer-initiated
     const credentialId1 = `urn:uuid:${uuid()}`;
     const credentialId2 = `urn:uuid:${uuid()}`;
@@ -230,16 +205,9 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
       workflowRootZcap,
       useCredentialConfigurationIds: true
     });
-    const chapiRequest = {OID4VCI: offerUrl};
-    // CHAPI could potentially be used to deliver the URL to a native app
-    // that registered a "claimed URL" of `https://myapp.examples/ch`
-    // like so:
-    const claimedUrlFromChapi = 'https://myapp.example/ch?request=' +
-      encodeURIComponent(JSON.stringify(chapiRequest));
-    const parsedClaimedUrl = new URL(claimedUrlFromChapi);
-    const parsedChapiRequest = JSON.parse(
-      parsedClaimedUrl.searchParams.get('request'));
-    const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VCI});
+
+    // parse offer directly from URL
+    const offer = parseCredentialOfferUrl({url: offerUrl});
 
     // wallet / client gets access token
     const client = await OID4Client.fromCredentialOffer({offer, agent});
@@ -281,15 +249,6 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
   });
 
   it('should pass w/ "credential_offer_uri"', async () => {
-    // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
-
-    /* This flow demonstrates passing an OID4VCI issuance initiation URL
-    through a CHAPI OID4VCI request. The request is passed to a "Claimed URL"
-    which was registered on a user's device by a native app. The native app's
-    domain also published a "manifest.json" file that expressed the same
-    "Claimed URL" via `credential_handler.url='https://myapp.example/ch'` and
-    `credential_handler.launchType='redirect'` (TBD). */
-
     // pre-authorized flow, issuer-initiated
     const credentialId1 = `urn:uuid:${uuid()}`;
     const credentialId2 = `urn:uuid:${uuid()}`;
@@ -308,18 +267,9 @@ describe('exchange multiple VCs w/OID4VCI delivery', () => {
       workflowRootZcap,
       useCredentialOfferUri: true
     });
-    const chapiRequest = {OID4VCI: offerUrl};
-    // CHAPI could potentially be used to deliver the URL to a native app
-    // that registered a "claimed URL" of `https://myapp.examples/ch`
-    // like so:
-    const claimedUrlFromChapi = 'https://myapp.example/ch?request=' +
-      encodeURIComponent(JSON.stringify(chapiRequest));
-    const parsedClaimedUrl = new URL(claimedUrlFromChapi);
-    const parsedChapiRequest = JSON.parse(
-      parsedClaimedUrl.searchParams.get('request'));
-    const offer = await getCredentialOffer({
-      url: parsedChapiRequest.OID4VCI, agent
-    });
+
+    // get offer from server
+    const offer = await getCredentialOffer({url: offerUrl, agent});
     console.log('offer', offer);
 
     // wallet / client gets access token

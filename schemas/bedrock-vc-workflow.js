@@ -227,20 +227,10 @@ const openIdExchangeOptions = {
   title: 'OpenID Exchange options',
   type: 'object',
   additionalProperties: false,
-  // use either `supportedCredentialConfigurations` (preferred) or
-  // `expectedCredentialRequests` (deprecated), but not both
-  oneOf: [{
-    required: [
-      'supportedCredentialConfigurations', 'preAuthorizedCode', 'oauth2'
-    ]
-  }, {
-    required: [
-      'expectedCredentialRequests', 'preAuthorizedCode', 'oauth2'
-    ]
-  }],
+  required: ['preAuthorizedCode', 'oauth2'],
   properties: {
     // deprecated; for backwards compatibility only, use
-    // `supportedCredentialConfigurations` instead
+    // `supportedCredentialConfigurations` in each `issuerInstance` instead
     expectedCredentialRequests: {
       title: 'OpenID Expected Credential Requests',
       type: 'array',
@@ -274,13 +264,6 @@ const openIdExchangeOptions = {
         },
         keyPair: jwkKeyPair,
         maxClockSkew: {type: 'number'}
-      }
-    },
-    supportedCredentialConfigurations: {
-      type: 'object',
-      additionalProperties: false,
-      patternProperties: {
-        '^.*$': credentialConfiguration()
       }
     }
   }
@@ -366,10 +349,19 @@ const issuerInstance = {
   additionalProperties: false,
   properties: {
     id: {type: 'string'},
-    supportedCredentialConfigurationIds: {
-      type: 'array',
-      minItems: 1,
-      items: {type: 'string'}
+    oid4vci: {
+      type: 'object',
+      required: ['supportedCredentialConfigurations'],
+      additionalProperties: false,
+      properties: {
+        supportedCredentialConfigurations: {
+          type: 'object',
+          additionalProperties: false,
+          patternProperties: {
+            '^.*$': credentialConfiguration()
+          }
+        }
+      }
     },
     supportedFormats: vcFormats,
     supportedMediaTypes: vcMediaTypes,
@@ -403,9 +395,18 @@ const issueRequestParameters = {
   }],
   additionalProperties: false,
   properties: {
-    credentialConfigurationId: {type: 'string'},
+    // optionally explicitly reference an issuer instance to use
+    issuerInstanceId: {type: 'string'},
     credentialTemplateId: {type: 'string'},
     credentialTemplateIndex: {type: 'number'},
+    oid4vci: {
+      type: 'object',
+      required: ['credentialConfigurationId'],
+      additionalProperties: false,
+      properties: {
+        credentialConfigurationId: {type: 'string'}
+      }
+    },
     // optional specify where to store the issued VCs instead of automatically
     // including it in a VP to be returned to the client
     result: {type: 'string'},
@@ -738,12 +739,13 @@ function openIdCredentialRequestVersion1() {
       // FIXME: only support `credential_identifier`;
       // `credential_configuration_id` is for scope-identified credentials,
       // which is not supported
-      {required: ['credential_identifier']},
-      {required: ['credential_configuration_id']}
+      {required: ['credential_identifier']}//,
+      //{required: ['credential_configuration_id']}
     ],
     properties: {
       credential_identifier: {type: 'string'},
-      credential_configuration_id: {type: 'string'},
+      // FIXME: remove me
+      //credential_configuration_id: {type: 'string'},
       proofs: {
         type: 'object',
         additionalProperties: false,
