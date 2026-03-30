@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc.
  */
 import * as helpers from './helpers.js';
 import {
@@ -1197,7 +1197,6 @@ describe('exchange w/OID4VCI + OID4VP VC with VC-JWT', () => {
       helpers.assertVpr({
         actual: verifiablePresentationRequest, expected: expectedVpr
       });
-      console.log('GOT HERE');
 
       // generate enveloped VP
       const {domain, challenge} = verifiablePresentationRequest;

@@ -8,7 +8,7 @@ import {mockData} from './mock.data.js';
 
 const {credentialTemplateV2} = mockData;
 
-describe.only('exchange w/OID4VCI 1.0+', () => {
+describe('exchange w/OID4VCI 1.0+', () => {
   let capabilityAgent;
   let workflowId;
   let workflowRootZcap;

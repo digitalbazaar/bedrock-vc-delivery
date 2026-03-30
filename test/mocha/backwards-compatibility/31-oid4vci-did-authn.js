@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc.
  */
 import * as helpers from './helpers.js';
 import {OID4Client, parseCredentialOfferUrl} from '@digitalbazaar/oid4-client';
@@ -103,7 +103,9 @@ describe('exchanger backwards-compatibility: ' +
     const offer = parseCredentialOfferUrl({url: parsedChapiRequest.OID4VCI});
 
     // wallet / client gets access token
-    const client = await OID4Client.fromCredentialOffer({offer, agent});
+    const client = await OID4Client.fromCredentialOffer({
+      offer, agent, oid4vciVersion: 'draft13'
+    });
 
     const {did, signer: didProofSigner} = await helpers.createDidProofSigner();
 
