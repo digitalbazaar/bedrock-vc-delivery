@@ -1,12 +1,24 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.14.0 - 2026-03-dd
+## 7.14.0 - 2026-03-30
 
 ### Added
-- Add support for OID4VCI 1.0+ credential requests.
+- Add support for OID4VCI 1.0 credential requests.
 - Add `supportedMediaTypes` to issuer instance options in workflow config
   `issuerInstances` set. This is the preferred mechanism for specifying the
   VC media type and `supportedFormats` is now deprecated.
+- Add optional parameters to each element of `step.issueRequests` (these can
+  be used individually or together):
+  - `issuerInstanceId` to explicitly refer to the issuer instance to use.
+  - `oid4vci.credentialConfigurationId` to explicitly refer to the
+    OID4VCI credential configuration ID to use; this is to be used in
+    concern with `supportedCredentialConfigurations` as specified on an
+    associated issuer instance.
+- Add optional `oid4vci.supportedCredentialConfigurations` parameter to
+  each issuer instance configuration in a workflow's `issuerInstances`. This
+  can be used to express the explicit (instead of auto-generated) OID4VCI
+  credential configurations supported by a particular issuer instance in a
+  workflow.
 
 ## 7.13.3 - 2026-03-17
 
