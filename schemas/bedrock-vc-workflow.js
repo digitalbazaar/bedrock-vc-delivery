@@ -584,6 +584,31 @@ function computedStep() {
           }
         }
       },
+      divpDidProofRequest: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          acceptedMethods: {
+            title: 'Accepted DID Methods',
+            type: 'array',
+            minItems: 1,
+            items: {
+              title: 'Accepted DID Method',
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                method: {type: 'string'}
+              }
+            }
+          },
+          allowedCryptosuites: {
+            title: 'Allowed DI Cryptosuites',
+            type: 'array',
+            minItems: 1,
+            items: {type: 'string'}
+          }
+        }
+      },
       nextStep: {type: 'string'},
       // required to support OID4VP
       openId: {
@@ -721,9 +746,10 @@ function openIdCredentialRequestDraft13() {
         properties: {
           proof_type: {
             type: 'string',
-            enum: ['jwt']
+            enum: ['jwt', 'di_vp']
           },
-          jwt: {type: 'string'}
+          jwt: {type: 'string'},
+          di_vp: {type: 'string'}
         }
       }
     }
@@ -736,16 +762,12 @@ function openIdCredentialRequestVersion1() {
     type: 'object',
     additionalProperties: false,
     oneOf: [
-      // FIXME: only support `credential_identifier`;
       // `credential_configuration_id` is for scope-identified credentials,
       // which is not supported
-      {required: ['credential_identifier']}//,
-      //{required: ['credential_configuration_id']}
+      {required: ['credential_identifier']}
     ],
     properties: {
       credential_identifier: {type: 'string'},
-      // FIXME: remove me
-      //credential_configuration_id: {type: 'string'},
       proofs: {
         type: 'object',
         additionalProperties: false,
