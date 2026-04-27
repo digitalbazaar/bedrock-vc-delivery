@@ -902,7 +902,7 @@ export function openIdAuthorizationResponseBody() {
     additionalProperties: false,
     oneOf: [{
       // for response_mode == 'direct_post'
-      required: ['presentation_submission', 'vp_token'],
+      required: ['vp_token'],
       // cannot also use `response`
       not: {
         required: ['response']
