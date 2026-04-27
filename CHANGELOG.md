@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.14.1 - 2026-mm-dd
+## 7.14.1 - 2026-04-27
 
 ### Fixed
 - Do not require `presentation_submission` in OID4VP.
