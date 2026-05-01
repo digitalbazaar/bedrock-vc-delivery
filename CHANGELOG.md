@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.14.2 - 2026-05-dd
+## 7.14.2 - 2026-05-01
 
 ### Fixed
 - Use `@digitalbazaar/oid4-client@5.11` to support `vp_token` values that
