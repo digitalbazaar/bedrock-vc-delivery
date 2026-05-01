@@ -831,6 +831,221 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     }
   });
 
+  it('should pass Annex D w/vp_token as object', async () => {
+    // create an exchange with appropriate variables for the step template
+    const exchange = {
+      // 15 minute expiry in seconds
+      ttl: 60 * 15,
+      // template variables
+      variables: {
+        verifiablePresentationRequest: {
+          query: [{
+            type: 'QueryByExample',
+            group: 'vc',
+            credentialQuery: {
+              reason: 'You must be over 18 years old to use this service.',
+              example: {
+                '@context': [
+                  'https://www.w3.org/ns/credentials/v2',
+                  'https://w3id.org/vdl/v2'
+                ],
+                type: 'Iso18013DriversLicenseCredential',
+                credentialSubject: {
+                  driversLicense: {
+                    age_over_18: true
+                  }
+                }
+              }
+            }
+          }, {
+            type: 'QueryByExample',
+            group: 'mdl',
+            credentialQuery: {
+              example: {
+                'org.iso.18013.5.1': {
+                  age_over_21: ''
+                }
+              },
+              acceptedEnvelopes: ['application/mdl']
+            }
+          }],
+          domain: baseUrl
+        },
+        openId: {
+          clientProfiles: {
+            default: {
+              createAuthorizationRequest: 'authorizationRequest',
+              response_mode: 'dc_api.jwt',
+              client_id: leafDnsName,
+              client_id_scheme: 'x509_san_dns',
+              // enable signed authz request
+              client_metadata: {
+                require_signed_request_object: true
+              },
+              expected_origins: [`https://${leafDnsName}`],
+              authorizationRequestSigningParameters: {
+                x5c
+              },
+              dcql_query: {
+                credentials: [{
+                  id: 'mdl-id',
+                  format: 'mso_mdoc',
+                  meta: {
+                    doctype_value: 'org.iso.18013.5.1.mDL'
+                  },
+                  claims: [{
+                    path: ['org.iso.18013.5.1', 'age_over_21'],
+                    intent_to_retain: false
+                  }]
+                }]
+              },
+              protocolUrlParameters: {
+                name: 'OID4VP',
+                scheme: 'openid4vp'
+              },
+              zcapReferenceIds: {
+                signAuthorizationRequest: signAuthorizationRequestRefId
+              }
+            }
+          }
+        }
+      }
+    };
+    const {id: exchangeId} = await helpers.createExchange({
+      url: `${workflowId}/exchanges`,
+      capabilityAgent, capability: workflowRootZcap, exchange
+    });
+    const authzReqUrl =
+      `${exchangeId}/openid/clients/default/authorization/request`;
+
+    const getTrustedCertificates = async () => trustedCertificates;
+
+    let oid4vpUrl;
+    {
+      // `openid4vp` URL would be:
+      const searchParams = new URLSearchParams({
+        client_id: `x509_san_dns:${leafDnsName}`,
+        request_uri: authzReqUrl,
+        request_uri_method: 'post'
+      });
+      oid4vpUrl = 'openid4vp://?' + searchParams.toString();
+
+      // confirm oid4vp URL matches the one in `protocols`
+      const protocolsUrl = `${exchangeId}/protocols`;
+      const response = await httpClient.get(protocolsUrl, {agent});
+      should.exist(response);
+      should.exist(response.data);
+      should.exist(response.data.protocols);
+      should.exist(response.data.protocols.vcapi);
+      response.data.protocols.vcapi.should.equal(exchangeId);
+      should.exist(response.data.protocols.OID4VP);
+      response.data.protocols.OID4VP.should.equal(oid4vpUrl);
+    }
+
+    // get authorization request
+    const {authorizationRequest} = await getAuthorizationRequest(
+      {url: oid4vpUrl, getTrustedCertificates, agent});
+    // client ID should be prefixed
+    should.exist(authorizationRequest);
+    should.exist(authorizationRequest.client_id.should.equal(
+      `x509_san_dns:${leafDnsName}`
+    ));
+    // PE should be auto-generated
+    should.exist(authorizationRequest.presentation_definition);
+    authorizationRequest.presentation_definition.id.should.be.a('string');
+    authorizationRequest.presentation_definition.input_descriptors.should.be
+      .an('array');
+    authorizationRequest.response_mode.should.equal('dc_api.jwt');
+    authorizationRequest.nonce.should.be.a('string');
+    authorizationRequest.client_metadata
+      .vp_formats.should.include.keys(['mso_mdoc']);
+    // ensure DCQL is set
+    should.exist(authorizationRequest.dcql_query);
+    authorizationRequest.dcql_query.should.eql(
+      exchange.variables.openId.clientProfiles.default.dcql_query);
+
+    // generate mDL device response as VP...
+
+    // select recipient public key for encryption
+    let recipientPublicJwk;
+    if(authorizationRequest.response_mode === 'dc_api.jwt') {
+      recipientPublicJwk = oid4vp.authzResponse.selectRecipientPublicJwk({
+        authorizationRequest
+      });
+    }
+
+    // create an MDL Annex D handover
+    const handover = {
+      type: 'OpenID4VPDCAPIHandover',
+      origin: `https://${leafDnsName}`,
+      nonce: authorizationRequest.nonce,
+      recipientPublicJwk
+    };
+
+    // create mDL enveloped presentation
+    const verifiablePresentation = await mdlUtils.createPresentation({
+      presentationDefinition: authorizationRequest.presentation_definition,
+      mdoc,
+      handover,
+      devicePrivateJwk: deviceKeyPair.privateJwk
+    });
+
+    // vpToken is credential response object with a key identifying the DCQL
+    // credential query and an array with a base64url-encoded mDL device
+    // response as its single element
+    const vpToken = {
+      'mdl-id': [verifiablePresentation.id.slice(
+        verifiablePresentation.id.indexOf(',') + 1)
+      ]
+    };
+
+    // get expected presentation response
+    let expectedPresentation;
+    {
+      const deviceResponse = Buffer.from(vpToken['mdl-id'][0], 'base64url');
+      expectedPresentation = await mdlUtils.verifyPresentation({
+        deviceResponse, handover,
+        trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
+      });
+      should.exist(expectedPresentation);
+    }
+
+    // send authorization response
+    const {result} = await oid4vp.sendAuthorizationResponse({
+      vpToken, vpTokenMediaType: 'application/mdl-vp-token',
+      verifiablePresentation, authorizationRequest, agent,
+      encryptionOptions: {
+        mdl: {handover}
+      }
+    });
+    // should be only an optional `redirect_uri` in the response
+    should.exist(result);
+    //should.exist(result.redirect_uri);
+
+    // exchange should be complete and contain the VP and open ID results
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+        should.exist(exchange.variables?.results?.myStep);
+        should.exist(
+          exchange.variables?.results?.myStep?.verifiablePresentation);
+        exchange.variables.results.myStep.verifiablePresentation
+          .should.deep.equal(expectedPresentation);
+        should.exist(exchange.variables.results.myStep.openId);
+        exchange.variables.results.myStep.openId.authorizationRequest
+          .should.deep.equal(authorizationRequest);
+      } catch(error) {
+        err = error;
+      }
+      assertNoError(err);
+    }
+  });
+
   it('should fail w/invalid device signature', async () => {
     // mDL presentation definition
     const presentationDefinition = {
