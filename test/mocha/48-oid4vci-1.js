@@ -298,7 +298,7 @@ describe('exchange w/OID4VCI 1.0+', () => {
 
     // wallet / client receives credential(s)
     const result = await client.requestCredentials({
-      agent, did, didProofSigner
+      agent, getDidOptions: () => ({did, didProofSigner})
     });
     should.exist(result);
     result.should.include.keys('credential_responses');
@@ -378,7 +378,7 @@ describe('exchange w/OID4VCI 1.0+', () => {
 
     // wallet / client receives credential(s)
     const result = await client.requestCredentials({
-      agent, did, didProofSigner
+      agent, getDidOptions: () => ({did, didProofSigner})
     });
     should.exist(result);
     result.should.include.keys('credential_responses');
