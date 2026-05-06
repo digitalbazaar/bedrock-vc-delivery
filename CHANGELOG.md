@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.15.0 - 2026-mm-dd
+
+### Added
+- Support `di_vp` DID Auth proofs in OID4VCI.
+
 ## 7.14.2 - 2026-05-01
 
 ### Fixed

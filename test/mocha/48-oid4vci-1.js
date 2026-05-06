@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc.
  */
 import * as helpers from './helpers.js';
 import {getCredentialOffer, OID4Client} from '@digitalbazaar/oid4-client';
@@ -59,7 +59,9 @@ describe('exchange w/OID4VCI 1.0+', () => {
             }, {
               "credentialTemplateIndex": 1,
               "oid4vci": issueRequest2Oid4vci
-            }]
+            }],
+            "divpDidProofRequest": divpDidProofRequest,
+            "jwtDidProofRequest": jwtDidProofRequest
           }`
         }
       }
@@ -71,11 +73,37 @@ describe('exchange w/OID4VCI 1.0+', () => {
       issuerInstances: [{
         oid4vci: {
           supportedCredentialConfigurations: {
-            myCredentialConfigId_1: {
+            myCredentialConfigId_no_did_auth: {
               format: 'ldp_vc',
               credential_definition: {
                 '@context': ['https://www.w3.org/ns/credentials/v2'],
                 type: ['VerifiableCredential']
+              }
+            },
+            myCredentialConfigId_di_vp_did_auth: {
+              format: 'ldp_vc',
+              credential_definition: {
+                '@context': ['https://www.w3.org/ns/credentials/v2'],
+                type: ['VerifiableCredential']
+              },
+              proof_types_supported: {
+                di_vp: {
+                  proof_signing_alg_values_supported: [
+                    'ecdsa-rdfc-2019', 'eddsa-rdfc-2022'
+                  ]
+                }
+              }
+            },
+            myCredentialConfigId_jwt_did_auth: {
+              format: 'ldp_vc',
+              credential_definition: {
+                '@context': ['https://www.w3.org/ns/credentials/v2'],
+                type: ['VerifiableCredential']
+              },
+              proof_types_supported: {
+                jwt: {
+                  proof_signing_alg_values_supported: ['ES256']
+                }
               }
             }
           }
@@ -168,10 +196,10 @@ describe('exchange w/OID4VCI 1.0+', () => {
         subjectName1: 'Name One',
         subjectName2: 'Name Two',
         issueRequest1Oid4vci: {
-          credentialConfigurationId: 'myCredentialConfigId_1'
+          credentialConfigurationId: 'myCredentialConfigId_no_did_auth'
         },
         issueRequest2Oid4vci: {
-          credentialConfigurationId: 'myCredentialConfigId_1'
+          credentialConfigurationId: 'myCredentialConfigId_no_did_auth'
         }
       },
       preAuthorized: true,
@@ -185,13 +213,173 @@ describe('exchange w/OID4VCI 1.0+', () => {
     // get offer from server
     const offer = await getCredentialOffer({url: offerUrl, agent});
     offer.credential_configuration_ids.should.deep.equal(
-      ['myCredentialConfigId_1']);
+      ['myCredentialConfigId_no_did_auth']);
 
     // wallet / client gets access token
     const client = await OID4Client.fromCredentialOffer({offer, agent});
 
     // wallet / client receives credential(s)
     const result = await client.requestCredentials({agent});
+    should.exist(result);
+    result.should.include.keys('credential_responses');
+    const allCredentials = [];
+    for(const r of result.credential_responses) {
+      r.should.include.keys(['credentials']);
+      for(const element of r.credentials) {
+        element.should.include.keys(['credential']);
+        allCredentials.push(element.credential);
+      }
+    }
+
+    const namesFound = new Set();
+    for(const credential of allCredentials) {
+      // gather names to check below
+      should.exist(credential.credentialSubject.name);
+      namesFound.add(credential.credentialSubject.name);
+    }
+    // ensure each name matches
+    namesFound.size.should.equal(2);
+    namesFound.has('Name One').should.equal(true);
+    namesFound.has('Name Two').should.equal(true);
+
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: offer.credential_issuer, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+      } catch(error) {
+        err = error;
+      }
+      assertNoError(err);
+    }
+  });
+
+  it('should pass w/ di_vp DID Auth', async () => {
+    // pre-authorized flow, issuer-initiated
+    const {offerUrl} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinitionV2,
+      variables: {
+        subjectName1: 'Name One',
+        subjectName2: 'Name Two',
+        issueRequest1Oid4vci: {
+          credentialConfigurationId: 'myCredentialConfigId_di_vp_did_auth'
+        },
+        issueRequest2Oid4vci: {
+          credentialConfigurationId: 'myCredentialConfigId_di_vp_did_auth'
+        },
+        divpDidProofRequest: {
+          acceptedMethods: [{method: 'key'}]
+        }
+      },
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap,
+      useCredentialOfferUri: true
+    });
+
+    // get offer from server
+    const offer = await getCredentialOffer({url: offerUrl, agent});
+    offer.credential_configuration_ids.should.deep.equal(
+      ['myCredentialConfigId_di_vp_did_auth']);
+
+    // wallet / client gets access token
+    const client = await OID4Client.fromCredentialOffer({offer, agent});
+
+    const {
+      did, signer: didProofSigner
+    } = await helpers.createDidProofSigner();
+
+    // wallet / client receives credential(s)
+    const result = await client.requestCredentials({
+      agent, did, didProofSigner
+    });
+    should.exist(result);
+    result.should.include.keys('credential_responses');
+    const allCredentials = [];
+    for(const r of result.credential_responses) {
+      r.should.include.keys(['credentials']);
+      for(const element of r.credentials) {
+        element.should.include.keys(['credential']);
+        allCredentials.push(element.credential);
+      }
+    }
+
+    const namesFound = new Set();
+    for(const credential of allCredentials) {
+      // gather names to check below
+      should.exist(credential.credentialSubject.name);
+      namesFound.add(credential.credentialSubject.name);
+    }
+    // ensure each name matches
+    namesFound.size.should.equal(2);
+    namesFound.has('Name One').should.equal(true);
+    namesFound.has('Name Two').should.equal(true);
+
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: offer.credential_issuer, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+      } catch(error) {
+        err = error;
+      }
+      assertNoError(err);
+    }
+  });
+
+  it('should pass w/ jwt DID Auth', async () => {
+    // pre-authorized flow, issuer-initiated
+    const {offerUrl} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      credentialDefinition: mockData.credentialDefinitionV2,
+      variables: {
+        subjectName1: 'Name One',
+        subjectName2: 'Name Two',
+        issueRequest1Oid4vci: {
+          credentialConfigurationId: 'myCredentialConfigId_jwt_did_auth'
+        },
+        issueRequest2Oid4vci: {
+          credentialConfigurationId: 'myCredentialConfigId_jwt_did_auth'
+        },
+        jwtDidProofRequest: {
+          acceptedMethods: [{method: 'key'}]
+        }
+      },
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap,
+      useCredentialOfferUri: true
+    });
+
+    // get offer from server
+    const offer = await getCredentialOffer({url: offerUrl, agent});
+    offer.credential_configuration_ids.should.deep.equal(
+      ['myCredentialConfigId_jwt_did_auth']);
+
+    // wallet / client gets access token
+    const client = await OID4Client.fromCredentialOffer({offer, agent});
+
+    const {
+      did, signer: didProofSigner
+    } = await helpers.createDidProofSigner();
+
+    // wallet / client receives credential(s)
+    const result = await client.requestCredentials({
+      agent, did, didProofSigner
+    });
     should.exist(result);
     result.should.include.keys('credential_responses');
     const allCredentials = [];

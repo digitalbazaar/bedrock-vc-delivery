@@ -195,6 +195,20 @@ const credentialDefinition = {
   }
 };
 
+const supportedProofTypeConfiguration = {
+  title: 'OID4VCI Supported Proof Type Configuration',
+  type: 'object',
+  required: ['proof_signing_alg_values_supported'],
+  additionalProperties: false,
+  properties: {
+    proof_signing_alg_values_supported: {
+      type: 'array',
+      minItems: 1,
+      items: {type: 'string'}
+    }
+  }
+};
+
 function credentialConfiguration() {
   return {
     title: 'OID4VCI Credential Configuration',
@@ -209,14 +223,9 @@ function credentialConfiguration() {
       },
       proof_types_supported: {
         type: 'object',
-        required: ['proof_signing_al_values_supported'],
-        additionalProperties: false,
         properties: {
-          proof_signing_alg_values_supported: {
-            type: 'array',
-            minItems: 1,
-            items: {type: 'string'}
-          }
+          di_vp: supportedProofTypeConfiguration,
+          jwt: supportedProofTypeConfiguration
         }
       }
     }
@@ -742,14 +751,17 @@ function openIdCredentialRequestDraft13() {
         title: 'DID Authn Proof JWT',
         type: 'object',
         additionalProperties: false,
-        required: ['proof_type', 'jwt'],
+        anyOf: [
+          {required: ['proof_type', 'jwt']},
+          {required: ['proof_type', 'di_vp']}
+        ],
         properties: {
           proof_type: {
             type: 'string',
             enum: ['jwt', 'di_vp']
           },
           jwt: {type: 'string'},
-          di_vp: {type: 'string'}
+          di_vp: verifiablePresentation()
         }
       }
     }
@@ -761,17 +773,15 @@ function openIdCredentialRequestVersion1() {
     title: 'OID4VCI-1.0 Credential Request',
     type: 'object',
     additionalProperties: false,
-    oneOf: [
-      // `credential_configuration_id` is for scope-identified credentials,
-      // which is not supported
-      {required: ['credential_identifier']}
-    ],
+    // `credential_configuration_id` is for scope-identified credentials,
+    // which is not supported
+    required: ['credential_identifier'],
     properties: {
       credential_identifier: {type: 'string'},
       proofs: {
         type: 'object',
         additionalProperties: false,
-        oneOf: [
+        anyOf: [
           {required: ['jwt']},
           {required: ['di_vp']}
         ],
