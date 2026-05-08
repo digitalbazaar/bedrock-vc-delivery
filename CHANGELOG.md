@@ -1,5 +1,16 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.16.0 - 2026-05-dd
+
+### Added
+- Support reading exchanges that have externally stored `variables`. This
+  update ensures that if any exchange `variables` have been externally stored,
+  they will loaded when an exchange record is loaded. However, it does not
+  automatically externalize `variables` that are over 10MiB in size as that
+  is considered a breaking change. That breaking change will be released in
+  a new major version (unless it is determined that the change can be made
+  in a non-breaking fashion).
+
 ## 7.15.0 - 2026-05-06
 
 ### Added
