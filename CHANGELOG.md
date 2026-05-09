@@ -11,6 +11,11 @@
   a new major version (unless it is determined that the change can be made
   in a non-breaking fashion).
 
+### Fixed
+- Properly enforce `exchange.expires`. Throw an error when creating a new
+  exchange if `exchange.expires` is not set (which can be done via the HTTP
+  API by setting it directly or indirectly by setting the `ttl` property).
+
 ## 7.15.0 - 2026-05-06
 
 ### Added
