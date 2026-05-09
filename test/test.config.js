@@ -61,5 +61,5 @@ config.notify.push.hmacKey = {
   secretKeyMultibase: 'uogHy02QDNPX4GID7dGUSGuYQ_Gv0WOIcpmTuKgt1ZNz7_4'
 };
 
-// ensure "variables" garbage collector runs during tests
-config['vc-workflow'].variablesGarbageCollector.interval = 1000;
+// ensure exchanges "variables" garbage collector runs during tests
+config['vc-workflow'].exchanges.variablesGarbageCollector.interval = 1000;
