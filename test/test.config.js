@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2020-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2020-2026 Digital Bazaar, Inc.
  */
 import {config} from '@bedrock/core';
 import {fileURLToPath} from 'node:url';
@@ -60,3 +60,6 @@ config.notify.push.hmacKey = {
   id: 'urn:test:hmacKey',
   secretKeyMultibase: 'uogHy02QDNPX4GID7dGUSGuYQ_Gv0WOIcpmTuKgt1ZNz7_4'
 };
+
+// ensure "variables" garbage collector runs during tests
+config['vc-workflow'].variablesGarbageCollector.interval = 1000;
