@@ -256,8 +256,8 @@ describe('exchange w/ VC-API delivery', () => {
       capabilityAgent,
       workflowId,
       workflowRootZcap,
-      // TTL of one second
-      ttl: 1
+      // TTL of two seconds
+      ttl: 2
     });
 
     // exchange state should be pending and not yet expired
@@ -278,7 +278,7 @@ describe('exchange w/ VC-API delivery', () => {
         // wait for exchange to expire
         now = new Date();
         await new Promise(
-          r => setTimeout(r, expires.getTime() - now.getTime() + 1));
+          r => setTimeout(r, expires.getTime() - now.getTime() + 2));
       } catch(error) {
         err = error;
       }
