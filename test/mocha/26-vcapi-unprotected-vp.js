@@ -482,6 +482,8 @@ describe('exchange w/ VC-API delivery + ' +
     });
     // remove `proof` from VP
     delete verifiablePresentation.proof;
+    // FIXME: for testing large VPs
+    //verifiablePresentation.foo = 'bar'.padStart(1024 * 1024 * 20, '0');
 
     let err;
     try {
