@@ -57,7 +57,7 @@
     "@bedrock/app-identity": "^4.0.0",
     "@bedrock/core": "^6.3.0",
     "@bedrock/did-io": "^10.4.0",
-    "@bedrock/express": "^8.3.1",
+    "@bedrock/express": "^8.6.4",
     "@bedrock/https-agent": "^4.1.0",
     "@bedrock/mongodb": "^11.0.0",
     "@bedrock/oauth2-verifier": "^2.3.1",
