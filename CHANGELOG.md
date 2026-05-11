@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.16.0 - 2026-05-dd
+## 7.16.0 - 2026-05-10
 
 ### Added
 - Support reading exchanges that have externally stored `variables`. This
