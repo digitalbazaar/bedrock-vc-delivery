@@ -1,10 +1,5 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.16.1 - 2026-05-23
-
-### Changed
-- Rewrite README with full API reference documentation.
-
 ## 7.16.0 - 2026-05-10
 
 ### Added
