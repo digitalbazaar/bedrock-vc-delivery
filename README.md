@@ -542,15 +542,17 @@ accessible in subsequent JSONata step templates or credential templates.
 ## Security
 
 - Workflow management routes require **zcap** or **OAuth2** authorization.
-- Exchange execution routes (VC-API `POST`) are unauthenticated by design
-  for OID4* protocol compatibility, but exchanges are single-use, short-lived,
-  and scoped to a specific workflow.
+- Exchange execution routes (VC-API `POST`) are unauthenticated by design,
+  relying on capability URLs for authorization; exchanges are single-use,
+  short-lived, and scoped to a specific workflow. Workflows themselves
+  can add authentication by asking for verifiable presentations and
+  verifiable credentials.
 - CORS is enabled on all endpoints. This is safe because authorization is
   performed using HTTP signatures and capabilities (not cookies), making CSRF
   impossible.
 - Private key material (`privateKeyJwk`) and exchange `secrets` are stripped
   from all API responses.
-- VC-API exchange creation and exchange-use payloads are limited to **10 MB** (configured via `config.express.bodyParser.routes`). OID4VP authorization-response form posts are also limited to **10 MB** (via an inline `urlencoded` body parser). Other OID4VCI endpoints (token, credential, etc.) rely on the framework's default body-size limits.
+- VC-API exchange creation and exchange-use payloads are limited to **10 MB** (configured via `config.express.bodyParser.routes`). OID4VP authorization-response form posts are also limited to **10 MB** (via an inline `urlencoded` body parser). Other OID4VCI endpoints (token, credential, etc.) rely on the framework's default body-size limits. A feature exists to enable larger exchange state, but it has not been enabled at this time.
 
 ## Backwards Compatibility
 
