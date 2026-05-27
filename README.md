@@ -109,6 +109,8 @@ and storage on startup.
   "initialStep": "issue",
   "steps": {
     "issue": {
+      // you can use static step parameters like this, but also see
+      // `stepTemplate` below for more powerful dynamic steps instead!
       "issueRequests": [{ "credentialTemplateIndex": 0 }]
     }
   },
@@ -228,7 +230,7 @@ exchange variables at runtime:
 
 ```js
 "steps": {
-  "dynamic": {
+  "issue": {
     "stepTemplate": {
       "type": "jsonata",
       "template": "{ 'issueRequests': [{ 'credentialTemplateIndex': 0 }] }"
