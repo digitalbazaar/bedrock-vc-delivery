@@ -257,7 +257,7 @@ describe('exchanger backwards-compatibility: ' +
       err.data.details.errors.should.have.length(1);
       const [error] = err.data.details.errors;
       error.name.should.equal('ValidationError');
-      error.message.should.contain('should match pattern');
+      error.message.should.contain('match pattern');
       error.details.path.should.equal('.ipAllowList[0]');
     });
     it('throws error on invalid ipAllowList', async () => {
