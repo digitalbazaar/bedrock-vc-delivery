@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2025-2026 Digital Bazaar, Inc.
  */
 import * as helpers from './helpers.js';
 import {agent} from '@bedrock/https-agent';
@@ -228,6 +228,6 @@ describe('exchange with enveloped VP and presentationSchema', () => {
     should.exist(err);
     err.data.name.should.equal('ValidationError');
     const errorDetail = err.data.details.errors[0];
-    errorDetail.message.should.equal('should be string');
+    errorDetail.message.should.equal('be string');
   });
 });

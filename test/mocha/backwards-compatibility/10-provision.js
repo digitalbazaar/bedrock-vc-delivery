@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2026 Digital Bazaar, Inc.
  */
 import * as bedrock from '@bedrock/core';
 import * as helpers from './helpers.js';
@@ -36,7 +36,7 @@ describe('exchanger backwards-compatibility: ' +
       err.data.details.errors.should.have.length(1);
       const [error] = err.data.details.errors;
       error.name.should.equal('ValidationError');
-      error.message.should.contain('should be object');
+      error.message.should.contain('be object');
     });
     it('creates a config with no zcaps', async () => {
       let err;
@@ -277,7 +277,7 @@ describe('exchanger backwards-compatibility: ' +
       err.data.details.errors.should.have.length(1);
       const [error] = err.data.details.errors;
       error.name.should.equal('ValidationError');
-      error.message.should.contain('should NOT have fewer than 1 items');
+      error.message.should.contain('NOT have fewer than 1 items');
       error.details.path.should.equal('.ipAllowList');
     });
     it('throws error on no "sequence"', async () => {
