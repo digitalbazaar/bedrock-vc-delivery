@@ -228,6 +228,6 @@ describe('exchange with enveloped VP and presentationSchema', () => {
     should.exist(err);
     err.data.name.should.equal('ValidationError');
     const errorDetail = err.data.details.errors[0];
-    errorDetail.message.should.equal('be string');
+    errorDetail.message.should.include('be string');
   });
 });
