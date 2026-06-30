@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.16.1 - 2026-06-dd
+## 7.16.1 - 2026-06-29
 
 ### Fixed
 - Fix expired exchange bug.
