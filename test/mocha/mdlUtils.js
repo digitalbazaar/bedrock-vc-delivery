@@ -88,7 +88,7 @@ export const mdocContext = {
       const isTrusted = trusted.some(t => {
         try {
           return lastCert.verify(t.publicKey) && lastCert.checkIssued(t);
-        } catch {
+        } catch(e) {
           return false;
         }
       });

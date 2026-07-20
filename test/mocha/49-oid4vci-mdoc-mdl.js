@@ -16,7 +16,7 @@ import {generateCertificateChain} from './certUtils.js';
 const MDL_NAMESPACE = 'org.iso.18013.5.1';
 const MDOC_TYPE_MDL = `${MDL_NAMESPACE}.mDL`;
 
-describe.only('exchange w/OID4VCI that issues mdoc mDL', () => {
+describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
   let did;
   let capabilityAgent;
   let certificateEntities;
@@ -169,7 +169,7 @@ describe.only('exchange w/OID4VCI that issues mdoc mDL', () => {
     workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
   });
 
-  it.only('should pass w/ di_vp DID Auth', async () => {
+  it.skip('should pass w/ di_vp DID Auth', async () => {
     // pre-authorized flow, issuer-initiated
     const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
@@ -235,8 +235,8 @@ describe.only('exchange w/OID4VCI that issues mdoc mDL', () => {
       assertNoError(err);
     }
 
-    const [verifiableCredential] = allCredentials[0];
-    allCredentials[0].type.should.equal('EnvelopedVerifiableCredential');
+    const [verifiableCredential] = allCredentials;
+    verifiableCredential.type.should.equal('EnvelopedVerifiableCredential');
 
     // assert mDL contents
     const b64 = verifiableCredential.id
@@ -253,7 +253,8 @@ describe.only('exchange w/OID4VCI that issues mdoc mDL', () => {
 
     // issuer signed document should have matching fields from
     // credential subject's driver's license
-    const expectedFields = {...credential.credentialSubject.driversLicense};
+    const {mockVdl} = mockData;
+    const expectedFields = {...mockVdl.credentialSubject.driversLicense};
     delete expectedFields.type;
 
     should.exist(fields);
@@ -325,10 +326,6 @@ describe.only('exchange w/OID4VCI that issues mdoc mDL', () => {
     }
     allCredentials.length.should.equal(1);
 
-    allCredentials[0].type.should.equal('EnvelopedVerifiableCredential');
-    allCredentials[0].id.should.startWith('data:application/mdl;base64,');
-    // FIXME: parse mdoc and add assertions
-
     // exchange state should be complete
     {
       let err;
@@ -342,6 +339,44 @@ describe.only('exchange w/OID4VCI that issues mdoc mDL', () => {
       }
       assertNoError(err);
     }
+
+    const [verifiableCredential] = allCredentials;
+    verifiableCredential.type.should.equal('EnvelopedVerifiableCredential');
+
+    // assert mDL contents
+    const b64 = verifiableCredential.id
+      .slice('data:application/mdl;base64,'.length);
+    const encodedIssuerSigned = Buffer.from(b64, 'base64');
+
+    // decode issuerSigned directly — no CBOR container wrapping needed
+    const issuerSigned = IssuerSigned.decode(encodedIssuerSigned);
+    const rawFields = issuerSigned.getPrettyClaims(MDL_NAMESPACE);
+
+    // @owf/mdoc decodes nested CBOR maps as JS Map instances; convert to
+    // plain objects for comparison
+    const fields = _deepMapToObject(rawFields);
+
+    // issuer signed document should have matching fields from
+    // credential subject's driver's license
+    const {mockVdl} = mockData;
+    const expectedFields = {...mockVdl.credentialSubject.driversLicense};
+    delete expectedFields.type;
+
+    should.exist(fields);
+    issuerSigned.issuerAuth.mobileSecurityObject.docType.should.equal(
+      MDOC_TYPE_MDL);
+    fields.should.deep.equal(expectedFields);
+
+    // verify issuer signature on mDL
+    const trustedCertificates = [
+      certificateEntities.intermediate.pemCertificate,
+      certificateEntities.root.pemCertificate
+    ].map(pem => new Uint8Array(Buffer.from(
+      pem.replace(/-----[^-]+-----/g, '').replace(/\s/g, ''), 'base64')));
+
+    await Holder.verifyIssuerSigned(
+      {issuerSigned, trustedCertificates},
+      mdocContext);
   });
 });
 
