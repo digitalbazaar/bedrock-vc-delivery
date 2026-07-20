@@ -2,6 +2,7 @@
  * Copyright (c) 2019-2025 Digital Bazaar, Inc. All rights reserved.
  */
 import * as bedrock from '@bedrock/core';
+import * as didMethodKey from '@digitalbazaar/did-method-key';
 import * as EcdsaMultikey from '@digitalbazaar/ecdsa-multikey';
 import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
 import * as vcjwt from './vcjwt.js';
@@ -21,7 +22,6 @@ import {
 import {decodeList} from '@digitalbazaar/vc-status-list';
 import {didIo} from '@bedrock/did-io';
 import {driver as DidJwkDriver} from '@digitalbazaar/did-method-jwk';
-import {driver as DidKeyDriver} from '@digitalbazaar/did-method-key';
 import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {EdvClient} from '@digitalbazaar/edv-client';
 import {generateCertificateChain} from './certUtils.js';
@@ -51,7 +51,11 @@ const VC_CONTEXT_2 = 'https://www.w3.org/ns/credentials/v2';
 const TEXT_ENCODER = new TextEncoder();
 const ENCODED_PERIOD = TEXT_ENCODER.encode('.');
 
-const didKeyDriver = DidKeyDriver();
+const didKeyDriver = didMethodKey.driver();
+didKeyDriver.use({
+  multibaseMultikeyHeader: 'z6Mk',
+  fromMultibase: Ed25519Multikey.from
+});
 const didJwkDriver = DidJwkDriver();
 const edvBaseUrl = `${mockData.baseUrl}/edvs`;
 const kmsBaseUrl = `${mockData.baseUrl}/kms`;
@@ -476,14 +480,15 @@ export async function createDidAuthnVP({
 }
 
 export async function createDidProofSigner({didMethod = 'key'} = {}) {
-  const result = await didKeyDriver.generate();
-  let {didDocument} = result;
-  const authenticationKeyPair = result.methodFor({purpose: 'authentication'});
-  const keyPair = await Ed25519Multikey.from(authenticationKeyPair);
-  const signer = keyPair.signer();
+  const verificationKeyPair = await Ed25519Multikey.generate();
+  let {didDocument} = await didKeyDriver.fromKeyPair({verificationKeyPair});
+  const {id: did} = didDocument;
+  verificationKeyPair.id = didDocument.verificationMethod[0].id;
+  verificationKeyPair.controller = did;
+  const signer = verificationKeyPair.signer();
   signer.algorithm = 'Ed25519';
   if(didMethod === 'jwk') {
-    const jwk = await Ed25519Multikey.toJwk({keyPair});
+    const jwk = await Ed25519Multikey.toJwk({keyPair: verificationKeyPair});
     ({didDocument} = await didJwkDriver.fromJwk({jwk}));
     signer.id = didDocument.verificationMethod[0].id;
   }

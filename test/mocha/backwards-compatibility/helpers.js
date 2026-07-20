@@ -1,7 +1,8 @@
 /*!
- * Copyright (c) 2019-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2026 Digital Bazaar, Inc.
  */
 import * as bedrock from '@bedrock/core';
+import * as didMethodKey from '@digitalbazaar/did-method-key';
 import * as Ed25519Multikey from '@digitalbazaar/ed25519-multikey';
 import {
   generateKeyPair as _generateKeyPair,
@@ -17,7 +18,6 @@ import {agent} from '@bedrock/https-agent';
 import {CapabilityAgent} from '@digitalbazaar/webkms-client';
 import {decodeList} from '@digitalbazaar/vc-status-list';
 import {didIo} from '@bedrock/did-io';
-import {driver} from '@digitalbazaar/did-method-key';
 import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {EdvClient} from '@digitalbazaar/edv-client';
 import {generateId} from 'bnid';
@@ -30,7 +30,11 @@ import {ZcapClient} from '@digitalbazaar/ezcap';
 
 import {mockData} from './mock.data.js';
 
-const didKeyDriver = driver();
+const didKeyDriver = didMethodKey.driver();
+didKeyDriver.use({
+  multibaseMultikeyHeader: 'z6Mk',
+  fromMultibase: Ed25519Multikey.from
+});
 const edvBaseUrl = `${mockData.baseUrl}/edvs`;
 const kmsBaseUrl = `${mockData.baseUrl}/kms`;
 
@@ -383,10 +387,20 @@ export async function createDidAuthnVP({
 }
 
 export async function createDidProofSigner() {
+  const verificationKeyPair = await Ed25519Multikey.generate();
+  const {didDocument} = await didKeyDriver.fromKeyPair({verificationKeyPair});
+  const {id: did} = didDocument;
+  verificationKeyPair.id = didDocument.verificationMethod[0].id;
+  verificationKeyPair.controller = did;
+  const signer = verificationKeyPair.signer();
+  signer.algorithm = 'Ed25519';
+  return {did: didDocument.id, signer};
+
+  /*
   const {didDocument, methodFor} = await didKeyDriver.generate();
   const authenticationKeyPair = methodFor({purpose: 'authentication'});
   const keyPair = await Ed25519Multikey.from(authenticationKeyPair);
-  return {did: didDocument.id, signer: keyPair.signer()};
+  return {did: didDocument.id, signer: keyPair.signer()};*/
 }
 
 export async function createExchange({
