@@ -61,6 +61,7 @@
     "@digitalbazaar/vc-status-list": "^8.0.1",
     "@digitalbazaar/vpqr": "^5.1.0",
     "@digitalbazaar/webkms-client": "^14.1.2",
+    "@owf/mdoc": "^0.7.0",
     "asn1js": "^3.0.6",
     "bnid": "^3.0.0",
     "c8": "^10.1.3",
