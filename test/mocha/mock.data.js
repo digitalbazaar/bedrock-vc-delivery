@@ -876,7 +876,12 @@ mockData.envelopedVpPresentationSchema = {
 mockData.vdlTemplate = `
   {
     "options": {
-      "credentialId": credentialId
+      "credentialId": credentialId,
+      "mdl": {
+        "devicePublicJwk":
+          results.issue.credentialRequestProofResults[0].verifyResults.di_vp[0].publicKeyJwk ??
+          results.issue.credentialRequestProofResults[0].verifyResults.jwt[0].publicKeyJwk
+      }
     },
     "credential": {
       "@context": [

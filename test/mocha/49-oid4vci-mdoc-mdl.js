@@ -5,13 +5,18 @@ import * as bedrock from '@bedrock/core';
 import * as EcdsaMultikey from '@digitalbazaar/ecdsa-multikey';
 import * as helpers from './helpers.js';
 import {getCredentialOffer, OID4Client} from '@digitalbazaar/oid4-client';
+import {Holder, IssuerSigned} from '@owf/mdoc';
 import {agent} from '@bedrock/https-agent';
+import {mdocContext} from './mdlUtils.js';
 import {mockData} from './mock.data.js';
 import {randomUUID as uuid} from 'node:crypto';
 
 import {generateCertificateChain} from './certUtils.js';
 
-describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
+const MDL_NAMESPACE = 'org.iso.18013.5.1';
+const MDOC_TYPE_MDL = `${MDL_NAMESPACE}.mDL`;
+
+describe.only('exchange w/OID4VCI that issues mdoc mDL', () => {
   let did;
   let capabilityAgent;
   let certificateEntities;
@@ -164,7 +169,7 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
     workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
   });
 
-  it('should pass w/ di_vp DID Auth', async () => {
+  it.only('should pass w/ di_vp DID Auth', async () => {
     // pre-authorized flow, issuer-initiated
     const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
@@ -191,7 +196,9 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
       ['org.iso.18013.5.1.mDL_di_vp_did_auth']);
 
     // wallet / client gets access token
-    const client = await OID4Client.fromCredentialOffer({offer, agent});
+    const client = await OID4Client.fromCredentialOffer({
+      offer, agent, supportedFormats: ['mso_mdoc']
+    });
 
     const {
       did, signer: didProofSigner
@@ -199,7 +206,8 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
 
     // wallet / client receives credential(s)
     const result = await client.requestCredentials({
-      agent, getDidOptions: () => ({did, didProofSigner})
+      agent, getDidOptions: () => ({did, didProofSigner}),
+      format: 'mso_mdoc'
     });
     should.exist(result);
     result.should.include.keys('credential_responses');
@@ -212,21 +220,6 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
       }
     }
     allCredentials.length.should.equal(1);
-
-    console.log('credential', allCredentials[0]);
-
-    // FIXME:
-    /*
-    const namesFound = new Set();
-    for(const credential of allCredentials) {
-      // gather names to check below
-      should.exist(credential.credentialSubject.name);
-      namesFound.add(credential.credentialSubject.name);
-    }
-    // ensure each name matches
-    namesFound.size.should.equal(2);
-    namesFound.has('Name One').should.equal(true);
-    namesFound.has('Name Two').should.equal(true);*/
 
     // exchange state should be complete
     {
@@ -241,6 +234,43 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
       }
       assertNoError(err);
     }
+
+    const [verifiableCredential] = allCredentials[0];
+    allCredentials[0].type.should.equal('EnvelopedVerifiableCredential');
+
+    // assert mDL contents
+    const b64 = verifiableCredential.id
+      .slice('data:application/mdl;base64,'.length);
+    const encodedIssuerSigned = Buffer.from(b64, 'base64');
+
+    // decode issuerSigned directly — no CBOR container wrapping needed
+    const issuerSigned = IssuerSigned.decode(encodedIssuerSigned);
+    const rawFields = issuerSigned.getPrettyClaims(MDL_NAMESPACE);
+
+    // @owf/mdoc decodes nested CBOR maps as JS Map instances; convert to
+    // plain objects for comparison
+    const fields = _deepMapToObject(rawFields);
+
+    // issuer signed document should have matching fields from
+    // credential subject's driver's license
+    const expectedFields = {...credential.credentialSubject.driversLicense};
+    delete expectedFields.type;
+
+    should.exist(fields);
+    issuerSigned.issuerAuth.mobileSecurityObject.docType.should.equal(
+      MDOC_TYPE_MDL);
+    fields.should.deep.equal(expectedFields);
+
+    // verify issuer signature on mDL
+    const trustedCertificates = [
+      certificateEntities.intermediate.pemCertificate,
+      certificateEntities.root.pemCertificate
+    ].map(pem => new Uint8Array(Buffer.from(
+      pem.replace(/-----[^-]+-----/g, '').replace(/\s/g, ''), 'base64')));
+
+    await Holder.verifyIssuerSigned(
+      {issuerSigned, trustedCertificates},
+      mdocContext);
   });
 
   it('should pass w/ jwt DID Auth', async () => {
@@ -249,7 +279,7 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       variables: {
-        issueRequest1Oid4vci: {
+        issueRequestOid4vci: {
           credentialConfigurationId: 'org.iso.18013.5.1.mDL_jwt_did_auth'
         },
         jwtDidProofRequest: {
@@ -270,7 +300,9 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
       ['org.iso.18013.5.1.mDL_jwt_did_auth']);
 
     // wallet / client gets access token
-    const client = await OID4Client.fromCredentialOffer({offer, agent});
+    const client = await OID4Client.fromCredentialOffer({
+      offer, agent, supportedFormats: ['mso_mdoc']
+    });
 
     const {
       did, signer: didProofSigner
@@ -278,7 +310,8 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
 
     // wallet / client receives credential(s)
     const result = await client.requestCredentials({
-      agent, getDidOptions: () => ({did, didProofSigner})
+      agent, getDidOptions: () => ({did, didProofSigner}),
+      format: 'mso_mdoc'
     });
     should.exist(result);
     result.should.include.keys('credential_responses');
@@ -292,18 +325,9 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
     }
     allCredentials.length.should.equal(1);
 
-    // FIXME:
-    /*
-    const namesFound = new Set();
-    for(const credential of allCredentials) {
-      // gather names to check below
-      should.exist(credential.credentialSubject.name);
-      namesFound.add(credential.credentialSubject.name);
-    }
-    // ensure each name matches
-    namesFound.size.should.equal(2);
-    namesFound.has('Name One').should.equal(true);
-    namesFound.has('Name Two').should.equal(true);*/
+    allCredentials[0].type.should.equal('EnvelopedVerifiableCredential');
+    allCredentials[0].id.should.startWith('data:application/mdl;base64,');
+    // FIXME: parse mdoc and add assertions
 
     // exchange state should be complete
     {
@@ -320,3 +344,34 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
     }
   });
 });
+
+function _deepMapToObject(value) {
+  // handle native Map
+  if(value instanceof Map) {
+    const obj = {};
+    for(const [k, v] of value) {
+      obj[k] = _deepMapToObject(v);
+    }
+    return obj;
+  }
+  // handle @owf/mdoc's TypedMap, which wraps a native Map in a .map property
+  if(value?.map instanceof Map) {
+    const obj = {};
+    for(const [k, v] of value.map) {
+      obj[k] = _deepMapToObject(v);
+    }
+    return obj;
+  }
+  if(Array.isArray(value)) {
+    return value.map(_deepMapToObject);
+  }
+  // recurse into plain objects so nested Maps are converted
+  if(value !== null && typeof value === 'object') {
+    const obj = {};
+    for(const [k, v] of Object.entries(value)) {
+      obj[k] = _deepMapToObject(v);
+    }
+    return obj;
+  }
+  return value;
+}
