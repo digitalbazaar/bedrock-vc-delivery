@@ -22,6 +22,8 @@ import '@bedrock/vc-verifier';
 import {mockData} from './mocha/mock.data.js';
 import {PUSH_NOTIFICATION_CALLBACK_DATA} from './mocha/helpers.js';
 
+const {util: {BedrockError}} = bedrock;
+
 // used for VCB tests
 const contexts = new Map([
   ['https://www.w3.org/ns/credentials/examples/v2', {
