@@ -16,7 +16,7 @@ import {generateCertificateChain} from './certUtils.js';
 const MDL_NAMESPACE = 'org.iso.18013.5.1';
 const MDOC_TYPE_MDL = `${MDL_NAMESPACE}.mDL`;
 
-describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
+describe('exchange w/OID4VCI that issues mdoc mDL', () => {
   let did;
   let capabilityAgent;
   let certificateEntities;
@@ -39,7 +39,7 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
     };
     await helpers.provisionDependencies({
       issuerOptions: {
-        issueOptions: {issuer: did, envelope}
+        issueOptions: {did, issuer: did, envelope}
       }
     });
 
@@ -70,15 +70,21 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
 
     // create a certificate chain that ends in the MDL issuer (leaf)
     certificateEntities = await generateCertificateChain({
-      leafKeyPairInfo: {
-        keyPair: issuerKeyPair,
-        jwk: issuerPublicJwk
+      leafConfig: {
+        // FIXME: leaf must be marked as a CA to pass verification; investigate
+        // to see if this is correct or not and adjust accordingly
+        cA: true,
+        keyPairInfo: {
+          keyPair: issuerKeyPair,
+          jwk: issuerPublicJwk
+        }
       }
     });
     issuerCertificateChain = [certificateEntities.leaf.pemCertificate];
 
     // create issue options
     const issueOptions = {
+      did,
       issuer: did,
       envelope: {
         mediaType: envelope.mediaType,
@@ -169,7 +175,7 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
     workflowRootZcap = `urn:zcap:root:${encodeURIComponent(workflowId)}`;
   });
 
-  it.skip('should pass w/ di_vp DID Auth', async () => {
+  it('should pass w/ di_vp DID Auth', async () => {
     // pre-authorized flow, issuer-initiated
     const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
@@ -202,7 +208,7 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
 
     const {
       did, signer: didProofSigner
-    } = await helpers.createDidProofSigner();
+    } = await helpers.createDidProofSigner({algorithm: 'P-256'});
 
     // wallet / client receives credential(s)
     const result = await client.requestCredentials({
@@ -242,7 +248,6 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
     const b64 = verifiableCredential.id
       .slice('data:application/mdl;base64,'.length);
     const encodedIssuerSigned = Buffer.from(b64, 'base64');
-
     // decode issuerSigned directly — no CBOR container wrapping needed
     const issuerSigned = IssuerSigned.decode(encodedIssuerSigned);
     const rawFields = issuerSigned.getPrettyClaims(MDL_NAMESPACE);
@@ -307,7 +312,7 @@ describe.skip('exchange w/OID4VCI that issues mdoc mDL', () => {
 
     const {
       did, signer: didProofSigner
-    } = await helpers.createDidProofSigner();
+    } = await helpers.createDidProofSigner({algorithm: 'P-256'});
 
     // wallet / client receives credential(s)
     const result = await client.requestCredentials({

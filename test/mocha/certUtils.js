@@ -49,7 +49,9 @@ export async function generateCertificateChain({leafConfig} = {}) {
     issuer: intermediate.subject,
     commonName: leafConfig?.commonName ?? 'Leaf',
     dnsName: leafConfig?.dnsName ?? 'example.test',
+    cA: leafConfig?.cA,
     serialNumber: 3,
+    keyPairInfo: leafConfig?.keyPairInfo,
     privateKeyJwk: leafConfig?.privateKeyJwk,
     publicKeyJwk: leafConfig?.publicKeyJwk
   });
@@ -73,12 +75,19 @@ export async function generateKeyPair() {
 
 async function _createEntity({
   issuer, commonName, dnsName, cA = false, serialNumber,
-  privateKeyJwk, publicKeyJwk
+  keyPairInfo, privateKeyJwk, publicKeyJwk
 } = {}) {
   // import or generate key pair
-  const givenJwk = privateKeyJwk || publicKeyJwk;
-  const {keyPair, jwk} = await (givenJwk ?
-    importJwk({jwk: givenJwk}) : generateKeyPair());
+  let keyPair;
+  let jwk;
+  if(keyPairInfo) {
+    ({keyPair, jwk} = keyPairInfo);
+  } else {
+    // import or generate key pair
+    const givenJwk = privateKeyJwk || publicKeyJwk;
+    ({keyPair, jwk} = await (givenJwk ?
+      importJwk({jwk: givenJwk}) : generateKeyPair()));
+  }
 
   // subject ID
   const subject = {
