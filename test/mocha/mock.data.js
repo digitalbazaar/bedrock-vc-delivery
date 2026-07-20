@@ -1,9 +1,11 @@
 /*!
-* Copyright (c) 2019-2024 Digital Bazaar, Inc. All rights reserved.
+* Copyright (c) 2019-2026 Digital Bazaar, Inc.
 */
 import {config} from '@bedrock/core';
 
 export const mockData = {};
+
+mockData.didWebDocuments = new Map();
 
 // mock product IDs and reverse lookup for service products
 mockData.productIdMap = new Map([
@@ -868,4 +870,60 @@ mockData.envelopedVpPresentationSchema = {
     ]
   }
 }
+/* eslint-enable */
+
+/* eslint-disable */
+mockData.vdlTemplate = `
+  {
+    "options": {
+      "credentialId": credentialId
+    },
+    "credential": {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://w3id.org/vdl/v1",
+        "https://w3id.org/vdl/aamva/v1"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "Iso18013DriversLicenseCredential"
+      ],
+      "validFrom": "2023-11-15T10:00:00-07:00",
+      "validUntil": "2058-11-15T12:00:00-06:00",
+      "credentialSubject": {
+        "type": "LicensedDriver",
+        "driversLicense": {
+          "type": "Iso18013DriversLicense",
+          "age_over_21": true,
+          "document_number": "542426814",
+          "family_name": "TURNER",
+          "given_name": "SUSAN",
+          "portrait": "data:image/jpeg;base64,/9j/4AAQSkZJR...RSClooooP/2Q==",
+          "birth_date": "1998-08-28",
+          "issue_date": "2023-01-15",
+          "expiry_date": "2028-08-27",
+          "issuing_country": "US",
+          "issuing_authority": "UADMV",
+          "driving_privileges": [{
+            "codes": [{"code": "D"}],
+            "vehicle_category_code": "D",
+            "issue_date": "2019-01-01",
+            "expiry_date": "2027-01-01"
+          },
+          {
+            "codes": [{"code": "C"}],
+            "vehicle_category_code": "C",
+            "issue_date": "2019-01-01",
+            "expiry_date": "2017-01-01"
+          }],
+          "un_distinguishing_sign": "UTA",
+          "aamva_aka_suffix": "1ST",
+          "sex": 2,
+          "aamva_family_name_truncation": "N",
+          "aamva_given_name_truncation": "N"
+        }
+      }
+    }
+  }
+`;
 /* eslint-enable */

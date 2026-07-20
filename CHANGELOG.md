@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.17.0 - 2026-mm-dd
+
+### Added
+- Allow `mso_mdoc` format to be used in OID4VCI for issuing mDLs.
+
 ## 7.16.1 - 2026-06-29
 
 ### Fixed

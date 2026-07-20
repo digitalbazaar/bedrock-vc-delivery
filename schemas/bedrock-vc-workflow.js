@@ -232,6 +232,57 @@ function credentialConfiguration() {
   };
 }
 
+function mdocCredentialConfiguration() {
+  return {
+    title: 'OID4VCI Credential Configuration for mdocs',
+    type: 'object',
+    required: [
+      'cryptographic_binding_methods_supported',
+      'credential_signing_alg_values_supported',
+      'doctype',
+      'format',
+      'proof_types_supported'
+    ],
+    additionalProperties: false,
+    properties: {
+      cryptographic_binding_methods_supported: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 1,
+        items: {
+          type: 'string',
+          enum: ['cose_key']
+        }
+      },
+      credential_signing_alg_values_supported: {
+        // schema could be improved to ensure array is const: [-7, -9]; but
+        // other values might be acceptable in the future
+        type: 'array',
+        minItems: 2,
+        maxItems: 2,
+        items: {
+          type: 'number',
+          enum: [-7, -9]
+        }
+      },
+      doctype: {
+        const: 'org.iso.18013.5.1.mDL'
+      },
+      format: {
+        type: 'string',
+        enum: ['mso_mdoc']
+      },
+      proof_types_supported: {
+        type: 'object',
+        properties: {
+          di_vp: supportedProofTypeConfiguration,
+          jwt: supportedProofTypeConfiguration
+        }
+      }
+    }
+  };
+}
+
 const openIdExchangeOptions = {
   title: 'OpenID Exchange options',
   type: 'object',
@@ -367,7 +418,9 @@ const issuerInstance = {
           type: 'object',
           additionalProperties: false,
           patternProperties: {
-            '^.*$': credentialConfiguration()
+            '^.*$': {
+              oneOf: [credentialConfiguration(), mdocCredentialConfiguration()]
+            }
           }
         }
       }
