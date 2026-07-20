@@ -165,14 +165,17 @@ export async function createCredentialOffer({
     } else {
       oauth2.generateKeyPair = {algorithm: 'ES256'};
     }
-    if(!Array.isArray(credentialDefinition)) {
-      credentialDefinition = [credentialDefinition];
+    exchange.openId = {oauth2};
+    if(credentialDefinition) {
+      if(!Array.isArray(credentialDefinition)) {
+        credentialDefinition = [credentialDefinition];
+      }
+      const expectedCredentialRequests = credentialDefinition.map(
+        credential_definition => ({
+          format: credentialFormat, credential_definition
+        }));
+      exchange.openId.expectedCredentialRequests = expectedCredentialRequests;
     }
-    const expectedCredentialRequests = credentialDefinition.map(
-      credential_definition => ({
-        format: credentialFormat, credential_definition
-      }));
-    exchange.openId = {expectedCredentialRequests, oauth2};
 
     // default to using `credential_configuration_ids` if neither legacy
     // `credentials` nor offer URI is enabled
@@ -894,7 +897,9 @@ export async function provisionIssuer({
     }
     if(envelope) {
       configOptions.issueOptions.envelope = {
+        // `format` deprecated; use `mediaType` instead
         format: envelope.format,
+        mediaType: envelope.mediaType,
         options: envelope.options,
         zcapReferenceIds: envelope.zcapReferenceIds
       };
