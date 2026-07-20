@@ -262,7 +262,6 @@ describe('exchange w/OID4VCI 1.0+', () => {
     const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
-      credentialDefinition: mockData.credentialDefinitionV2,
       variables: {
         subjectName1: 'Name One',
         subjectName2: 'Name Two',
@@ -342,7 +341,6 @@ describe('exchange w/OID4VCI 1.0+', () => {
     const {offerUrl} = await helpers.createCredentialOffer({
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
-      credentialDefinition: mockData.credentialDefinitionV2,
       variables: {
         subjectName1: 'Name One',
         subjectName2: 'Name Two',
