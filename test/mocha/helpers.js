@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2019-2026 Digital Bazaar, Inc.
  */
 import * as bedrock from '@bedrock/core';
 import * as didMethodKey from '@digitalbazaar/did-method-key';
@@ -55,6 +55,14 @@ const didKeyDriver = didMethodKey.driver();
 didKeyDriver.use({
   multibaseMultikeyHeader: 'z6Mk',
   fromMultibase: Ed25519Multikey.from
+});
+didKeyDriver.use({
+  multibaseMultikeyHeader: 'zDna',
+  fromMultibase: EcdsaMultikey.from
+});
+didKeyDriver.use({
+  multibaseMultikeyHeader: 'z82L',
+  fromMultibase: EcdsaMultikey.from
 });
 const didJwkDriver = DidJwkDriver();
 const edvBaseUrl = `${mockData.baseUrl}/edvs`;
@@ -479,16 +487,28 @@ export async function createDidAuthnVP({
   return {verifiablePresentation, did};
 }
 
-export async function createDidProofSigner({didMethod = 'key'} = {}) {
-  const verificationKeyPair = await Ed25519Multikey.generate();
+export async function createDidProofSigner({
+  didMethod = 'key', algorithm = 'Ed25519'
+} = {}) {
+  let verificationKeyPair;
+  if(algorithm.startsWith('P-')) {
+    verificationKeyPair = await EcdsaMultikey.generate({curve: algorithm});
+  } else {
+    verificationKeyPair = await Ed25519Multikey.generate();
+  }
   let {didDocument} = await didKeyDriver.fromKeyPair({verificationKeyPair});
   const {id: did} = didDocument;
   verificationKeyPair.id = didDocument.verificationMethod[0].id;
   verificationKeyPair.controller = did;
   const signer = verificationKeyPair.signer();
-  signer.algorithm = 'Ed25519';
+  signer.algorithm = algorithm;
   if(didMethod === 'jwk') {
-    const jwk = await Ed25519Multikey.toJwk({keyPair: verificationKeyPair});
+    let jwk;
+    if(algorithm.startsWith('P-')) {
+      jwk = await EcdsaMultikey.toJwk({keyPair: verificationKeyPair});
+    } else {
+      jwk = await Ed25519Multikey.toJwk({keyPair: verificationKeyPair});
+    }
     ({didDocument} = await didJwkDriver.fromJwk({jwk}));
     signer.id = didDocument.verificationMethod[0].id;
   }

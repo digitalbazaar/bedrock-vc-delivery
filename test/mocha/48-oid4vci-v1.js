@@ -293,7 +293,7 @@ describe('exchange w/OID4VCI 1.0+', () => {
 
     const {
       did, signer: didProofSigner
-    } = await helpers.createDidProofSigner();
+    } = await helpers.createDidProofSigner({algorithm: 'P-256'});
 
     // wallet / client receives credential(s)
     const result = await client.requestCredentials({
@@ -372,7 +372,7 @@ describe('exchange w/OID4VCI 1.0+', () => {
 
     const {
       did, signer: didProofSigner
-    } = await helpers.createDidProofSigner();
+    } = await helpers.createDidProofSigner({algorithm: 'P-256'});
 
     // wallet / client receives credential(s)
     const result = await client.requestCredentials({
