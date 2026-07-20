@@ -5,6 +5,9 @@
 ### Added
 - Allow `mso_mdoc` format to be used in OID4VCI for issuing mDLs.
 
+### Fixed
+- Fix issuer instance selection by properly passing `issueRequest` parameters.
+
 ## 7.16.1 - 2026-06-29
 
 ### Fixed
