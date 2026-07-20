@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2016-2025 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2016-2026 Digital Bazaar, Inc.
  */
 import * as bedrock from '@bedrock/core';
 import {asyncHandler} from '@bedrock/express';
@@ -95,6 +95,24 @@ bedrock.events.on('bedrock-express.configure.routes', async app => {
         PUSH_NOTIFICATION_CALLBACK_DATA.expectedExchangeId === exchangeId);
       res.sendStatus(204);
     }));
+});
+
+// mock DID web server routes
+bedrock.events.on('bedrock-express.configure.routes', app => {
+  app.get('/did-web/:localId/did.json', (req, res) => {
+    const {localId} = req.params;
+    const didDocument = mockData.didWebDocuments.get(localId);
+    if(!didDocument) {
+      throw new BedrockError('DID document not found.', {
+        name: 'NotFoundError',
+        details: {
+          httpStatusCode: 404,
+          public: true
+        }
+      });
+    }
+    res.json(didDocument);
+  });
 });
 
 import '@bedrock/test';
