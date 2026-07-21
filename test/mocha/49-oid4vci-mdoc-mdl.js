@@ -7,6 +7,7 @@ import * as helpers from './helpers.js';
 import {getCredentialOffer, OID4Client} from '@digitalbazaar/oid4-client';
 import {Holder, IssuerSigned} from '@owf/mdoc';
 import {agent} from '@bedrock/https-agent';
+import {httpClient} from '@digitalbazaar/http-client';
 import {mdocContext} from './mdlUtils.js';
 import {mockData} from './mock.data.js';
 import {randomUUID as uuid} from 'node:crypto';
@@ -121,7 +122,18 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
           type: 'jsonata',
           template: `
           {
+            /* start only needed for VC-API delivery */
+            "createChallenge": true,
+            "verifiablePresentationRequest": {
+              "query": {
+                "type": "DIDAuthentication",
+                "acceptedMethods": [{"method": "key"}]
+              },
+              "domain": domain
+            },
+            /* end only needed for VC-API delivery */
             "issueRequests": [{
+              "issuerInstanceId": issuerInstanceId,
               "credentialTemplateIndex": 0,
               "oid4vci": issueRequestOid4vci
             }],
@@ -136,6 +148,7 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
       steps,
       initialStep: 'issue',
       issuerInstances: [{
+        id: 'mdoc-mdl-issuer-instance',
         oid4vci: {
           supportedCredentialConfigurations: {
             'org.iso.18013.5.1.mDL_di_vp_did_auth': {
@@ -181,6 +194,7 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       variables: {
+        domain: mockData.baseUrl,
         issueRequestOid4vci: {
           credentialConfigurationId: 'org.iso.18013.5.1.mDL_di_vp_did_auth'
         },
@@ -285,6 +299,7 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
       // local target user
       userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
       variables: {
+        domain: mockData.baseUrl,
         issueRequestOid4vci: {
           credentialConfigurationId: 'org.iso.18013.5.1.mDL_jwt_did_auth'
         },
@@ -353,6 +368,104 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
       .slice('data:application/mdl;base64,'.length);
     const encodedIssuerSigned = Buffer.from(b64, 'base64');
 
+    // decode issuerSigned directly — no CBOR container wrapping needed
+    const issuerSigned = IssuerSigned.decode(encodedIssuerSigned);
+    const rawFields = issuerSigned.getPrettyClaims(MDL_NAMESPACE);
+
+    // @owf/mdoc decodes nested CBOR maps as JS Map instances; convert to
+    // plain objects for comparison
+    const fields = _deepMapToObject(rawFields);
+
+    // issuer signed document should have matching fields from
+    // credential subject's driver's license
+    const {mockVdl} = mockData;
+    const expectedFields = {...mockVdl.credentialSubject.driversLicense};
+    delete expectedFields.type;
+
+    should.exist(fields);
+    issuerSigned.issuerAuth.mobileSecurityObject.docType.should.equal(
+      MDOC_TYPE_MDL);
+    fields.should.deep.equal(expectedFields);
+
+    // verify issuer signature on mDL
+    const trustedCertificates = [
+      certificateEntities.intermediate.pemCertificate,
+      certificateEntities.root.pemCertificate
+    ].map(pem => new Uint8Array(Buffer.from(
+      pem.replace(/-----[^-]+-----/g, '').replace(/\s/g, ''), 'base64')));
+
+    await Holder.verifyIssuerSigned(
+      {issuerSigned, trustedCertificates},
+      mdocContext);
+  });
+
+  it('should pass w/ VC-API delivery', async () => {
+    // pre-authorized flow, issuer-initiated
+    const {exchangeId} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      variables: {
+        issuerInstanceId: 'mdoc-mdl-issuer-instance',
+        domain: mockData.baseUrl
+      },
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap,
+      useCredentialOfferUri: true
+    });
+
+    // post to get VPR
+    let vpr;
+    {
+      const response = await httpClient.post(exchangeId, {agent, json: {}});
+      vpr = response.data.verifiablePresentationRequest;
+    }
+
+    const {
+      did, signer
+    } = await helpers.createDidProofSigner({algorithm: 'P-256'});
+
+    // generate VP
+    const {challenge, domain} = vpr;
+    const {verifiablePresentation} = await helpers.createDidAuthnVP({
+      challenge,
+      domain,
+      did, signer
+    });
+
+    // post VP to get VP in response
+    let vcs;
+    {
+      const response = await httpClient.post(
+        exchangeId, {agent, json: {verifiablePresentation}});
+      should.exist(response.data?.verifiablePresentation?.verifiableCredential);
+      vcs = response.data.verifiablePresentation.verifiableCredential;
+      vcs.length.should.equal(1);
+    }
+
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+      } catch(error) {
+        err = error;
+      }
+      assertNoError(err);
+    }
+
+    const [verifiableCredential] = vcs;
+    verifiableCredential.type.should.equal('EnvelopedVerifiableCredential');
+
+    // assert mDL contents
+    const b64 = verifiableCredential.id
+      .slice('data:application/mdl;base64,'.length);
+    const encodedIssuerSigned = Buffer.from(b64, 'base64');
     // decode issuerSigned directly — no CBOR container wrapping needed
     const issuerSigned = IssuerSigned.decode(encodedIssuerSigned);
     const rawFields = issuerSigned.getPrettyClaims(MDL_NAMESPACE);
