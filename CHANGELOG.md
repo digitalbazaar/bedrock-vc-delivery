@@ -1,5 +1,13 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.17.1 - 2026-07-dd
+
+### Fixed
+- Properly pass `issuerInstanceId` in `issueRequest` params when selecting
+  an issuer instance.
+- Ensure `publicKeyJwk` format of key is available for use in workflow
+  templates if a VP was submitted to perform DID Authn.
+
 ## 7.17.0 - 2026-07-21
 
 ### Added

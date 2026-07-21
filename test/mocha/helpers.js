@@ -19,9 +19,12 @@ import {agent} from '@bedrock/https-agent';
 import {
   documentLoader as brDocumentLoader
 } from '@bedrock/jsonld-document-loader';
+import {DataIntegrityProof} from '@digitalbazaar/data-integrity';
 import {decodeList} from '@digitalbazaar/vc-status-list';
 import {didIo} from '@bedrock/did-io';
 import {driver as DidJwkDriver} from '@digitalbazaar/did-method-jwk';
+import {cryptosuite as ecdsaRdfc2019Cryptosuite} from
+  '@digitalbazaar/ecdsa-rdfc-2019-cryptosuite';
 import {Ed25519Signature2020} from '@digitalbazaar/ed25519-signature-2020';
 import {EdvClient} from '@digitalbazaar/edv-client';
 import {generateCertificateChain} from './certUtils.js';
@@ -464,10 +467,11 @@ export async function getOAuth2AccessToken({
 }
 
 export async function createDidAuthnVP({
-  domain, challenge, verifiableCredential, did, signer
+  domain, challenge, verifiableCredential, did, signer,
+  createDidProofSignerOptions
 }) {
   if(!(did && signer)) {
-    ({did, signer} = await createDidProofSigner());
+    ({did, signer} = await createDidProofSigner(createDidProofSignerOptions));
   }
   const presentation = createPresentation({holder: did});
   if(verifiableCredential) {
@@ -479,8 +483,13 @@ export async function createDidAuthnVP({
     presentation.verifiableCredential = verifiableCredential;
   }
   // FIXME: add `envelope` (vc-jwt) option
+  const suite = signer.algorithm === 'Ed25519' ?
+    new Ed25519Signature2020({signer}) :
+    new DataIntegrityProof({
+      signer, cryptosuite: ecdsaRdfc2019Cryptosuite
+    });
   const verifiablePresentation = await signPresentation({
-    suite: new Ed25519Signature2020({signer}),
+    suite,
     presentation, domain, challenge,
     documentLoader
   });
