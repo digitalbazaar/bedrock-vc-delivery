@@ -255,13 +255,11 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
       assertNoError(err);
     }
 
-    const [verifiableCredential] = allCredentials;
-    verifiableCredential.type.should.equal('EnvelopedVerifiableCredential');
+    const [b64Url] = allCredentials;
+    b64Url.should.be.a('string');
 
     // assert mDL contents
-    const b64 = verifiableCredential.id
-      .slice('data:application/mdl;base64,'.length);
-    const encodedIssuerSigned = Buffer.from(b64, 'base64');
+    const encodedIssuerSigned = Buffer.from(b64Url, 'base64url');
     // decode issuerSigned directly — no CBOR container wrapping needed
     const issuerSigned = IssuerSigned.decode(encodedIssuerSigned);
     const rawFields = issuerSigned.getPrettyClaims(MDL_NAMESPACE);
@@ -360,13 +358,11 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
       assertNoError(err);
     }
 
-    const [verifiableCredential] = allCredentials;
-    verifiableCredential.type.should.equal('EnvelopedVerifiableCredential');
+    const [b64Url] = allCredentials;
+    b64Url.should.be.a('string');
 
     // assert mDL contents
-    const b64 = verifiableCredential.id
-      .slice('data:application/mdl;base64,'.length);
-    const encodedIssuerSigned = Buffer.from(b64, 'base64');
+    const encodedIssuerSigned = Buffer.from(b64Url, 'base64url');
 
     // decode issuerSigned directly — no CBOR container wrapping needed
     const issuerSigned = IssuerSigned.decode(encodedIssuerSigned);
