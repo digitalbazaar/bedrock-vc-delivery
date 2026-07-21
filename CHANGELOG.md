@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.17.1 - 2026-07-dd
+## 7.17.1 - 2026-07-21
 
 ### Fixed
 - Properly pass `issuerInstanceId` in `issueRequest` params when selecting
