@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.17.2 - 2026-07-dd
+
+### Fixed
+- When issuing an mdoc mDL using OID4VCI v1+, return the raw mdoc
+  (`IssuerSigned` structure) encoded w/`base64url` per the OID4VCI spec.
+
 ## 7.17.1 - 2026-07-21
 
 ### Fixed
