@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.17.2 - 2026-07-dd
+## 7.17.2 - 2026-07-21
 
 ### Fixed
 - When issuing an mdoc mDL using OID4VCI v1+, return the raw mdoc
