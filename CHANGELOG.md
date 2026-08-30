@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.18.0 - 2026-mm-dd
+
+### Added
+- Handle `application/mdoc` media type when used by issuer instances.
+
 ## 7.17.2 - 2026-07-21
 
 ### Fixed
