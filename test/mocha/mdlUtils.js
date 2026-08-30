@@ -133,15 +133,14 @@ export async function createPresentation({
     .sign();
   //console.log('Device response', deviceResponse);
 
-  // FIXME: define a base64url-encoded mdl vp token mime type?
   const encodedDeviceResponse = deviceResponse.encode();
-  const vpToken = Buffer.from(encodedDeviceResponse).toString('base64url');
+  const b64Mdoc = Buffer.from(encodedDeviceResponse).toString('base64');
   // console.log('device side: device response cbor', encodedDeviceResponse);
   // console.log(vpToken, 'vpToken');
 
   return {
     '@context': [VC_CONTEXT_2],
-    id: `data:application/mdl-vp-token,${vpToken}`,
+    id: `data:application/mdoc;base64,${b64Mdoc}`,
     type: 'EnvelopedVerifiablePresentation'
   };
 }

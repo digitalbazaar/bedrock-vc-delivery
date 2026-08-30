@@ -320,13 +320,14 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     });
 
     // vpToken is base64url-encoded mDL device response
-    const vpToken = verifiablePresentation.id.slice(
+    const b64Mdoc = verifiablePresentation.id.slice(
       verifiablePresentation.id.indexOf(',') + 1);
+    const vpToken = Buffer.from(b64Mdoc, 'base64').toString('base64url');
 
     // get expected presentation response
     let expectedPresentation;
     {
-      const deviceResponse = Buffer.from(vpToken, 'base64url');
+      const deviceResponse = Buffer.from(b64Mdoc, 'base64');
       expectedPresentation = await mdlUtils.verifyPresentation({
         deviceResponse, handover,
         trustedCertificates: [mdocCertChain.intermediate.pemCertificate]
@@ -518,13 +519,14 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     });
 
     // vpToken is base64url-encoded mDL device response
-    const vpToken = verifiablePresentation.id.slice(
+    const b64Mdoc = verifiablePresentation.id.slice(
       verifiablePresentation.id.indexOf(',') + 1);
+    const vpToken = Buffer.from(b64Mdoc, 'base64').toString('base64url');
 
     // get expected presentation response
     let expectedPresentation;
     {
-      const deviceResponse = Buffer.from(vpToken, 'base64url');
+      const deviceResponse = Buffer.from(b64Mdoc, 'base64');
       expectedPresentation = await mdlUtils.verifyPresentation({
         deviceResponse, handover,
         trustedCertificates: [mdocCertChain.intermediate.pemCertificate]
@@ -793,13 +795,14 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     });
 
     // vpToken is base64url-encoded mDL device response
-    const vpToken = verifiablePresentation.id.slice(
+    const b64Mdoc = verifiablePresentation.id.slice(
       verifiablePresentation.id.indexOf(',') + 1);
+    const vpToken = Buffer.from(b64Mdoc, 'base64').toString('base64url');
 
     // get expected presentation response
     let expectedPresentation;
     {
-      const deviceResponse = Buffer.from(vpToken, 'base64url');
+      const deviceResponse = Buffer.from(b64Mdoc, 'base64');
       expectedPresentation = await mdlUtils.verifyPresentation({
         deviceResponse, handover,
         trustedCertificates: [mdocCertChain.intermediate.pemCertificate]
@@ -809,7 +812,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
 
     // send authorization response
     const {result} = await oid4vp.sendAuthorizationResponse({
-      vpToken, vpTokenMediaType: 'application/mdl-vp-token',
+      vpToken, vpTokenMediaType: 'application/mdoc-vp-token',
       verifiablePresentation, authorizationRequest, agent,
       encryptionOptions: {
         mdoc: {handover}
@@ -1008,10 +1011,11 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     // vpToken is credential response object with a key identifying the DCQL
     // credential query and an array with a base64url-encoded mDL device
     // response as its single element
+    const b64Mdoc = verifiablePresentation.id.slice(
+      verifiablePresentation.id.indexOf(',') + 1);
+    const b64UrlMdoc = Buffer.from(b64Mdoc, 'base64').toString('base64url');
     const vpToken = {
-      'mdl-id': [verifiablePresentation.id.slice(
-        verifiablePresentation.id.indexOf(',') + 1)
-      ]
+      'mdl-id': [b64UrlMdoc]
     };
 
     // get expected presentation response
@@ -1027,7 +1031,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
 
     // send authorization response
     const {result} = await oid4vp.sendAuthorizationResponse({
-      vpToken, vpTokenMediaType: 'application/mdl-vp-token',
+      vpToken, vpTokenMediaType: 'application/mdoc-vp-token',
       verifiablePresentation, authorizationRequest, agent,
       encryptionOptions: {
         mdoc: {handover}
@@ -1285,13 +1289,14 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     });
 
     // vpToken is base64url-encoded mDL device response
-    const vpToken = verifiablePresentation.id.slice(
+    const b64Mdoc = verifiablePresentation.id.slice(
       verifiablePresentation.id.indexOf(',') + 1);
+    const vpToken = Buffer.from(b64Mdoc, 'base64').toString('base64url');
 
     // get expected presentation response
     let expectedPresentation;
     {
-      const deviceResponse = Buffer.from(vpToken, 'base64url');
+      const deviceResponse = Buffer.from(b64Mdoc, 'base64');
       await mdlUtils.verifyPresentation({
         deviceResponse, handover,
         trustedCertificates: [mdocCertChain.intermediate.pemCertificate]
