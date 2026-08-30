@@ -12,7 +12,7 @@ const VC_CONTEXT_2 = 'https://www.w3.org/ns/credentials/v2';
 const MDL_NAMESPACE = 'org.iso.18013.5.1';
 const MDOC_TYPE_MDL = `${MDL_NAMESPACE}.mDL`;
 
-const {encodeSessionTranscript} = oid4vp.mdl;
+const {encodeSessionTranscript} = oid4vp.mdoc;
 
 // mdocContext implements the crypto/cose/x509 interfaces required by @owf/mdoc
 export const mdocContext = {
@@ -212,12 +212,13 @@ export async function verifyPresentation({
 
     // express cbor-encoded mdoc as an enveloped VC in a VP
     const encodedMdoc = mdoc.encode();
-    const b64Mdl = Buffer.from(encodedMdoc).toString('base64');
+    const b64Mdoc = Buffer.from(encodedMdoc).toString('base64');
     return {
       '@context': [VC_CONTEXT_2],
       type: 'VerifiablePresentation',
       verifiableCredential: [{
-        id: `data:application/mdl;base64,${b64Mdl}`,
+        '@context': [VC_CONTEXT_2],
+        id: `data:application/mdoc;base64,${b64Mdoc}`,
         type: 'EnvelopedVerifiableCredential'
       }]
     };

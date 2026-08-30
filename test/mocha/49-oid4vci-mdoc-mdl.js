@@ -35,7 +35,7 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
     // certificate chain -- the issuer instance will be discarded; another
     // issuer instance will be created below that will be used in the test
     const envelope = {
-      mediaType: 'application/mdl',
+      mediaType: 'application/mdoc',
       algorithm: 'P-256'
     };
     await helpers.provisionDependencies({
@@ -175,7 +175,7 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
             }
           }
         },
-        supportedMediaTypes: ['application/mdl'],
+        supportedMediaTypes: ['application/mdoc'],
         zcapReferenceIds: {
           issue: 'issue'
         }
@@ -460,7 +460,7 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
 
     // assert mDL contents
     const b64 = verifiableCredential.id
-      .slice('data:application/mdl;base64,'.length);
+      .slice('data:application/mdoc;base64,'.length);
     const encodedIssuerSigned = Buffer.from(b64, 'base64');
     // decode issuerSigned directly — no CBOR container wrapping needed
     const issuerSigned = IssuerSigned.decode(encodedIssuerSigned);

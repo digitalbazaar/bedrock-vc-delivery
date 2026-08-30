@@ -800,6 +800,9 @@ export async function provisionDependencies({
       verifierConfig,
       workflowCreateChallengeZcap,
       workflowVerifyPresentationZcap,
+      mdocCaStoreId,
+      mdocCertChain,
+      // deprecated
       mdlCaStoreId,
       mdlCertChain
     }
@@ -809,10 +812,15 @@ export async function provisionDependencies({
   ]);
 
   return {
+    capabilityAgent,
     issuerConfig, workflowIssueZcap, workflowCredentialStatusZcap,
     verifierConfig, workflowCreateChallengeZcap,
-    workflowVerifyPresentationZcap, mdlCaStoreId, mdlCertChain,
-    capabilityAgent
+    workflowVerifyPresentationZcap,
+    mdocCaStoreId,
+    mdocCertChain,
+    // deprecated
+    mdlCaStoreId,
+    mdlCertChain
   };
 }
 
@@ -1027,7 +1035,9 @@ export async function provisionVerifier({
     delegator: capabilityAgent
   });
 
-  const mdlCaStoreId = verifierOptions?.verifyOptions?.mdl?.caStores?.[0];
+  const mdocCaStoreId = verifierOptions?.verifyOptions?.mdoc?.caStores?.[0] ??
+    // deprecated
+    verifierOptions?.verifyOptions?.mdl?.caStores?.[0];
 
   // create verifer instance w/ oauth2-based authz
   const verifierConfig = await createVerifierConfig(
@@ -1035,18 +1045,18 @@ export async function provisionVerifier({
   const {id: verifierId} = verifierConfig;
   const verifierRootZcap = `urn:zcap:root:${encodeURIComponent(verifierId)}`;
 
-  let mdlCertChain;
-  if(mdlCaStoreId) {
+  let mdocCertChain;
+  if(mdocCaStoreId) {
     // create a certificate chain that ends in the MDL issuer (leaf)
-    mdlCertChain = await generateCertificateChain();
+    mdocCertChain = await generateCertificateChain();
 
     // add mDL CA store with intermediate certificate
     {
       const client = createZcapClient({capabilityAgent});
-      const url = `${verifierConfig.id}/mdl/ca-stores`;
-      const trustedCertificates = [mdlCertChain.intermediate.pemCertificate];
+      const url = `${verifierConfig.id}/mdoc/ca-stores`;
+      const trustedCertificates = [mdocCertChain.intermediate.pemCertificate];
       await client.write({
-        url, json: {id: mdlCaStoreId, trustedCertificates},
+        url, json: {id: mdocCaStoreId, trustedCertificates},
         capability: verifierRootZcap
       });
     }
@@ -1078,8 +1088,11 @@ export async function provisionVerifier({
     verifierConfig,
     workflowCreateChallengeZcap,
     workflowVerifyPresentationZcap,
-    mdlCaStoreId,
-    mdlCertChain
+    mdocCaStoreId,
+    mdocCertChain,
+    // deprecated
+    mdlCaStoreId: mdocCaStoreId,
+    mdlCertChain: mdocCertChain
   };
 }
 

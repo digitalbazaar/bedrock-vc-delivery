@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2022-2026 Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2022-2026 Digital Bazaar, Inc.
  */
 import * as helpers from './helpers.js';
 import * as mdlUtils from './mdlUtils.js';
@@ -17,8 +17,8 @@ describe('exchange w/ OID4VP mDL presentation', () => {
   const leafDnsName = 'mdl.reader.example';
   let capabilityAgent;
   let deviceKeyPair;
-  // `mdlCertChain` is for verifying the mDL issuer's signature
-  let mdlCertChain;
+  // `mdocCertChain` is for verifying the mDL issuer's signature
+  let mdocCertChain;
   let mdoc;
   // `x5c` and `trustedCertificates` are for verifying the mDL
   // reader's signature
@@ -28,11 +28,11 @@ describe('exchange w/ OID4VP mDL presentation', () => {
   let workflowId;
   let workflowRootZcap;
   beforeEach(async () => {
-    // add `mdl` config to verifier config options
-    const caStoreId = `urn:mdl-ca-store:${uuid()}`;
+    // add `mdoc` config to verifier config options
+    const caStoreId = `urn:mdoc-ca-store:${uuid()}`;
     const verifierOptions = {
       verifyOptions: {
-        mdl: {
+        mdoc: {
           caStores: [caStoreId]
         }
       }
@@ -42,7 +42,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       workflowCreateChallengeZcap,
       workflowVerifyPresentationZcap
     } = deps;
-    ({capabilityAgent, mdlCertChain} = deps);
+    ({capabilityAgent, mdocCertChain} = deps);
 
     // create OID4VP authz request signing params
     const authzRequestSigningParams = await helpers
@@ -90,8 +90,8 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     deviceKeyPair = await mdlUtils.generateDeviceKeyPair();
 
     // issue an MDL
-    const issuerPrivateJwk = mdlCertChain.leaf.subject.jwk;
-    const issuerCertificate = mdlCertChain.leaf.pemCertificate;
+    const issuerPrivateJwk = mdocCertChain.leaf.subject.jwk;
+    const issuerCertificate = mdocCertChain.leaf.pemCertificate;
     mdoc = await mdlUtils.issue({
       issuerPrivateJwk, issuerCertificate,
       devicePublicJwk: deviceKeyPair.publicJwk
@@ -158,7 +158,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
                   age_over_21: ''
                 }
               },
-              acceptedEnvelopes: ['application/mdl']
+              acceptedEnvelopes: [{
+                mediaType: 'application/mdoc',
+                meta: {docType: 'org.iso.18013.5.1.mDL'}
+              }]
             }
           }],
           domain: baseUrl
@@ -279,7 +282,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
               age_over_21: ''
             }
           },
-          acceptedEnvelopes: ['application/mdl']
+          acceptedEnvelopes: [{
+            mediaType: 'application/mdoc',
+            meta: {docType: 'org.iso.18013.5.1.mDL'}
+          }]
         }
       }],
       // OID4VP requires this to be `client_id` or `response_uri`
@@ -323,7 +329,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       const deviceResponse = Buffer.from(vpToken, 'base64url');
       expectedPresentation = await mdlUtils.verifyPresentation({
         deviceResponse, handover,
-        trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
+        trustedCertificates: [mdocCertChain.intermediate.pemCertificate]
       });
       should.exist(expectedPresentation);
     }
@@ -342,7 +348,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       vpToken, verifiablePresentation, authorizationRequest, agent,
       presentationSubmission,
       encryptionOptions: {
-        mdl: {handover}
+        mdoc: {handover}
       }
     });
     // should be only an optional `redirect_uri` in the response
@@ -521,7 +527,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       const deviceResponse = Buffer.from(vpToken, 'base64url');
       expectedPresentation = await mdlUtils.verifyPresentation({
         deviceResponse, handover,
-        trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
+        trustedCertificates: [mdocCertChain.intermediate.pemCertificate]
       });
       should.exist(expectedPresentation);
     }
@@ -540,7 +546,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       vpToken, verifiablePresentation, authorizationRequest, agent,
       presentationSubmission,
       encryptionOptions: {
-        mdl: {handover}
+        mdoc: {handover}
       }
     });
     // should be only an optional `redirect_uri` in the response
@@ -608,7 +614,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
                   age_over_21: ''
                 }
               },
-              acceptedEnvelopes: ['application/mdl']
+              acceptedEnvelopes: [{
+                mediaType: 'application/mdoc',
+                meta: {docType: 'org.iso.18013.5.1.mDL'}
+              }]
             }
           }],
           domain: baseUrl
@@ -740,7 +749,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
               age_over_21: ''
             }
           },
-          acceptedEnvelopes: ['application/mdl']
+          acceptedEnvelopes: [{
+            mediaType: 'application/mdoc',
+            meta: {docType: 'org.iso.18013.5.1.mDL'}
+          }]
         }
       }],
       // OID4VP requires this to be `client_id` or `response_uri`
@@ -790,7 +802,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       const deviceResponse = Buffer.from(vpToken, 'base64url');
       expectedPresentation = await mdlUtils.verifyPresentation({
         deviceResponse, handover,
-        trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
+        trustedCertificates: [mdocCertChain.intermediate.pemCertificate]
       });
       should.exist(expectedPresentation);
     }
@@ -800,7 +812,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       vpToken, vpTokenMediaType: 'application/mdl-vp-token',
       verifiablePresentation, authorizationRequest, agent,
       encryptionOptions: {
-        mdl: {handover}
+        mdoc: {handover}
       }
     });
     // should be only an optional `redirect_uri` in the response
@@ -866,7 +878,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
                   age_over_21: ''
                 }
               },
-              acceptedEnvelopes: ['application/mdl']
+              acceptedEnvelopes: [{
+                mediaType: 'application/mdoc',
+                meta: {docType: 'org.iso.18013.5.1.mDL'}
+              }]
             }
           }],
           domain: baseUrl
@@ -1005,7 +1020,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       const deviceResponse = Buffer.from(vpToken['mdl-id'][0], 'base64url');
       expectedPresentation = await mdlUtils.verifyPresentation({
         deviceResponse, handover,
-        trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
+        trustedCertificates: [mdocCertChain.intermediate.pemCertificate]
       });
       should.exist(expectedPresentation);
     }
@@ -1015,7 +1030,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       vpToken, vpTokenMediaType: 'application/mdl-vp-token',
       verifiablePresentation, authorizationRequest, agent,
       encryptionOptions: {
-        mdl: {handover}
+        mdoc: {handover}
       }
     });
     // should be only an optional `redirect_uri` in the response
@@ -1106,7 +1121,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
                   age_over_21: ''
                 }
               },
-              acceptedEnvelopes: ['application/mdl']
+              acceptedEnvelopes: [{
+                mediaType: 'application/mdoc',
+                meta: {docType: 'org.iso.18013.5.1.mDL'}
+              }]
             }
           }],
           domain: baseUrl
@@ -1225,7 +1243,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
               age_over_21: ''
             }
           },
-          acceptedEnvelopes: ['application/mdl']
+          acceptedEnvelopes: [{
+            mediaType: 'application/mdoc',
+            meta: {docType: 'org.iso.18013.5.1.mDL'}
+          }]
         }
       }],
       // OID4VP requires this to be `client_id` or `response_uri`
@@ -1273,7 +1294,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
       const deviceResponse = Buffer.from(vpToken, 'base64url');
       await mdlUtils.verifyPresentation({
         deviceResponse, handover,
-        trustedCertificates: [mdlCertChain.intermediate.pemCertificate]
+        trustedCertificates: [mdocCertChain.intermediate.pemCertificate]
       });
       should.not.exist(expectedPresentation);
     }
@@ -1295,7 +1316,7 @@ describe('exchange w/ OID4VP mDL presentation', () => {
           vpToken, verifiablePresentation, authorizationRequest, agent,
           presentationSubmission,
           encryptionOptions: {
-            mdl: {handover}
+            mdoc: {handover}
           }
         });
       } catch(error) {
