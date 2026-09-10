@@ -1,5 +1,13 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.18.1 - TBD
+
+### Fixed
+- Return early from `_issue()` when there are no issue requests. A step
+  carrying `verifiablePresentation` with no `issueRequests` previously
+  reached issuer instance resolution and threw a `TypeError` on a workflow
+  with no `issue` zcap, preventing delivery of out-of-band issued VCs.
+
 ## 7.18.0 - 2026-08-31
 
 ### Added
