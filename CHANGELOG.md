@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.18.1 - TBD
+## 7.18.1 - 2026-09-11
 
 ### Fixed
 - Return early from `_issue()` when there are no issue requests. A step
