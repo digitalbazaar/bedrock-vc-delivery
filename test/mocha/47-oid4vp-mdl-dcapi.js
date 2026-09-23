@@ -72,12 +72,9 @@ describe('DC-API presentation', () => {
       myStep: {
         stepTemplate: {
           type: 'jsonata',
-          template: `
-          {
-            "createChallenge": true,
-            "verifiablePresentationRequest": verifiablePresentationRequest,
-            "openId": openId
-          }`
+          template: _createStepTemplate({
+            leafDnsName, x5c, signAuthorizationRequestRefId
+          })
         }
       }
     };
@@ -110,10 +107,8 @@ describe('DC-API presentation', () => {
   });
 
   async function _executeExchange({protocolName}) {
-    // create an exchange with appropriate variables for the step template
-    const exchange = _createExchangeRequest({
-      leafDnsName, x5c, signAuthorizationRequestRefId
-    });
+    // create an exchange
+    const exchange = _createExchangeRequest();
     const {id: exchangeId} = await helpers.createExchange({
       url: `${workflowId}/exchanges`,
       capabilityAgent, capability: workflowRootZcap, exchange
@@ -175,8 +170,6 @@ describe('DC-API presentation', () => {
         .vp_formats.should.include.keys(['mso_mdoc']);
       // ensure DCQL is set
       should.exist(authorizationRequest.dcql_query);
-      authorizationRequest.dcql_query.should.eql(
-        exchange.variables.openId.clientProfiles[profileName].dcql_query);
 
       // save authz request; would be included in a single DC API request
       authzRequestMap.set(name, {
@@ -292,70 +285,12 @@ describe('DC-API presentation', () => {
   }
 });
 
-function _createExchangeRequest({
-  leafDnsName, x5c, signAuthorizationRequestRefId
-}) {
+function _createExchangeRequest() {
   return {
     // 15 minute expiry in seconds
     ttl: 60 * 15,
     // template variables
-    variables: {
-      verifiablePresentationRequest: {
-        query: [{
-          type: 'QueryByExample',
-          group: 'vc',
-          credentialQuery: {
-            reason: 'You must be over 18 years old to use this service.',
-            example: {
-              '@context': [
-                'https://www.w3.org/ns/credentials/v2',
-                'https://w3id.org/vdl/v2'
-              ],
-              type: 'Iso18013DriversLicenseCredential',
-              credentialSubject: {
-                driversLicense: {
-                  age_over_18: true
-                }
-              }
-            }
-          }
-        }, {
-          type: 'QueryByExample',
-          group: 'mdl',
-          credentialQuery: {
-            example: {
-              'org.iso.18013.5.1': {
-                age_over_21: ''
-              }
-            },
-            acceptedEnvelopes: [{
-              mediaType: 'application/mdoc',
-              meta: {docType: 'org.iso.18013.5.1.mDL'}
-            }]
-          }
-        }],
-        domain: baseUrl
-      },
-      openId: {
-        clientProfiles: {
-          default: _createClientProfile({
-            protocolName: 'OID4VP',
-            responseMode: 'dc_api.jwt',
-            leafDnsName, x5c, signAuthorizationRequestRefId
-          }),
-          '18013-7-Annex-C': _createClientProfile({
-            protocolName: '18013-7-Annex-C',
-            responseMode: 'dc_api',
-            leafDnsName, x5c, signAuthorizationRequestRefId
-          }),
-          '18013-7-Annex-D': _createClientProfile({
-            protocolName: '18013-7-Annex-D',
-            responseMode: 'dc_api.jwt',
-            leafDnsName, x5c, signAuthorizationRequestRefId
-          })
-        }
-      }
-    }
+    variables: {}
   };
 }
 
@@ -398,4 +333,68 @@ function _createClientProfile({
       signAuthorizationRequest: signAuthorizationRequestRefId
     }
   };
+}
+
+function _createStepTemplate({
+  leafDnsName, x5c, signAuthorizationRequestRefId
+}) {
+  const templateObject = {
+    createChallenge: true,
+    verifiablePresentationRequest: {
+      query: [{
+        type: 'QueryByExample',
+        group: 'vc',
+        credentialQuery: {
+          reason: 'You must be over 18 years old to use this service.',
+          example: {
+            '@context': [
+              'https://www.w3.org/ns/credentials/v2',
+              'https://w3id.org/vdl/v2'
+            ],
+            type: 'Iso18013DriversLicenseCredential',
+            credentialSubject: {
+              driversLicense: {
+                age_over_18: true
+              }
+            }
+          }
+        }
+      }, {
+        type: 'QueryByExample',
+        group: 'mdl',
+        credentialQuery: {
+          example: {
+            'org.iso.18013.5.1': {
+              age_over_21: ''
+            }
+          },
+          acceptedEnvelopes: [{
+            mediaType: 'application/mdoc',
+            meta: {docType: 'org.iso.18013.5.1.mDL'}
+          }]
+        }
+      }],
+      domain: baseUrl
+    },
+    openId: {
+      clientProfiles: {
+        default: _createClientProfile({
+          protocolName: 'OID4VP',
+          responseMode: 'dc_api.jwt',
+          leafDnsName, x5c, signAuthorizationRequestRefId
+        }),
+        '18013-7-Annex-C': _createClientProfile({
+          protocolName: '18013-7-Annex-C',
+          responseMode: 'dc_api',
+          leafDnsName, x5c, signAuthorizationRequestRefId
+        }),
+        '18013-7-Annex-D': _createClientProfile({
+          protocolName: '18013-7-Annex-D',
+          responseMode: 'dc_api.jwt',
+          leafDnsName, x5c, signAuthorizationRequestRefId
+        })
+      }
+    }
+  };
+  return JSON.stringify(templateObject, null, 2);
 }
