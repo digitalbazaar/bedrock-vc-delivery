@@ -547,6 +547,8 @@ const oid4vpClientProfile = {
       required: ['x5c'],
       additionalProperties: false,
       properties: {
+        // FIXME: consider adding `privateKeyJwk` as an alternative to using
+        // a zcap for a WebKMS key
         x5c: {
           type: 'array',
           minItems: 1,
@@ -999,6 +1001,13 @@ export function openIdAuthorizationResponseBody() {
       not: {
         required: ['presentation_submission', 'vp_token', 'state']
       }
+    }, {
+      // for response_mode == 'dc_api'
+      required: ['Response'],
+      // cannot also use any other params
+      not: {
+        required: ['presentation_submission', 'vp_token', 'state']
+      }
     }],
     properties: {
       // is a JSON string in the x-www-form-urlencoded body
@@ -1025,6 +1034,10 @@ export function openIdAuthorizationResponseBody() {
       },
       response: {
         // must be an encrypted JWT
+        type: 'string'
+      },
+      Response: {
+        // must be an HPKE encrypted mdoc device response (ISO 18013-7 Annex C)
         type: 'string'
       },
       state: {

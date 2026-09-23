@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.18.2 - 2026-09-dd
+
+### Fixed
+- Improve support for ISO 18013-7 Annex C responses over OID4VP.
+
 ## 7.18.1 - 2026-09-11
 
 ### Fixed
