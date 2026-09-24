@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.19.0 - 2026-09-dd
+## 7.19.0 - 2026-09-24
 
 ### Added
 - Allow `privateKeyJwk` to be included as an authz request signing
