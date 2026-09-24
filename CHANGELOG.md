@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.19.0 - 2026-09-dd
+
+### Added
+- Allow `privateKeyJwk` to be included as an authz request signing
+  parameter for OID4VP client profiles.
+
 ## 7.18.2 - 2026-09-23
 
 ### Fixed

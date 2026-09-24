@@ -25,8 +25,9 @@ describe('DC-API presentation', () => {
   // `mdocCertChain` is for verifying the mDL issuer's signature
   let mdocCertChain;
   let mdoc;
-  // `x5c` and `trustedCertificates` are for verifying the mDL
-  // reader's signature
+  // `authorizationRequestPrivateKeyJwk`, `x5c`, and `trustedCertificates` are
+  // for verifying the mDL reader's signature, they are not for mDL issuers
+  let authorizationRequestPrivateKeyJwk;
   let x5c;
   let trustedCertificates;
   let signAuthorizationRequestRefId;
@@ -49,35 +50,46 @@ describe('DC-API presentation', () => {
     } = deps;
     ({capabilityAgent, mdocCertChain} = deps);
 
+    const zcaps = {
+      createChallenge: workflowCreateChallengeZcap,
+      verifyPresentation: workflowVerifyPresentationZcap
+    };
+
     // create OID4VP authz request signing params
     const authzRequestSigningParams = await helpers
       .createWorkflowOid4vpAuthzRequestSigningParams({
-        capabilityAgent, leafConfig: {dnsName: leafDnsName}
+        capabilityAgent, leafConfig: {dnsName: leafDnsName},
+        // note: set to `false` to use zcap for authz signing private key
+        // instead of a `privateKeyJwk`
+        returnPrivateKeyJwk: true
       });
     ({
+      authorizationRequestPrivateKeyJwk,
       x5c,
       trustedCertificates
     } = authzRequestSigningParams);
+
+    // only present if `returnPrivateKeyJwk: false` above
     const {signAuthorizationRequestZcap} = authzRequestSigningParams;
+    if(signAuthorizationRequestZcap) {
+      signAuthorizationRequestRefId = `urn:uuid:${uuid()}`;
+      zcaps[signAuthorizationRequestRefId] = signAuthorizationRequestZcap;
+    }
 
     // create workflow instance w/ oauth2-based authz
-    signAuthorizationRequestRefId = `urn:uuid:${uuid()}`;
-    const zcaps = {
-      createChallenge: workflowCreateChallengeZcap,
-      verifyPresentation: workflowVerifyPresentationZcap,
-      [signAuthorizationRequestRefId]: signAuthorizationRequestZcap
-    };
     // require semantically-named workflow steps
     const steps = {
       myStep: {
         stepTemplate: {
           type: 'jsonata',
           template: _createStepTemplate({
-            leafDnsName, x5c, signAuthorizationRequestRefId
+            leafDnsName, x5c, signAuthorizationRequestRefId,
+            authorizationRequestPrivateKeyJwk
           })
         }
       }
     };
+
     // set initial step
     const initialStep = 'myStep';
     const workflowConfig = await helpers.createWorkflowConfig({
@@ -296,7 +308,8 @@ function _createExchangeRequest() {
 
 function _createClientProfile({
   protocolName, responseMode,
-  leafDnsName, x5c, signAuthorizationRequestRefId
+  leafDnsName, x5c,
+  signAuthorizationRequestRefId, authorizationRequestPrivateKeyJwk
 }) {
   return {
     // ensure each created authz request gets stored in a different variable
@@ -310,6 +323,7 @@ function _createClientProfile({
     },
     expected_origins: [`https://${leafDnsName}`],
     authorizationRequestSigningParameters: {
+      privateKeyJwk: authorizationRequestPrivateKeyJwk,
       x5c
     },
     dcql_query: {
@@ -336,7 +350,8 @@ function _createClientProfile({
 }
 
 function _createStepTemplate({
-  leafDnsName, x5c, signAuthorizationRequestRefId
+  leafDnsName, x5c,
+  signAuthorizationRequestRefId, authorizationRequestPrivateKeyJwk
 }) {
   const templateObject = {
     createChallenge: true,
@@ -381,17 +396,20 @@ function _createStepTemplate({
         default: _createClientProfile({
           protocolName: 'OID4VP',
           responseMode: 'dc_api.jwt',
-          leafDnsName, x5c, signAuthorizationRequestRefId
+          leafDnsName, x5c,
+          signAuthorizationRequestRefId, authorizationRequestPrivateKeyJwk
         }),
         '18013-7-Annex-C': _createClientProfile({
           protocolName: '18013-7-Annex-C',
           responseMode: 'dc_api',
-          leafDnsName, x5c, signAuthorizationRequestRefId
+          leafDnsName, x5c,
+          signAuthorizationRequestRefId, authorizationRequestPrivateKeyJwk
         }),
         '18013-7-Annex-D': _createClientProfile({
           protocolName: '18013-7-Annex-D',
           responseMode: 'dc_api.jwt',
-          leafDnsName, x5c, signAuthorizationRequestRefId
+          leafDnsName, x5c,
+          signAuthorizationRequestRefId, authorizationRequestPrivateKeyJwk
         })
       }
     }
