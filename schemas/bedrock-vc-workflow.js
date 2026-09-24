@@ -547,8 +547,22 @@ const oid4vpClientProfile = {
       required: ['x5c'],
       additionalProperties: false,
       properties: {
-        // FIXME: consider adding `privateKeyJwk` as an alternative to using
-        // a zcap for a WebKMS key
+        privateKeyJwk: {
+          type: 'object',
+          required: ['kid', 'kty', 'crv', 'x', 'y', 'd'],
+          properties: {
+            // only ES256 supported at this time
+            alg: {enum: ['ES256']},
+            kid: {type: 'string'},
+            kty: {enum: ['EC']},
+            crv: {enum: ['P-256']},
+            x: {type: 'string'},
+            y: {type: 'string'},
+            d: {type: 'string'},
+            use: {const: 'sig'},
+            key_ops: {const: ['sign']}
+          }
+        },
         x5c: {
           type: 'array',
           minItems: 1,

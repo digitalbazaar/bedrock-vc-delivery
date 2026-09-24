@@ -306,41 +306,59 @@ export async function createWorkflowConfig({
 }
 
 export async function createWorkflowOid4vpAuthzRequestSigningParams({
-  capabilityAgent, leafConfig
+  capabilityAgent, leafConfig, returnPrivateKeyJwk = false
 } = {}) {
   // auto-generate DID using `did:key`
   const publicAliasTemplate =
     'did:key:{publicKeyMultibase}#{publicKeyMultibase}';
 
-  // generate a key for signing authz requests
-  const keystoreAgent = await createKeystoreAgent({capabilityAgent});
-  const signingKey = await generateAsymmetricKey({
-    keystoreAgent, algorithm: 'P-256', publicAliasTemplate
-  });
+  // generate a key for signing authz requests, either
+  // `authorizationRequestPrivateKeyJwk` or
+  // `signAuthorizationRequestZcap`
+  let authorizationRequestPrivateKeyJwk;
+  let authorizationRequestPublicKeyJwk;
+  let signAuthorizationRequestZcap;
+  if(returnPrivateKeyJwk) {
+    const keyPair = await generateKeyPair({algorithm: 'ES256'});
+    authorizationRequestPrivateKeyJwk = keyPair.privateKeyJwk;
+    authorizationRequestPublicKeyJwk = keyPair.publicKeyJwk;
+    const mk = await EcdsaMultikey.fromJwk({
+      jwk: authorizationRequestPublicKeyJwk
+    });
+    const {publicKeyMultibase} = await mk.export({publicKey: true});
+    const kid = `did:key:${publicKeyMultibase}#${publicKeyMultibase}`;
+    authorizationRequestPrivateKeyJwk.kid = kid;
+    authorizationRequestPrivateKeyJwk.alg = 'ES256';
+    authorizationRequestPublicKeyJwk.kid = kid;
+    authorizationRequestPublicKeyJwk.alg = 'ES256';
+  } else {
+    const keystoreAgent = await createKeystoreAgent({capabilityAgent});
+    const signingKey = await generateAsymmetricKey({
+      keystoreAgent, algorithm: 'P-256', publicAliasTemplate
+    });
 
-  // delegate issuer root zcap to workflow service
-  const workflowServiceAgentUrl =
-    `${mockData.baseUrl}/service-agents/${encodeURIComponent('vc-workflow')}`;
-  const {data: workflowServiceAgent} = await httpClient.get(
-    workflowServiceAgentUrl, {agent});
+    // delegate issuer root zcap to workflow service
+    const workflowServiceAgentUrl =
+      `${mockData.baseUrl}/service-agents/${encodeURIComponent('vc-workflow')}`;
+    const {data: workflowServiceAgent} = await httpClient.get(
+      workflowServiceAgentUrl, {agent});
 
-  // zcap to sign using the above key to enable signing authz requests
-  const signAuthorizationRequestZcap = await delegate({
-    capability: createRootZcap({
-      url: parseKeystoreId(signingKey.kmsId)
-    }),
-    controller: workflowServiceAgent.id,
-    invocationTarget: signingKey.kmsId,
-    delegator: capabilityAgent
-  });
+    // zcap to sign using the above key to enable signing authz requests
+    signAuthorizationRequestZcap = await delegate({
+      capability: createRootZcap({
+        url: parseKeystoreId(signingKey.kmsId)
+      }),
+      controller: workflowServiceAgent.id,
+      invocationTarget: signingKey.kmsId,
+      delegator: capabilityAgent
+    });
 
-  // get public key
-  const keyPair = await signingKey.getKeyDescription();
-  const authorizationRequestPublicKeyJwk = await EcdsaMultikey.toJwk({
-    keyPair
-  });
-  authorizationRequestPublicKeyJwk.kid = signingKey.id;
-  authorizationRequestPublicKeyJwk.alg = 'ES256';
+    // get public key
+    const keyPair = await signingKey.getKeyDescription();
+    authorizationRequestPublicKeyJwk = await EcdsaMultikey.toJwk({keyPair});
+    authorizationRequestPublicKeyJwk.kid = signingKey.id;
+    authorizationRequestPublicKeyJwk.alg = 'ES256';
+  }
 
   // auto-generate `x5c` that includes public key for signing key
   const certificateChainEntities = await generateCertificateChain({
@@ -356,7 +374,8 @@ export async function createWorkflowOid4vpAuthzRequestSigningParams({
   ];
 
   return {
-    authorizationRequestPublicKeyJwk, signAuthorizationRequestZcap,
+    authorizationRequestPrivateKeyJwk, authorizationRequestPublicKeyJwk,
+    signAuthorizationRequestZcap,
     certificateChainEntities, x5c, trustedCertificates
   };
 }
