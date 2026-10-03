@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.19.1 - 2026-mm-dd
+
+### Fixed
+- Use `@digitalbazaar/oid4-client@5.15.1` to get mdoc Annex C handover format
+  fixes.
+
 ## 7.19.0 - 2026-09-24
 
 ### Added
