@@ -92,10 +92,10 @@ describe('exchange w/ OID4VP mDL presentation', () => {
     // issue an MDL
     const issuerPrivateJwk = mdocCertChain.leaf.subject.jwk;
     const issuerCertificate = mdocCertChain.leaf.pemCertificate;
-    mdoc = await mdlUtils.issue({
+    ({mdoc} = await mdlUtils.issue({
       issuerPrivateJwk, issuerCertificate,
       devicePublicJwk: deviceKeyPair.publicJwk
-    });
+    }));
   });
 
   it('should pass Annex B w/ VC API also enabled', async () => {

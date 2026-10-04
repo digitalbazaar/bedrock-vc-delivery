@@ -1,5 +1,13 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.19.2 - 2026-10-dd
+
+### Fixed
+- Fix response payload for a `dcapi` "response_mode" Annex C authz request,
+  returning JSON that includes the `request` to be passed to DC API and `meta`
+  that includes the base authorization request for help with testing and
+  debugging.
+
 ## 7.19.1 - 2026-10-03
 
 ### Fixed

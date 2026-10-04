@@ -1,10 +1,17 @@
 /*
  * Copyright (c) 2025-2026 Digital Bazaar, Inc.
  */
+import {
+  CoseKey, DeviceKey,
+  IsoMdocDcApi,
+  //IssuerSigned,
+  Issuer as MDocIssuer,
+  SignatureAlgorithm
+} from '@owf/mdoc';
 import {DeviceResponse, Document, MDoc, /*parse,*/ Verifier} from '@auth0/mdl';
 import {exportJWK, importX509} from 'jose';
 import {webcrypto, X509Certificate} from 'node:crypto';
-import {CoseKey} from '@owf/mdoc';
+import {decode as cborDecode} from 'cborg';
 import {oid4vp} from '@digitalbazaar/oid4-client';
 
 const VC_CONTEXT_2 = 'https://www.w3.org/ns/credentials/v2';
@@ -37,24 +44,35 @@ export const mdocContext = {
           {name: 'ECDSA', hash: 'SHA-256'}, cryptoKey, toBeSigned);
         return new Uint8Array(sig);
       },
-      async verify({sign1, key}) {
+      async verify({signature, key, toBeVerified}) {
         const cryptoKey = await webcrypto.subtle.importKey(
           'jwk', _cleanJwk(key.jwk),
           {name: 'ECDSA', namedCurve: 'P-256'},
           false, ['verify']);
         return webcrypto.subtle.verify(
           {name: 'ECDSA', hash: 'SHA-256'}, cryptoKey,
-          sign1.signature, sign1.toBeSigned);
+          signature, toBeVerified);
       }
     }
   },
   x509: {
+    getSubjectNameField({certificate, field}) {
+      const cert = new X509Certificate(certificate);
+      return _parseDN(cert.subject)[field] ?? [];
+    },
     getIssuerNameField({certificate, field}) {
       const cert = new X509Certificate(certificate);
       return _parseDN(cert.issuer)[field] ?? [];
     },
-    async getPublicKey({certificate, alg}) {
+    async getPublicKey({certificate, alg, algorithm}) {
       const cert = new X509Certificate(certificate);
+      if(!alg && algorithm) {
+        if(algorithm === -7) {
+          alg = 'ES256';
+        } else if(algorithm === -35) {
+          alg = 'ES384';
+        }
+      }
       const key = await importX509(cert.toString(), alg, {extractable: true});
       return CoseKey.fromJwk(await exportJWK(key));
     },
@@ -84,10 +102,15 @@ export const mdocContext = {
       }
 
       // the last cert in the chain must be trusted (or self-signed by trusted)
+      let trustedCertificate;
       const lastCert = chain[chain.length - 1];
       const isTrusted = trusted.some(t => {
         try {
-          return lastCert.verify(t.publicKey) && lastCert.checkIssued(t);
+          if(lastCert.verify(t.publicKey) && lastCert.checkIssued(t)) {
+            trustedCertificate = t;
+            return true;
+          }
+          return false;
         } catch(e) {
           return false;
         }
@@ -97,6 +120,13 @@ export const mdocContext = {
           'No trusted certificate was found while validating the X.509 chain');
       }
       _checkValidity(lastCert, now);
+
+      return {
+        // return verified chain + trusted certificate it descends from
+        chain: [
+          ...x5chain.slice(), new Uint8Array(trustedCertificate.rawData)
+        ]
+      };
     },
     async getCertificateData({certificate}) {
       const cert = new X509Certificate(certificate);
@@ -115,10 +145,107 @@ export const mdocContext = {
   }
 };
 
+export function coseKeyToJwk({coseKey} = {}) {
+  // convert from `@owf/mdoc` structure if necessary
+  if(!(coseKey instanceof Map) && typeof coseKey.encode === 'function') {
+    const cbor = coseKey.encode();
+    coseKey = cborDecode(cbor, {useMaps: true});
+  }
+
+  const kty = coseKey.get(1) === 2 ? 'EC' : undefined;
+  const crvId = coseKey.get(-1);
+  let crv;
+  if(crvId === 1) {
+    crv = 'P-256';
+  } else if(crv === 2) {
+    crv = 'P-384';
+  }
+  const x = coseKey.get(-2);
+  const y = coseKey.get(-3);
+
+  if(!(kty === 'EC' && (crv === 'P-256' || crv === 'P-384'))) {
+    throw new Error(
+      'Unknown supported COSE key for mdoc decryption; ' +
+      'only EC (2), P-256 (1) or P-384 (2) are accepted.');
+  }
+
+  // https://datatracker.ietf.org/doc/html/rfc9053
+  return {
+    kty,
+    crv,
+    x: Buffer.from(x).toString('base64url'),
+    y: Buffer.from(y).toString('base64url')
+  };
+}
+
 export async function createPresentation({
+  dcApiRequest, origin,
   presentationDefinition,
-  mdoc, handover, devicePrivateJwk
+  mdoc, /* issuerSigned, */
+  handover, devicePrivateJwk
 } = {}) {
+  if(dcApiRequest?.protocol === 'org-iso-mdoc') {
+    const parsedRequest = await IsoMdocDcApi.parseRequest({
+      request: dcApiRequest.data, origin
+    }, mdocContext);
+
+    // convert doc request into DCQL
+    const credentials = parsedRequest.docRequests.map(docRequest => {
+      const {namespaces} = docRequest;
+      const claims = [];
+      for(const [namespace, fields] of namespaces) {
+        for(const field of fields.keys()) {
+          claims.push({
+            path: [namespace, field],
+            intent_to_retain: true
+          });
+        }
+      }
+      return {
+        id: 'mdl-id',
+        format: 'mso_mdoc',
+        meta: {doctype_value: docRequest.docType},
+        claims
+      };
+    });
+    const dcqlQuery = {credentials};
+
+    // convert DCQL into presentation definition
+    const groupId = globalThis.crypto.randomUUID();
+    const input_descriptors = dcqlQuery.credentials.map(credential => {
+      const fields = credential.claims.map(claim => {
+        return {
+          path: [`\$['${claim.path.join('\'][\'')}']`],
+          fields: {type: 'string'}
+        };
+      });
+      return {
+        id: credential.meta.doctype_value,
+        constraints: {fields},
+        format: {[credential.format]: {}},
+        group: [groupId]
+      };
+    });
+    presentationDefinition = {
+      id: globalThis.crypto.randomUUID(),
+      input_descriptors,
+      submission_requirements: [{
+        rule: 'pick',
+        count: 1,
+        from: groupId
+      }]
+    };
+  }
+
+  // FIXME: this API undesirably performs full encryption, etc. so it is not
+  // left to oid4-client
+  /*const deviceKey = CoseKey.fromJwk(devicePrivateJwk);
+  const response = await IsoMdocDcApi.createResponse({
+    parsedRequest,
+    documents: [{issuerSigned, deviceKey, docRequestIndex: 0}]
+  }, mdocContext);
+  encodedDeviceResponse = response.encode();*/
+
   // pick input_descriptor w/ID: `MDOC_TYPE_MDL` as needed by auth0 lib
   presentationDefinition = {
     ...presentationDefinition,
@@ -134,6 +261,7 @@ export async function createPresentation({
   //console.log('Device response', deviceResponse);
 
   const encodedDeviceResponse = deviceResponse.encode();
+
   const b64Mdoc = Buffer.from(encodedDeviceResponse).toString('base64');
   // console.log('device side: device response cbor', encodedDeviceResponse);
   // console.log(vpToken, 'vpToken');
@@ -164,6 +292,37 @@ export async function issue({
   issuerPrivateJwk, issuerCertificate,
   devicePublicJwk
 } = {}) {
+  // parse issuer certificate chain and use it to modulate validity period
+  const validityInfo = {};
+  const issuerCertificateChain = [issuerCertificate].map(pem => {
+    const certificate = new X509Certificate(pem);
+    // limit validity period to certificate period
+    const validFrom = certificate.validFromDate;
+    const validUntil = certificate.validToDate;
+    validityInfo.validFrom = validFrom;
+    validityInfo.validUntil = validUntil;
+    validityInfo.signed = validityInfo.validFrom;
+    return certificate.raw;
+  });
+
+  // construct and sign mDL
+  const mdocIssuer = new MDocIssuer(MDOC_TYPE_MDL, mdocContext);
+  mdocIssuer.addIssuerNamespace(MDL_NAMESPACE, {
+    family_name: 'FamilyName',
+    given_name: 'GivenName',
+    birth_date: '1990-01-01',
+    age_over_21: true
+  });
+  const issuerSigned = await mdocIssuer.sign({
+    signingKey: CoseKey.fromJwk(issuerPrivateJwk),
+    certificates: issuerCertificateChain,
+    algorithm: SignatureAlgorithm.ES256,
+    digestAlgorithm: 'SHA-256',
+    deviceKeyInfo: {deviceKey: DeviceKey.fromJwk(devicePublicJwk)},
+    validityInfo
+  });
+
+  // issue *another* mdoc in legacy format using `@auth0/mdl`
   const document = await new Document(MDOC_TYPE_MDL)
     .addIssuerNameSpace(MDL_NAMESPACE, {
       family_name: 'FamilyName',
@@ -180,7 +339,12 @@ export async function issue({
       kid: issuerPrivateJwk.kid,
       alg: 'ES256'
     });
-  return new MDoc([document]);
+
+  // return both legacy `mdoc` and `issuerSigned`
+  return {
+    mdoc: new MDoc([document]),
+    issuerSigned
+  };
 }
 
 export async function verifyPresentation({

@@ -258,10 +258,8 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
     const [b64Url] = allCredentials;
     b64Url.should.be.a('string');
 
-    // assert mDL contents
-    const encodedIssuerSigned = Buffer.from(b64Url, 'base64url');
     // decode issuerSigned directly — no CBOR container wrapping needed
-    const issuerSigned = IssuerSigned.decode(encodedIssuerSigned);
+    const issuerSigned = IssuerSigned.fromEncodedForOid4Vci(b64Url);
     const rawFields = issuerSigned.getPrettyClaims(MDL_NAMESPACE);
 
     // @owf/mdoc decodes nested CBOR maps as JS Map instances; convert to
@@ -286,9 +284,10 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
     ].map(pem => new Uint8Array(Buffer.from(
       pem.replace(/-----[^-]+-----/g, '').replace(/\s/g, ''), 'base64')));
 
-    await Holder.verifyIssuerSigned(
-      {issuerSigned, trustedCertificates},
-      mdocContext);
+    await Holder.verifyIssuerSigned({
+      issuerSigned,
+      trustedCertificates: [{issuance: trustedCertificates}]
+    }, mdocContext);
   });
 
   it('should pass w/ jwt DID Auth', async () => {
@@ -361,11 +360,8 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
     const [b64Url] = allCredentials;
     b64Url.should.be.a('string');
 
-    // assert mDL contents
-    const encodedIssuerSigned = Buffer.from(b64Url, 'base64url');
-
     // decode issuerSigned directly — no CBOR container wrapping needed
-    const issuerSigned = IssuerSigned.decode(encodedIssuerSigned);
+    const issuerSigned = IssuerSigned.fromEncodedForOid4Vci(b64Url);
     const rawFields = issuerSigned.getPrettyClaims(MDL_NAMESPACE);
 
     // @owf/mdoc decodes nested CBOR maps as JS Map instances; convert to
@@ -390,9 +386,10 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
     ].map(pem => new Uint8Array(Buffer.from(
       pem.replace(/-----[^-]+-----/g, '').replace(/\s/g, ''), 'base64')));
 
-    await Holder.verifyIssuerSigned(
-      {issuerSigned, trustedCertificates},
-      mdocContext);
+    await Holder.verifyIssuerSigned({
+      issuerSigned,
+      trustedCertificates: [{issuance: trustedCertificates}]
+    }, mdocContext);
   });
 
   it('should pass w/ VC-API delivery', async () => {
@@ -488,9 +485,10 @@ describe('exchange w/OID4VCI that issues mdoc mDL', () => {
     ].map(pem => new Uint8Array(Buffer.from(
       pem.replace(/-----[^-]+-----/g, '').replace(/\s/g, ''), 'base64')));
 
-    await Holder.verifyIssuerSigned(
-      {issuerSigned, trustedCertificates},
-      mdocContext);
+    await Holder.verifyIssuerSigned({
+      issuerSigned,
+      trustedCertificates: [{issuance: trustedCertificates}]
+    }, mdocContext);
   });
 });
 
