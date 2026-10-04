@@ -124,7 +124,7 @@ export const mdocContext = {
       return {
         // return verified chain + trusted certificate it descends from
         chain: [
-          ...x5chain.slice(), new Uint8Array(trustedCertificate.rawData)
+          ...x5chain.slice(), new Uint8Array(trustedCertificate.raw)
         ]
       };
     },
@@ -182,11 +182,13 @@ export async function createPresentation({
   dcApiRequest, origin,
   presentationDefinition,
   mdoc, /* issuerSigned, */
-  handover, devicePrivateJwk
+  handover, devicePrivateJwk,
+  trustedReaderCertificates
 } = {}) {
   if(dcApiRequest?.protocol === 'org-iso-mdoc') {
     const parsedRequest = await IsoMdocDcApi.parseRequest({
-      request: dcApiRequest.data, origin
+      request: dcApiRequest.data, origin,
+      trustedReaderCertificates
     }, mdocContext);
 
     // convert doc request into DCQL

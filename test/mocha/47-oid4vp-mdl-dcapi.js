@@ -3,12 +3,12 @@
  */
 import * as helpers from './helpers.js';
 import * as mdlUtils from './mdlUtils.js';
+import {randomUUID as uuid, X509Certificate} from 'node:crypto';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
 import {IsoMdocDcApi} from '@owf/mdoc';
 import {mockData} from './mock.data.js';
 import {oid4vp} from '@digitalbazaar/oid4-client';
-import {randomUUID as uuid} from 'node:crypto';
 
 const {baseUrl} = mockData;
 const {getAuthorizationRequest} = oid4vp;
@@ -62,7 +62,14 @@ describe('DC-API presentation', () => {
     // create OID4VP authz request signing params
     const authzRequestSigningParams = await helpers
       .createWorkflowOid4vpAuthzRequestSigningParams({
-        capabilityAgent, leafConfig: {dnsName: leafDnsName},
+        capabilityAgent,
+        leafConfig: {
+          dnsName: leafDnsName,
+          // FIXME: leaf must be marked as a CA to pass verification;
+          // investigate to see if this is correct or not and adjust
+          // accordingly
+          cA: true,
+        },
         // note: set to `false` to use zcap for authz signing private key
         // instead of a `privateKeyJwk`
         returnPrivateKeyJwk: true
@@ -242,7 +249,9 @@ describe('DC-API presentation', () => {
 
     if(dcApiRequest.protocol === 'org-iso-mdoc') {
       const parsedRequest = await IsoMdocDcApi.parseRequest({
-        request: dcApiRequest.data, origin
+        request: dcApiRequest.data, origin,
+        trustedReaderCertificates: trustedCertificates.map(
+          c => new Uint8Array(new X509Certificate(c).raw))
       }, mdlUtils.mdocContext);
 
       // get key in JWK format
@@ -280,7 +289,9 @@ describe('DC-API presentation', () => {
       presentationDefinition: authorizationRequest?.presentation_definition,
       mdoc, issuerSigned,
       handover,
-      devicePrivateJwk: deviceKeyPair.privateJwk
+      devicePrivateJwk: deviceKeyPair.privateJwk,
+      trustedReaderCertificates: trustedCertificates.map(
+        c => new Uint8Array(new X509Certificate(c).raw))
     });
 
     // `vpToken` format depends on `response_mode`; response modes under test
