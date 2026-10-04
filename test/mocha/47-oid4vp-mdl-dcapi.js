@@ -5,6 +5,7 @@ import * as helpers from './helpers.js';
 import * as mdlUtils from './mdlUtils.js';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
+import {IsoMdocDcApi} from '@owf/mdoc';
 import {mockData} from './mock.data.js';
 import {oid4vp} from '@digitalbazaar/oid4-client';
 import {randomUUID as uuid} from 'node:crypto';
@@ -24,7 +25,10 @@ describe('DC-API presentation', () => {
   let deviceKeyPair;
   // `mdocCertChain` is for verifying the mDL issuer's signature
   let mdocCertChain;
+  // old `mdoc` interface from `@auth0/mdl`
   let mdoc;
+  // new `issuerSigned` mdoc interface from `@owf/mdoc`
+  let issuerSigned;
   // `authorizationRequestPrivateKeyJwk`, `x5c`, and `trustedCertificates` are
   // for verifying the mDL reader's signature, they are not for mDL issuers
   let authorizationRequestPrivateKeyJwk;
@@ -106,13 +110,18 @@ describe('DC-API presentation', () => {
     // issue an MDL
     const issuerPrivateJwk = mdocCertChain.leaf.subject.jwk;
     const issuerCertificate = mdocCertChain.leaf.pemCertificate;
-    mdoc = await mdlUtils.issue({
+    const mdocIssuanceResult = await mdlUtils.issue({
       issuerPrivateJwk, issuerCertificate,
       devicePublicJwk: deviceKeyPair.publicJwk
     });
+    mdoc = mdocIssuanceResult.mdoc;
+    issuerSigned = mdocIssuanceResult.issuerSigned;
   });
 
   it('should pass', async () => {
+    // uncomment for testing / developing individual protocols
+    //await _executeExchange({protocolName: '18013-7-Annex-C'});
+    //await _executeExchange({protocolName: '18013-7-Annex-D'});
     for(const protocolName of PROTOCOL_NAMES) {
       await _executeExchange({protocolName});
     }
@@ -137,9 +146,26 @@ describe('DC-API presentation', () => {
       const authzReqUrl =
         `${exchangeId}/openid/clients/${profileName}/authorization/request`;
 
+      let authorizationRequest;
+      let dcApiRequest;
       let oid4vpUrl;
-      {
-        // `openid4vp` URL would be:
+      if(name === '18013-7-Annex-C') {
+        // fetch authz request as a simple HTTPS request
+        const response = await httpClient.get(authzReqUrl, {agent});
+        should.exist(response.data?.request);
+        should.exist(response.data?.meta?.authorizationRequest);
+        const {request} = response.data;
+        should.exist(request?.protocol);
+        request.protocol.should.equal('org-iso-mdoc');
+        should.exist(request.data?.deviceRequest);
+        request.data.deviceRequest.should.be.a('string');
+        should.exist(request.data?.encryptionInfo);
+        request.data.encryptionInfo.should.be.a('string');
+
+        dcApiRequest = request;
+        authorizationRequest = response.data.meta.authorizationRequest;
+      } else {
+        // `openid4vp` URL should be:
         const searchParams = new URLSearchParams({
           client_id: `x509_san_dns:${leafDnsName}`,
           request_uri: authzReqUrl,
@@ -156,66 +182,92 @@ describe('DC-API presentation', () => {
         should.exist(response.data.protocols.vcapi);
         response.data.protocols.vcapi.should.equal(exchangeId);
         should.exist(response.data.protocols[name]);
-        response.data.protocols[name].should.equal(oid4vpUrl);
-      }
+        if(name !== '18013-7-Annex-C') {
+          response.data.protocols[name].should.equal(oid4vpUrl);
+        }
 
-      // get authorization request
-      const {authorizationRequest} = await getAuthorizationRequest(
-        {url: oid4vpUrl, getTrustedCertificates, agent});
-      // client ID should be prefixed
-      should.exist(authorizationRequest);
-      should.exist(authorizationRequest.client_id.should.equal(
-        `x509_san_dns:${leafDnsName}`
-      ));
-      // PE should be auto-generated
-      should.exist(authorizationRequest.presentation_definition);
-      authorizationRequest.presentation_definition.id.should.be.a('string');
-      authorizationRequest.presentation_definition.input_descriptors.should.be
-        .an('array');
-      if(name === '18013-7-Annex-C') {
-        authorizationRequest.response_mode.should.equal('dc_api');
-      } else {
-        authorizationRequest.response_mode.should.equal('dc_api.jwt');
+        // get authorization request
+        ({authorizationRequest} = await getAuthorizationRequest(
+          {url: oid4vpUrl, getTrustedCertificates, agent}));
+        // client ID should be prefixed
+        should.exist(authorizationRequest);
+        should.exist(authorizationRequest.client_id.should.equal(
+          `x509_san_dns:${leafDnsName}`
+        ));
+        // PE should be auto-generated
+        should.exist(authorizationRequest.presentation_definition);
+        authorizationRequest.presentation_definition.id.should.be.a('string');
+        authorizationRequest.presentation_definition.input_descriptors.should.be
+          .an('array');
+        if(name === '18013-7-Annex-C') {
+          authorizationRequest.response_mode.should.equal('dc_api');
+        } else {
+          authorizationRequest.response_mode.should.equal('dc_api.jwt');
+        }
+        authorizationRequest.nonce.should.be.a('string');
+        authorizationRequest.client_metadata
+          .vp_formats.should.include.keys(['mso_mdoc']);
+        // ensure DCQL is set
+        should.exist(authorizationRequest.dcql_query);
+
+        dcApiRequest = {
+          protocol: 'openid4vp-v1-signed',
+          data: {
+            response_type: 'vp_token',
+            nonce: authorizationRequest.nonce,
+            dcql_query: authorizationRequest.dcql_query
+          }
+        };
       }
-      authorizationRequest.nonce.should.be.a('string');
-      authorizationRequest.client_metadata
-        .vp_formats.should.include.keys(['mso_mdoc']);
-      // ensure DCQL is set
-      should.exist(authorizationRequest.dcql_query);
 
       // save authz request; would be included in a single DC API request
       authzRequestMap.set(name, {
         profileName,
         oid4vpUrl,
+        dcApiRequest,
         authorizationRequest
       });
     }
 
     // choose `protocolName`-specific authz request for processing as the
     // DC API internals would
-    const {authorizationRequest} = authzRequestMap.get(protocolName);
+    const {
+      authorizationRequest, dcApiRequest
+    } = authzRequestMap.get(protocolName);
 
     // generate mdoc device response as VP...
-
-    // select recipient public key for encryption
-    const recipientPublicJwk = oid4vp.authzResponse.selectRecipientPublicJwk({
-      authorizationRequest
-    });
-
     let handover;
-    if(authorizationRequest.response_mode === 'dc_api') {
+    let recipientPublicJwk;
+    const origin = `https://${leafDnsName}`;
+
+    if(dcApiRequest.protocol === 'org-iso-mdoc') {
+      const parsedRequest = await IsoMdocDcApi.parseRequest({
+        request: dcApiRequest.data, origin
+      }, mdlUtils.mdocContext);
+
+      // get key in JWK format
+      const {recipientPublicKey} = parsedRequest.encryptionInfo;
+      recipientPublicJwk = mdlUtils.coseKeyToJwk({
+        coseKey: recipientPublicKey
+      });
+
       // create an mdoc Annex C handover
       handover = {
         type: 'dcapi',
-        origin: `https://${leafDnsName}`,
-        nonce: authorizationRequest.nonce,
+        origin,
+        nonce: parsedRequest.encryptionInfo.nonce,
         recipientPublicJwk
       };
     } else {
+      // select recipient public key for encryption
+      recipientPublicJwk = oid4vp.authzResponse.selectRecipientPublicJwk({
+        authorizationRequest
+      });
+
       // create an mdoc Annex D handover
       handover = {
         type: 'OpenID4VPDCAPIHandover',
-        origin: `https://${leafDnsName}`,
+        origin,
         nonce: authorizationRequest.nonce,
         recipientPublicJwk
       };
@@ -223,8 +275,10 @@ describe('DC-API presentation', () => {
 
     // create mDL enveloped presentation
     const verifiablePresentation = await mdlUtils.createPresentation({
-      presentationDefinition: authorizationRequest.presentation_definition,
-      mdoc,
+      dcApiRequest,
+      origin: `https://${leafDnsName}`,
+      presentationDefinition: authorizationRequest?.presentation_definition,
+      mdoc, issuerSigned,
       handover,
       devicePrivateJwk: deviceKeyPair.privateJwk
     });
@@ -236,7 +290,7 @@ describe('DC-API presentation', () => {
       verifiablePresentation.id.indexOf(',') + 1);
     const b64UrlMDoc = Buffer.from(b64Mdoc, 'base64').toString('base64url');
     let vpToken;
-    if(authorizationRequest.response_mode === 'dc_api') {
+    if(dcApiRequest.protocol === 'org-iso-mdoc') {
       // use base64url-encoded mdoc device response directly
       vpToken = b64UrlMDoc;
     } else {
@@ -341,7 +395,7 @@ function _createClientProfile({
     },
     protocolUrlParameters: {
       name: protocolName,
-      scheme: 'openid4vp'
+      scheme: responseMode === 'dc_api' ? 'https' : 'openid4vp'
     },
     zcapReferenceIds: {
       signAuthorizationRequest: signAuthorizationRequestRefId
