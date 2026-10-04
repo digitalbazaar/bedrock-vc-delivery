@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.19.2 - 2026-10-dd
+## 7.19.2 - 2026-10-04
 
 ### Fixed
 - Fix response payload for a `dcapi` "response_mode" Annex C authz request,
