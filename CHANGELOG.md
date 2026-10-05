@@ -1,5 +1,11 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.19.3 - 2026-10-dd
+
+### Fixed
+- Fix Annex C hpke `info`; use raw CBOR-encoded `SessionTranscript`; do not
+  use `SessionTranscriptBytes`, i.e., exclude the CBOR tag 24 wrapper.
+
 ## 7.19.2 - 2026-10-04
 
 ### Fixed
