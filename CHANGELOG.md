@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.19.4 - 2026-10-dd
+
+### Fixed
+- Use `@digitalbazaar/oid4-client@5.15.3`.
+
 ## 7.19.3 - 2026-10-05
 
 ### Fixed
