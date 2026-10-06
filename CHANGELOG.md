@@ -4,6 +4,7 @@
 
 ### Fixed
 - Use `@digitalbazaar/oid4-client@5.15.3`.
+- Add missing `@owf/mdoc` dependency.
 
 ## 7.19.3 - 2026-10-05
 
