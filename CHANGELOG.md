@@ -1,5 +1,12 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.19.5 - 2026-10-dd
+
+### Fixed
+- Use only the key material (`kty`, `crv`, `x`, `y`) for the Annex C
+  `EncryptionInfo` recipient COSE key so the `SessionTranscript` matches
+  wallets that hash the `EncryptionInfo` as received.
+
 ## 7.19.4 - 2026-10-06
 
 ### Fixed
