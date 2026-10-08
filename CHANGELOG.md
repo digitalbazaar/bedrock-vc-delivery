@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.19.5 - 2026-10-dd
+## 7.19.5 - 2026-10-07
 
 ### Fixed
 - Use only the key material (`kty`, `crv`, `x`, `y`) for the Annex C
