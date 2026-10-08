@@ -19,7 +19,7 @@ const PROTOCOL_NAMES = [
   '18013-7-Annex-D'
 ];
 
-describe('DC-API presentation', () => {
+describe.only('DC-API presentation', () => {
   const leafDnsName = 'mdl.reader.example';
   let capabilityAgent;
   let deviceKeyPair;
@@ -267,6 +267,13 @@ describe('DC-API presentation', () => {
         nonce: parsedRequest.encryptionInfo.nonce,
         recipientPublicJwk
       };
+      // a wallet's `SessionTranscript` (over the `EncryptionInfo` as received)
+      // must equal the one oid4-client rebuilds for decryption
+      const expected = await oid4vp.mdoc.encodeSessionTranscript({
+        handover, raw: true
+      });
+      Buffer.from(parsedRequest.sessionTranscript.encode())
+        .should.eql(Buffer.from(expected));
     } else {
       // select recipient public key for encryption
       recipientPublicJwk = oid4vp.authzResponse.selectRecipientPublicJwk({
