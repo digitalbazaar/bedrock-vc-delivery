@@ -19,7 +19,7 @@ const PROTOCOL_NAMES = [
   '18013-7-Annex-D'
 ];
 
-describe.only('DC-API presentation', () => {
+describe('DC-API presentation', () => {
   const leafDnsName = 'mdl.reader.example';
   let capabilityAgent;
   let deviceKeyPair;
