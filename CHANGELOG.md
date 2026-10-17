@@ -1,5 +1,29 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.20.0 - 2026-mm-dd
+
+### Added
+- Add `<exchangeId>/request` support for obtaining the next request
+  in a VC API exchange.
+- Add `step.acceptedEncryption` feature to allow clients to encrypt
+  presentations. The value of this field must be set to
+  `{required: <boolean>}`. When it is present, encryption key(s)
+  will be generated and expressed in a VPR by setting
+  `<vpr>.acceptedEncryption = {required: <boolean>, jwks: [...]}`.
+  A future revision might allow per-query accepted encryption to be specified
+  by providing other options in `step.acceptedEncryption`, but for now the
+  feature will turn this on at the top-level of the VPR. Additional
+  encryption is usually not necessary and does not provide more protection
+  unless the response moves over other channels prior to submission over
+  TLS. This is because the public encryption key itself is delivered within
+  the already authenticated and encrypted TLS channel. Note that some mdoc
+  implementations might require encryption to be used when generating
+  device responses, regardless of whether the response will travel over any
+  other channels prior to moving over TLS.
+
+### Fixed
+- Allow single value `type` fields for VCs and VPs.
+
 ## 7.19.5 - 2026-10-07
 
 ### Fixed

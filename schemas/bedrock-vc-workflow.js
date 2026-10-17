@@ -77,16 +77,20 @@ function verifiableCredential() {
       },
       issuer: idOrObjectWithId(),
       type: {
-        type: 'array',
-        minItems: 1,
-        // this first type must be VerifiableCredential
-        items: [
-          {const: 'VerifiableCredential'},
-        ],
-        // additional types must be strings
-        additionalItems: {
-          type: 'string'
-        }
+        anyOf: [{
+          const: 'VerifiableCredential'
+        }, {
+          type: 'array',
+          minItems: 1,
+          // this first type must be VerifiableCredential
+          items: [
+            {const: 'VerifiableCredential'},
+          ],
+          // additional types must be strings
+          additionalItems: {
+            type: 'string'
+          }
+        }]
       },
       proof: schemas.proof()
     }
@@ -152,16 +156,20 @@ export function verifiablePresentation() {
       '@context': vcContext,
       id: {type: 'string'},
       type: {
-        type: 'array',
-        minItems: 1,
-        // this first type must be VerifiablePresentation
-        items: [
-          {const: 'VerifiablePresentation'},
-        ],
-        // additional types must be strings
-        additionalItems: {
-          type: 'string'
-        }
+        anyOf: [{
+          const: 'VerifiablePresentation'
+        }, {
+          type: 'array',
+          minItems: 1,
+          // this first type must be VerifiablePresentation
+          items: [
+            {const: 'VerifiablePresentation'},
+          ],
+          // additional types must be strings
+          additionalItems: {
+            type: 'string'
+          }
+        }]
       },
       verifiableCredential: verifiableOrEnvelopedCredentials(),
       holder: idOrObjectWithId(),
@@ -621,6 +629,13 @@ function computedStep() {
     additionalProperties: false,
     properties: {
       allowUnprotectedPresentation: {type: 'boolean'},
+      acceptedEncryption: {
+        type: 'object',
+        required: ['required'],
+        properties: {
+          required: {type: 'boolean'}
+        }
+      },
       callback: {
         type: 'object',
         required: ['url'],
@@ -791,6 +806,7 @@ export function useExchangeBody() {
     type: 'object',
     additionalProperties: false,
     properties: {
+      done: {type: 'boolean'},
       referenceId: {type: 'string'},
       verifiablePresentationRequest: {type: 'object'},
       verifiablePresentation: {
