@@ -7,13 +7,12 @@ import {randomUUID as uuid, X509Certificate} from 'node:crypto';
 import {agent} from '@bedrock/https-agent';
 import {httpClient} from '@digitalbazaar/http-client';
 import {IsoMdocDcApi} from '@owf/mdoc';
-import {mockData} from './mock.data.js';
 import {oid4vp} from '@digitalbazaar/oid4-client';
 
-const {baseUrl} = mockData;
 const {getAuthorizationRequest} = oid4vp;
 
 const PROTOCOL_NAMES = [
+  'vcapi',
   'OID4VP',
   '18013-7-Annex-C',
   '18013-7-Annex-D'
@@ -127,6 +126,7 @@ describe('DC-API presentation', () => {
 
   it('should pass', async () => {
     // uncomment for testing / developing individual protocols
+    //await _executeExchange({protocolName: 'vcapi'});
     //await _executeExchange({protocolName: '18013-7-Annex-C'});
     //await _executeExchange({protocolName: '18013-7-Annex-D'});
     for(const protocolName of PROTOCOL_NAMES) {
@@ -144,19 +144,41 @@ describe('DC-API presentation', () => {
 
     const getTrustedCertificates = async () => trustedCertificates;
 
+    // save `presentation_definition` for use with current old API for
+    // creating mdoc presentation
+    let presentationDefinition;
+
     // always fetch *all* possible authz requests to ensure a single button
     // DC API implementation would work by including all requests at once
     const authzRequestMap = new Map();
     for(const name of PROTOCOL_NAMES) {
-      const profileName = encodeURIComponent(
-        name === 'OID4VP' ? 'default' : name);
-      const authzReqUrl =
-        `${exchangeId}/openid/clients/${profileName}/authorization/request`;
+      let authzReqUrl;
+      if(name === 'vcapi') {
+        authzReqUrl = `${exchangeId}/request`;
+      } else {
+        const profileName = encodeURIComponent(
+          name === 'OID4VP' ? 'default' : name);
+        authzReqUrl =
+          `${exchangeId}/openid/clients/${profileName}/authorization/request`;
+      }
 
       let authorizationRequest;
       let dcApiRequest;
       let oid4vpUrl;
-      if(name === '18013-7-Annex-C') {
+      if(name === 'vcapi') {
+        // fetch authz request as a simple HTTPS request
+        const response = await httpClient.get(authzReqUrl, {agent});
+        should.exist(response.data?.verifiablePresentationRequest);
+        //console.dir({vcApiAuthzRequest: response.data}, {depth: Infinity});
+        authorizationRequest = response.data;
+
+        dcApiRequest = {
+          protocol: 'vcalm',
+          data: {
+            interactionUrl: `${exchangeId}/protocols?iuv=1`
+          }
+        };
+      } else if(name === '18013-7-Annex-C') {
         // fetch authz request as a simple HTTPS request
         const response = await httpClient.get(authzReqUrl, {agent});
         should.exist(response.data?.request);
@@ -189,9 +211,6 @@ describe('DC-API presentation', () => {
         should.exist(response.data.protocols.vcapi);
         response.data.protocols.vcapi.should.equal(exchangeId);
         should.exist(response.data.protocols[name]);
-        if(name !== '18013-7-Annex-C') {
-          response.data.protocols[name].should.equal(oid4vpUrl);
-        }
 
         // get authorization request
         ({authorizationRequest} = await getAuthorizationRequest(
@@ -206,11 +225,7 @@ describe('DC-API presentation', () => {
         authorizationRequest.presentation_definition.id.should.be.a('string');
         authorizationRequest.presentation_definition.input_descriptors.should.be
           .an('array');
-        if(name === '18013-7-Annex-C') {
-          authorizationRequest.response_mode.should.equal('dc_api');
-        } else {
-          authorizationRequest.response_mode.should.equal('dc_api.jwt');
-        }
+        authorizationRequest.response_mode.should.equal('dc_api.jwt');
         authorizationRequest.nonce.should.be.a('string');
         authorizationRequest.client_metadata
           .vp_formats.should.include.keys(['mso_mdoc']);
@@ -225,11 +240,12 @@ describe('DC-API presentation', () => {
             dcql_query: authorizationRequest.dcql_query
           }
         };
+
+        presentationDefinition = authorizationRequest.presentation_definition;
       }
 
       // save authz request; would be included in a single DC API request
       authzRequestMap.set(name, {
-        profileName,
         oid4vpUrl,
         dcApiRequest,
         authorizationRequest
@@ -247,7 +263,18 @@ describe('DC-API presentation', () => {
     let recipientPublicJwk;
     const origin = `https://${leafDnsName}`;
 
-    if(dcApiRequest.protocol === 'org-iso-mdoc') {
+    if(dcApiRequest.protocol === 'vcalm') {
+      const {verifiablePresentationRequest} = authorizationRequest;
+      recipientPublicJwk = verifiablePresentationRequest
+        .acceptedEncryption.jwks[0];
+      // create an mdoc Annex D handover
+      handover = {
+        type: 'OpenID4VPDCAPIHandover',
+        origin,
+        nonce: verifiablePresentationRequest.challenge,
+        recipientPublicJwk
+      };
+    } else if(dcApiRequest.protocol === 'org-iso-mdoc') {
       const parsedRequest = await IsoMdocDcApi.parseRequest({
         request: dcApiRequest.data, origin,
         trustedReaderCertificates: trustedCertificates.map(
@@ -289,11 +316,16 @@ describe('DC-API presentation', () => {
       };
     }
 
-    // create mDL enveloped presentation
-    const verifiablePresentation = await mdlUtils.createPresentation({
+    //console.dir({clientHandover: handover}, {depth: Infinity});
+
+    // create mDL enveloped credential
+    const {
+      envelopedVerifiableCredential, verifiablePresentation
+    } = await mdlUtils.createEnvelopedData({
       dcApiRequest,
       origin: `https://${leafDnsName}`,
-      presentationDefinition: authorizationRequest?.presentation_definition,
+      presentationDefinition: authorizationRequest?.presentation_definition ??
+        presentationDefinition,
       mdoc, issuerSigned,
       handover,
       devicePrivateJwk: deviceKeyPair.privateJwk,
@@ -304,8 +336,8 @@ describe('DC-API presentation', () => {
     // `vpToken` format depends on `response_mode`; response modes under test
     // here both use a base64url-encoded mdoc device response, but differ in
     // how it is wrapped
-    const b64Mdoc = verifiablePresentation.id.slice(
-      verifiablePresentation.id.indexOf(',') + 1);
+    const b64Mdoc = envelopedVerifiableCredential.id.slice(
+      envelopedVerifiableCredential.id.indexOf(',') + 1);
     const b64UrlMDoc = Buffer.from(b64Mdoc, 'base64').toString('base64url');
     let vpToken;
     if(dcApiRequest.protocol === 'org-iso-mdoc') {
@@ -329,22 +361,50 @@ describe('DC-API presentation', () => {
       should.exist(expectedPresentation);
     }
 
-    // send authorization response
-    const {result} = await oid4vp.sendAuthorizationResponse({
-      vpToken,
-      // hacky; `vpToken` media type is inaccurate when a DCQL response wrapper
-      // encapsulates the base64url-encoded mdoc device response; this should
-      // be fixed in `@digitalbazaar/oid4-client`, not here
-      vpTokenMediaType: 'application/mdoc-vp-token',
-      verifiablePresentation, authorizationRequest, agent,
-      encryptionOptions: {
-        mdoc: {handover},
-        recipientPublicJwk
-      }
-    });
+    let result;
+    if(dcApiRequest.protocol === 'vcalm') {
+      //console.dir({presentation: verifiablePresentation}, {depth: Infinity});
+
+      // create encrypted presentation
+      const {authorizationResponse} = await oid4vp.authzResponse.create({
+        verifiablePresentation,
+        presentationSubmission: false,
+        encryptionOptions: {
+          mdoc: {handover},
+          recipientPublicJwk
+        }
+      });
+      const encryptedPresentation = {
+        '@context': ['https://www.w3.org/ns/credentials/v2'],
+        type: 'EnvelopedVerifiablePresentation',
+        id: `data:application/jwt,${authorizationResponse.response}`
+      };
+
+      // send response
+      const response = await httpClient.post(exchangeId, {
+        agent,
+        json: {verifiablePresentation: encryptedPresentation}
+      });
+      //console.dir({responseData: response.data});
+      result = response.data;
+    } else {
+      // send authorization response
+      ({result} = await oid4vp.sendAuthorizationResponse({
+        vpToken,
+        // hacky; `vpToken` media type is inaccurate when a DCQL response
+        // wrapper encapsulates the base64url-encoded mdoc device response;
+        // this should be fixed in `@digitalbazaar/oid4-client`, not here
+        vpTokenMediaType: 'application/mdoc-vp-token',
+        authorizationRequest, agent,
+        encryptionOptions: {
+          mdoc: {handover},
+          recipientPublicJwk
+        }
+      }));
+    }
     should.exist(result);
 
-    // exchange should be complete and contain the VP and open ID results
+    // exchange should be complete and contain the VP and protocol-based result
     // exchange state should be complete
     {
       let err;
@@ -356,11 +416,16 @@ describe('DC-API presentation', () => {
         should.exist(exchange.variables?.results?.myStep);
         should.exist(
           exchange.variables?.results?.myStep?.verifiablePresentation);
-        exchange.variables.results.myStep.verifiablePresentation
-          .should.deep.equal(expectedPresentation);
-        should.exist(exchange.variables.results.myStep.openId);
-        exchange.variables.results.myStep.openId.authorizationRequest
-          .should.deep.equal(authorizationRequest);
+        if(dcApiRequest.protocol === 'vcalm') {
+          exchange.variables.results.myStep.verifiablePresentation
+            .should.deep.equal(expectedPresentation);
+        } else {
+          exchange.variables.results.myStep.verifiablePresentation
+            .should.deep.equal(expectedPresentation);
+          should.exist(exchange.variables.results.myStep.openId);
+          exchange.variables.results.myStep.openId.authorizationRequest
+            .should.deep.equal(authorizationRequest);
+        }
       } catch(error) {
         err = error;
       }
@@ -426,6 +491,8 @@ function _createStepTemplate({
   signAuthorizationRequestRefId, authorizationRequestPrivateKeyJwk
 }) {
   const templateObject = {
+    acceptedEncryption: {required: false},
+    allowUnprotectedPresentation: true,
     createChallenge: true,
     verifiablePresentationRequest: {
       query: [{
@@ -461,7 +528,7 @@ function _createStepTemplate({
           }]
         }
       }],
-      domain: baseUrl
+      domain: `https://${leafDnsName}`
     },
     openId: {
       clientProfiles: {
@@ -486,5 +553,6 @@ function _createStepTemplate({
       }
     }
   };
+  //console.dir(templateObject, {colors: true, depth: Infinity});
   return JSON.stringify(templateObject, null, 2);
 }

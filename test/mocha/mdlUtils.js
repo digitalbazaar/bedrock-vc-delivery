@@ -178,6 +178,37 @@ export function coseKeyToJwk({coseKey} = {}) {
   };
 }
 
+export async function createEnvelopedData({
+  dcApiRequest, origin,
+  presentationDefinition,
+  mdoc, issuerSigned,
+  handover, devicePrivateJwk,
+  trustedReaderCertificates
+} = {}) {
+  const envelopedVerifiablePresentation = await createPresentation({
+    dcApiRequest, origin,
+    presentationDefinition,
+    mdoc, issuerSigned,
+    handover, devicePrivateJwk,
+    trustedReaderCertificates
+  });
+  const envelopedVerifiableCredential = {
+    '@context': [VC_CONTEXT_2],
+    id: envelopedVerifiablePresentation.id,
+    type: 'EnvelopedVerifiableCredential'
+  };
+  const verifiablePresentation = {
+    '@context': [VC_CONTEXT_2],
+    type: 'VerifiablePresentation',
+    verifiableCredential: envelopedVerifiableCredential
+  };
+  return {
+    envelopedVerifiableCredential,
+    envelopedVerifiablePresentation,
+    verifiablePresentation
+  };
+}
+
 export async function createPresentation({
   dcApiRequest, origin,
   presentationDefinition,
