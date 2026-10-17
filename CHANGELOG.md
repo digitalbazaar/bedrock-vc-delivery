@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.20.0 - 2026-mm-dd
+## 7.20.0 - 2026-10-17
 
 ### Added
 - Add `<exchangeId>/request` support for obtaining the next request
