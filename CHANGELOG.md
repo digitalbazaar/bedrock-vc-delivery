@@ -1,5 +1,10 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.20.1 - 2026-10-dd
+
+### Fixed
+- Fix crash when creating an exchange for a workflow without steps.
+
 ## 7.20.0 - 2026-10-17
 
 ### Added

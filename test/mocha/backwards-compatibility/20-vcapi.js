@@ -45,6 +45,33 @@ describe('exchanger backwards-compatibility: ' +
     exchangerRootZcap = `urn:zcap:root:${encodeURIComponent(exchangerId)}`;
   });
 
+  it('should not cause an unhandled rejection when creating an exchange ' +
+    'for a workflow without steps', async () => {
+    const rejections = [];
+    const onRejection = reason => rejections.push(reason);
+    process.on('unhandledRejection', onRejection);
+    try {
+      const {exchangeId} = await helpers.createCredentialOffer({
+        // local target user
+        userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+        credentialDefinition: mockData.credentialDefinition,
+        credentialId: `urn:uuid:${uuid()}`,
+        preAuthorized: true,
+        userPinRequired: false,
+        capabilityAgent,
+        exchangerId,
+        exchangerRootZcap
+      });
+      should.exist(exchangeId);
+      // allow any floating promise from exchange creation to settle
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } finally {
+      process.off('unhandledRejection', onRejection);
+    }
+    rejections.map(r => r?.message).should.eql([]);
+    rejections.should.have.length(0);
+  });
+
   it('should pass', async () => {
     // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
 
