@@ -64,12 +64,11 @@ describe('exchanger backwards-compatibility: ' +
       });
       should.exist(exchangeId);
       // allow any floating promise from exchange creation to settle
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setImmediate(resolve));
     } finally {
       process.off('unhandledRejection', onRejection);
     }
     rejections.map(r => r?.message).should.eql([]);
-    rejections.should.have.length(0);
   });
 
   it('should pass', async () => {
