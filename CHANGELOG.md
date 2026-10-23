@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.20.2 - 2026-10-dd
+## 7.20.2 - 2026-10-23
 
 ### Fixed
 - Keep the stored OID4VCI supported credential requests when an OID4VP
