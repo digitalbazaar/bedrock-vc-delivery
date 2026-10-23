@@ -2,11 +2,13 @@
  * Copyright (c) 2022-2026 Digital Bazaar, Inc.
  */
 import * as helpers from './helpers.js';
-import {getCredentialOffer, OID4Client} from '@digitalbazaar/oid4-client';
+import {
+  getCredentialOffer, OID4Client, oid4vp
+} from '@digitalbazaar/oid4-client';
 import {agent} from '@bedrock/https-agent';
 import {mockData} from './mock.data.js';
 
-const {credentialTemplateV2} = mockData;
+const {baseUrl, credentialTemplateV2} = mockData;
 
 describe('exchange w/OID4VCI 1.0+', () => {
   let capabilityAgent;
@@ -61,7 +63,10 @@ describe('exchange w/OID4VCI 1.0+', () => {
               "oid4vci": issueRequest2Oid4vci
             }],
             "divpDidProofRequest": divpDidProofRequest,
-            "jwtDidProofRequest": jwtDidProofRequest
+            "jwtDidProofRequest": jwtDidProofRequest,
+            "createChallenge": createChallenge,
+            "verifiablePresentationRequest": verifiablePresentationRequest,
+            "openId": openId
           }`
         }
       }
@@ -406,6 +411,135 @@ describe('exchange w/OID4VCI 1.0+', () => {
       try {
         const {exchange} = await helpers.getExchange(
           {id: offer.credential_issuer, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('complete');
+      } catch(error) {
+        err = error;
+      }
+      assertNoError(err);
+    }
+  });
+
+  it('should pass w/ OID4VP presentation required', async () => {
+    // pre-authorized flow, issuer-initiated
+    const {exchangeId, offerUrl} = await helpers.createCredentialOffer({
+      // local target user
+      userId: 'urn:uuid:01cc3771-7c51-47ab-a3a3-6d34b47ae3c4',
+      variables: {
+        subjectName1: 'Name One',
+        subjectName2: 'Name Two',
+        issueRequest1Oid4vci: {
+          credentialConfigurationId: 'myCredentialConfigId_no_did_auth'
+        },
+        issueRequest2Oid4vci: {
+          credentialConfigurationId: 'myCredentialConfigId_no_did_auth'
+        },
+        createChallenge: true,
+        verifiablePresentationRequest: {
+          query: {
+            type: 'DIDAuthentication',
+            acceptedMethods: [{method: 'key'}],
+            acceptedCryptosuites: [{cryptosuite: 'ecdsa-rdfc-2019'}]
+          },
+          domain: baseUrl
+        },
+        openId: {
+          createAuthorizationRequest: 'authorizationRequest'
+        }
+      },
+      preAuthorized: true,
+      userPinRequired: false,
+      capabilityAgent,
+      workflowId,
+      workflowRootZcap,
+      useCredentialOfferUri: true
+    });
+
+    // get offer from server
+    const offer = await getCredentialOffer({url: offerUrl, agent});
+    offer.credential_configuration_ids.should.deep.equal(
+      ['myCredentialConfigId_no_did_auth']);
+
+    // wallet / client gets access token
+    const client = await OID4Client.fromCredentialOffer({offer, agent});
+
+    // wallet / client attempts to receive credential(s), should receive a
+    // `presentation_required` error with an authorization request
+    let error;
+    try {
+      await client.requestCredentials({agent});
+    } catch(e) {
+      error = e;
+    }
+    should.exist(error);
+    should.exist(error.cause?.cause?.data);
+    error.cause.cause.data.error.should.equal('presentation_required');
+    should.exist(error.cause.cause.data.authorization_request);
+
+    // wallet / client responds to `authorization_request` by performing
+    // OID4VP
+    const {
+      cause: {cause: {data: {authorization_request: authorizationRequest}}}
+    } = error;
+    const {verifiablePresentationRequest} = await oid4vp.toVpr(
+      {authorizationRequest});
+    const {domain, challenge} = verifiablePresentationRequest;
+    const {
+      did, signer
+    } = await helpers.createDidProofSigner({algorithm: 'P-256'});
+    const {verifiablePresentation} = await helpers.createDidAuthnVP(
+      {domain, challenge, did, signer});
+    const {result: authzResponseResult} = await oid4vp
+      .sendAuthorizationResponse({
+        verifiablePresentation, authorizationRequest, agent
+      });
+    should.exist(authzResponseResult);
+
+    // exchange should be `active`
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
+        should.exist(exchange?.state);
+        exchange.state.should.equal('active');
+      } catch(error) {
+        err = error;
+      }
+      assertNoError(err);
+    }
+
+    // wallet / client repeats credential request, using the credential
+    // identifiers from its access token, now that OID4VP is done
+    const result = await client.requestCredentials({agent});
+    should.exist(result);
+    result.should.include.keys('credential_responses');
+    const allCredentials = [];
+    for(const r of result.credential_responses) {
+      r.should.include.keys(['credentials']);
+      for(const element of r.credentials) {
+        element.should.include.keys(['credential']);
+        allCredentials.push(element.credential);
+      }
+    }
+
+    const namesFound = new Set();
+    for(const credential of allCredentials) {
+      // gather names to check below
+      should.exist(credential.credentialSubject.name);
+      namesFound.add(credential.credentialSubject.name);
+    }
+    // ensure each name matches
+    namesFound.size.should.equal(2);
+    namesFound.has('Name One').should.equal(true);
+    namesFound.has('Name Two').should.equal(true);
+
+    // exchange state should be complete
+    {
+      let err;
+      try {
+        const {exchange} = await helpers.getExchange(
+          {id: exchangeId, capabilityAgent});
         should.exist(exchange?.state);
         exchange.state.should.equal('complete');
       } catch(error) {
