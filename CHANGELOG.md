@@ -1,5 +1,14 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.20.2 - 2026-10-dd
+
+### Fixed
+- Keep the stored OID4VCI supported credential requests when an OID4VP
+  response is received during OID4VCI. Previously, these requests were
+  dropped and recreated with new credential identifiers, which caused an
+  OID4VCI 1.0+ client's repeated credential request to be rejected with
+  "The requested credential(s) have already been delivered."
+
 ## 7.20.1 - 2026-10-20
 
 ### Fixed
