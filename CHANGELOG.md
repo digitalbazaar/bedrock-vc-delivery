@@ -1,5 +1,12 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.21.0 - 2026-11-dd
+
+### Changed
+- Require `@bedrock/validation@7.4.0` to support `$data` JSON schema
+  feature for comparing fields within data (such as verification
+  results) against each other for equality.
+
 ## 7.20.2 - 2026-10-23
 
 ### Fixed
