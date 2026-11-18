@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.21.0 - 2026-11-dd
+## 7.21.0 - 2026-11-18
 
 ### Changed
 - Require `@bedrock/validation@7.4.0` to support `$data` JSON schema
