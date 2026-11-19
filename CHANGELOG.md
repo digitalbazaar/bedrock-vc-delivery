@@ -1,5 +1,13 @@
 # bedrock-vc-delivery ChangeLog
 
+## 7.21.1 - 2026-11-dd
+
+### Fixed
+- Return an empty `verifiablePresentationRequest` from an exchange's
+  `/request` endpoint when the current step requests nothing. Previously,
+  the response was an empty object, which signals that the exchange is
+  complete.
+
 ## 7.21.0 - 2026-11-18
 
 ### Changed
