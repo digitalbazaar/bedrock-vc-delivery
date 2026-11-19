@@ -1,6 +1,6 @@
 # bedrock-vc-delivery ChangeLog
 
-## 7.21.1 - 2026-11-dd
+## 7.21.1 - 2026-11-19
 
 ### Fixed
 - Return an empty `verifiablePresentationRequest` from an exchange's
